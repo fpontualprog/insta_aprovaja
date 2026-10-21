@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#102c63"><title>Insta AprovaJá | Painel editorial</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar"><div class="brand-mark">A<span>J</span></div><div class="brand"><strong>Insta AprovaJá</strong><small>Conteúdo com estratégia</small></div><span class="pill">MODO GRATUITO</span></header>
+<main class="wrap">
+<section class="hero"><div><p class="eyebrow">APROVAJÁ CONCURSOS · @aprovaja_seuconcurso</p><h1>Seu conteúdo.<br><span>Sua estratégia.</span></h1><p>Planeje, escreva e organize publicações para crescer com consistência — sem contratar ferramentas agora.</p></div><div class="hero-stat"><strong id="count">0</strong><span>publicações no painel</span></div></section>
+<section class="stats"><article><span>Na fila</span><strong id="pendingCount">0</strong></article><article><span>Aprovadas</span><strong id="approvedCount">0</strong></article><article><span>Publicadas</span><strong id="publishedCount">0</strong></article></section>
+<div class="columns">
+<section class="panel"><div class="panel-head"><div><p class="eyebrow">ESTÚDIO EDITORIAL</p><h2>Nova publicação</h2></div><span class="mini-logo">AJ</span></div>
+<form id="postForm">
+<label for="title">Título da publicação</label><input id="title" required maxlength="100" placeholder="Ex.: 3 erros em Direito Constitucional">
+<div class="form-row"><div><label for="kind">Linha editorial</label><select id="kind"><option>Questão comentada</option><option>Dica de prova</option><option>Mapa mental</option><option>Planejamento de estudos</option><option>Divulgação da plataforma</option><option>Motivação e disciplina</option></select></div><div><label for="format">Formato</label><select id="format"><option>Carrossel</option><option>Imagem única</option><option>Reel (roteiro)</option><option>Stories</option></select></div></div>
+<label for="date">Data planejada</label><input id="date" type="date" required>
+<label for="time">Horário</label><select id="time"><option value="12:15">12h15 — intervalo de almoço</option><option value="19:30">19h30 — noite</option><option value="18:30">18h30 — domingo</option></select>
+<label for="brief">Orientações para o conteúdo</label><textarea id="brief" rows="3" placeholder="Disciplina, assunto, público ou chamada que deseja destacar..."></textarea>
+<div class="actions"><button type="button" class="btn secondary" id="suggestBtn">Gerar ideia grátis</button><button class="btn primary" type="submit">Adicionar à fila</button></div>
+<p class="hint">A geração gratuita usa modelos de texto e regras editoriais no navegador; não é uma chamada a um modelo de IA externo.</p>
+</form></section>
+<section class="panel"><div class="panel-head"><div><p class="eyebrow">PRÓXIMOS CONTEÚDOS</p><h2>Fila editorial</h2></div><select id="filter" aria-label="Filtrar publicações"><option value="all">Todas</option><option value="Pendente">Pendentes</option><option value="Aprovada">Aprovadas</option><option value="Publicada">Publicadas</option></select></div><div id="posts" class="posts-empty"><div class="empty-icon">✦</div><strong>Seu calendário começa aqui</strong><p>Adicione a primeira publicação para montar sua fila.</p></div></section>
+</div>
+<section class="panel guide"><p class="eyebrow">LINHA EDITORIAL</p><h2>Uma rotina simples, três vezes por semana</h2><div class="schedule"><article><span>TER · 12h15</span><strong>Questão comentada</strong><p>Ensine algo prático e estimule salvamentos.</p></article><article><span>QUI · 19h30</span><strong>Dica ou mapa mental</strong><p>Transforme um tema difícil em revisão visual.</p></article><article><span>DOM · 18h30</span><strong>Planejamento + plataforma</strong><p>Ajude a organizar a semana e apresente a AprovaJá.</p></article></div><p class="hint">Horários iniciais para teste, não garantia de maior alcance. Ajuste com os Insights da conta.</p></section>
+<footer>Insta AprovaJá · Protótipo gratuito · Não conectado ao Instagram</footer>
+</main><div id="toast" role="status" aria-live="polite"></div><script src="app.js"></script>
+</body></html>
