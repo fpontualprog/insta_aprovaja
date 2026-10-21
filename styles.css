@@ -106,3 +106,9 @@
 #instagramStatus[data-connection="error"]{background:#fff0ef;color:#a12620}
 #instagramIntegration.is-connected{border-color:#6cbe8a}
 @media(max-width:720px){#instagramIntegration .instagram-login-form{grid-template-columns:1fr}#instagramIntegration .instagram-login-form .actions .btn{width:100%}}
+
+
+/* Login fixo como primeira seção do conteúdo */
+main.wrap>#instagramIntegration{display:block;position:relative;order:-1;margin:0 0 22px;max-width:none;width:100%;box-sizing:border-box}
+main.wrap>#instagramIntegration h2{margin-top:0}
+.history-note{margin-top:10px;font-size:12px}
