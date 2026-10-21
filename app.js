@@ -78,7 +78,7 @@ async function htmlEditorialToImage(html,post){
 }
 
 function makePost(topic,kind,date,time,format='Carrossel'){const p={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),title:topic.trim(),kind,format,date,time,brief:'Conteúdo educativo para candidatos a concursos públicos. Identidade visual azul-marinho, branco e laranja.',status:'Pendente'};p.captionBody=topicBody(p.title,kind);p.caption=makeCaption(p);p.images=[];return p}
-function render(){const filter=$('filter').value;const monthFilter=$('monthFilter')?.value||localDate(new Date()).slice(0,7);const list=posts.filter(p=>(!p.date||p.date.slice(0,7)===monthFilter)&&(filter==='all'||filter==='Pendente'?(filter==='all'||p.status==='Pendente'||p.needsApproval):p.status===filter)).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));$('count').textContent=posts.length;$('pendingCount').textContent=posts.filter(p=>p.status==='Pendente'||p.needsApproval).length;$('approvedCount').textContent=posts.filter(p=>p.status==='Aprovada'&&!p.needsApproval).length;$('publishedCount').textContent=posts.filter(p=>p.status==='Publicada').length;const host=$('posts');if(!list.length){host.className='posts-empty';host.innerHTML='<div class="empty-icon">✦</div><strong>Agenda vazia</strong><p>Gere as pautas para montar o calendário mensal.</p>';return}host.className='';host.innerHTML=list.map(p=>{const needsApproval=!!p.needsApproval||p.status==='Pendente';return '<article class="post-card layout-'+esc((p.kind||'dica').toLowerCase().replace(/[^a-z0-9]+/g,'-'))+'"><div class="post-top"><div><h3>'+esc(p.title)+'</h3><div class="meta">'+esc(p.kind)+' · '+esc(p.format||'Carrossel')+'<br>'+esc(formatDate(p.date))+' às '+esc(p.time)+'</div></div><span class="status '+esc(p.status)+'">'+esc(needsApproval?'Aguardando aprovação':p.status==='Aprovada'?'Na fila de publicação':p.status)+'</span></div><p class="post-caption">'+esc(needsApproval?'Prévia da pauta. Aprove para gerar o texto, a legenda e as artes.':p.caption||'')+'</p>'+(p.images&&p.images.length?'<div class="post-images">'+p.images.map((src,i)=>'<a href="'+src+'" download="aprovaja-arte-'+(i+1)+'.svg" target="_blank" rel="noopener"><img src="'+src+'" alt="Arte '+(i+1)+' do carrossel"><span>Baixar arte '+(i+1)+'</span></a>').join('')+'</div>':'')+'<div class="post-actions">'+(needsApproval?'<button class="small-btn" data-action="edit" data-id="'+p.id+'">Alterar</button><button class="small-btn approve-btn" data-action="approve" data-id="'+p.id+'">Aprovar e gerar conteúdo</button><button class="small-btn" data-action="reject" data-id="'+p.id+'">Reprovar</button>':'<button class="small-btn" data-action="copy" data-id="'+p.id+'">Copiar legenda</button>')+(p.status==='Aprovada'&&!needsApproval?'<button class="small-btn publish-btn" data-publish-id="'+p.id+'">Publicar agora</button><button class="small-btn" data-action="published" data-id="'+p.id+'">Marcar publicada</button>':'')+'<button class="small-btn" data-action="delete" data-id="'+p.id+'">Excluir</button></div></article>'}).join('')}function setDefaultDate(){const d=new Date();d.setDate(d.getDate()+((2-d.getDay()+7)%7||7));$('date').value=localDate(d);$('bulkStart').value=localDate(d)}
+function render(){const filter=$('filter').value;const monthFilter=$('monthFilter')?.value||localDate(new Date()).slice(0,7);const list=posts.filter(p=>(!p.date||p.date.slice(0,7)===monthFilter)&&(filter==='all'||filter==='Pendente'?(filter==='all'||p.status==='Pendente'||p.needsApproval):p.status===filter)).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));$('count').textContent=posts.length;$('pendingCount').textContent=posts.filter(p=>p.status==='Pendente'||p.needsApproval).length;$('approvedCount').textContent=posts.filter(p=>p.status==='Aprovada'&&!p.needsApproval).length;$('publishedCount').textContent=posts.filter(p=>p.status==='Publicada').length;const host=$('posts');if(!list.length){host.className='posts-empty';host.innerHTML='<div class="empty-icon">✦</div><strong>Agenda vazia</strong><p>Gere as pautas para montar o calendário mensal.</p>';return}host.className='';host.innerHTML=list.map(p=>{const needsApproval=!!p.needsApproval||p.status==='Pendente';return '<article class="post-card layout-'+esc((p.kind||'dica').toLowerCase().replace(/[^a-z0-9]+/g,'-'))+'"><div class="post-top"><div><h3>'+esc(p.title)+'</h3><div class="meta">'+esc(p.kind)+' · '+esc(p.format||'Carrossel')+'<br>'+esc(formatDate(p.date))+' às '+esc(p.time)+'</div></div><span class="status '+esc(p.status)+'">'+esc(needsApproval?'Aguardando aprovação':p.status==='Aprovada'?'Na fila de publicação':p.status)+'</span></div><p class="post-caption">'+esc(needsApproval?'Prévia da pauta. Aprove para gerar o texto, a legenda e as artes.':p.caption||'')+'</p>'+(p.images&&p.images.length?'<div class="post-images">'+p.images.map((src,i)=>'<a href="'+src+'" download="aprovaja-arte-'+(i+1)+'.png" target="_blank" rel="noopener"><img src="'+src+'" alt="Arte '+(i+1)+' do carrossel"><span>Baixar arte '+(i+1)+'</span></a>').join('')+'</div>':'')+'<div class="post-actions">'+(needsApproval?'<button class="small-btn" data-action="edit" data-id="'+p.id+'">Alterar</button><button class="small-btn approve-btn" data-action="approve" data-id="'+p.id+'">Aprovar e gerar conteúdo</button><button class="small-btn" data-action="reject" data-id="'+p.id+'">Reprovar</button>':'<button class="small-btn" data-action="copy" data-id="'+p.id+'">Copiar legenda</button>')+(p.status==='Aprovada'&&!needsApproval?'<button class="small-btn publish-btn" data-publish-id="'+p.id+'">Publicar agora</button><button class="small-btn" data-action="published" data-id="'+p.id+'">Marcar publicada</button>':'')+'<button class="small-btn" data-action="delete" data-id="'+p.id+'">Excluir</button></div></article>'}).join('')}function setDefaultDate(){const d=new Date();d.setDate(d.getDate()+((2-d.getDay()+7)%7||7));$('date').value=localDate(d);$('bulkStart').value=localDate(d)}
 const RANDOM_EDITORIAL_KINDS=['Dica de prova','Questão comentada','Mapa mental','Planejamento de estudos','Divulgação da plataforma','Motivação e disciplina'];
 function randomItem(items){return items[Math.floor(Math.random()*items.length)]}
 
@@ -204,14 +204,14 @@ function updateAuthUI() {
   if (emailLabel) emailLabel.textContent = currentSession?.user?.email || '';
   if (loginEmail && currentSession?.user?.email) loginEmail.value = currentSession.user.email;
 }
-function svgToJpegBlob(dataUrl) {
+function imageDataToJpegBlob(dataUrl) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
       try {
         const canvas = document.createElement('canvas');
         canvas.width = 1080;
-        canvas.height = img.naturalHeight > 1500 ? 1920 : 1350;
+        canvas.height = img.naturalHeight > 1080 ? 1920 : 1080;
         const ctx = canvas.getContext('2d');
         if (!ctx) throw new Error('O navegador não disponibilizou o canvas.');
         ctx.fillStyle = '#ffffff';
@@ -220,7 +220,7 @@ function svgToJpegBlob(dataUrl) {
         canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Não foi possível converter a arte para JPEG.')), 'image/jpeg', 0.92);
       } catch (e) { reject(e); }
     };
-    img.onerror = () => reject(new Error('Não foi possível carregar a arte SVG para conversão.'));
+    img.onerror = () => reject(new Error('Não foi possível carregar a imagem gerada pelo HTML para conversão.'));
     img.src = dataUrl;
   });
 }
@@ -282,7 +282,7 @@ async function publishApprovedImage(postId, button) {
     const imageUrls = [];
     for (let i = 0; i < post.images.length; i++) {
       integrationStatus('Preparando imagem ' + (i + 1) + ' de ' + post.images.length + '…');
-      const jpegBlob = await svgToJpegBlob(post.images[i]);
+      const jpegBlob = await imageDataToJpegBlob(post.images[i]);
       const objectPath = 'publicacoes/' + Date.now() + '-' + (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)) + '-' + (i + 1) + '.jpg';
       const { error: uploadError } = await supabaseClient.storage
         .from('instagram-publicacoes')
@@ -458,7 +458,7 @@ function openArtworkPopup(src,title){
  let modal=document.getElementById('artworkModal');
  if(!modal){
   modal=document.createElement('div');modal.id='artworkModal';modal.className='artwork-modal';
-  modal.innerHTML='<div class="artwork-modal-backdrop" data-close-artwork></div><section class="artwork-modal-dialog" role="dialog" aria-modal="true" aria-label="Visualização ampliada da arte"><div class="artwork-modal-head"><strong id="artworkModalTitle">Prévia da arte</strong><button type="button" class="artwork-modal-close" aria-label="Fechar visualização" data-close-artwork>×</button></div><div class="artwork-modal-body"><img id="artworkModalImage" alt="Arte ampliada AprovaJá"></div><div class="artwork-modal-actions"><a id="artworkModalDownload" class="btn primary" download="arte-aprovaja.svg">Baixar arte</a><button type="button" class="btn secondary" data-close-artwork>Fechar</button></div></section>';
+  modal.innerHTML='<div class="artwork-modal-backdrop" data-close-artwork></div><section class="artwork-modal-dialog" role="dialog" aria-modal="true" aria-label="Visualização ampliada da arte"><div class="artwork-modal-head"><strong id="artworkModalTitle">Prévia da arte</strong><button type="button" class="artwork-modal-close" aria-label="Fechar visualização" data-close-artwork>×</button></div><div class="artwork-modal-body"><img id="artworkModalImage" alt="Arte ampliada AprovaJá"></div><div class="artwork-modal-actions"><a id="artworkModalDownload" class="btn primary" download="arte-aprovaja.png">Baixar arte</a><button type="button" class="btn secondary" data-close-artwork>Fechar</button></div></section>';
   document.body.appendChild(modal);
   modal.addEventListener('click',e=>{if(e.target.closest('[data-close-artwork]'))modal.classList.remove('open');});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')modal.classList.remove('open');});
