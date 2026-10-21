@@ -568,7 +568,8 @@ $('postForm')?.addEventListener('submit', async e=>{
    p.discipline=discipline;
    p.brief=brief;
    p.caption=makeCaption(p);
-   p.images=generateArts(p);
+   p.images=[await htmlEditorialToImage(ai.html,p)];
+   p.generatedHtml=String(ai.html);
    p.status='Pendente';
    p.needsApproval=false;
    posts.push(p);
