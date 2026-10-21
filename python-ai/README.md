@@ -44,7 +44,7 @@ Na página /docs, use POST /generate com este exemplo JSON:
       "exam_board": "CEBRASPE"
     }
 
-Tipos aceitos: resumo, mapa_mental, questoes, flashcards e carrossel. A resposta contém o conteúdo e os arquivos/páginas recuperados. Revise questões, gabaritos e referências legais em fontes oficiais antes de publicar.
+Tipos aceitos: resumo, mapa_mental, questoes, flashcards e carrossel. A resposta contém o conteúdo e os arquivos/páginas recuperados. Revise questões, gabaritos e referências legais em fontes oficiais antes de publicar.\n\n## Artes para Instagram pelo GitHub Actions\n\nO workflow manual `.github/workflows/gerar-conteudo-ia.yml` gera o conteúdo, executa `python-ai/render_instagram.py` e monta um carrossel com identidade visual azul-marinho, branco e laranja. O resultado inclui imagens PNG individuais em 1080 × 1350 (proporção 4:5), `carrossel_instagram.zip` e `legenda_instagram.txt`. Ao terminar a execução, baixe o artefato `aprovaja-conteudo-gerado` na página do workflow. A arte usa tipografia e formas vetoriais desenhadas pelo Pillow; não depende de gerador de imagens pago. Confira o resultado visual e corrija manualmente qualquer quebra de linha ou texto antes de publicar.
 
 ## Endpoints
 - GET /health — verifica Ollama e modelo
