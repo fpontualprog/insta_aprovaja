@@ -67,12 +67,6 @@ $('generateBatch').addEventListener('click',()=>{
  $('generatedPreview').innerHTML='<p class="hint">Agenda criada. Na fila editorial, altere os temas se necessário e clique em “Aprovar e gerar conteúdo” para produzir texto, legenda e artes.</p>';
  $('posts').scrollIntoView({behavior:'smooth',block:'start'});
 });
- posts.push(...newPosts);
- if(!save()){posts.splice(-newPosts.length,newPosts.length);return}
- toast(newPosts.length+' publicações geradas com abordagem editorial '+(selectedKind==='Aleatória'?'sorteada.':'selecionada.'));
- $('bulkTopics').value='';
- $('generatedPreview').innerHTML='<p class="hint">Os temas informados foram mantidos; na opção Aleatória, cada tema recebeu uma abordagem editorial sorteada. Confira a fila editorial.</p>';
-});
 $('posts').addEventListener('click',e=>{const b=e.target.closest('button[data-action]');if(!b)return;const p=posts.find(x=>x.id===b.dataset.id);if(!p)return;switch(b.dataset.action){case'edit':{const title=prompt('Edite o tema da publicação:',p.title);if(title===null)return;if(!title.trim()){toast('O tema não pode ficar vazio.');return}const kinds=['Dica de prova','Questão comentada','Mapa mental','Planejamento de estudos','Divulgação da plataforma','Motivação e disciplina','Concursos abertos'];const chosen=prompt('Abordagem editorial atual: '+p.kind+'\nDigite uma das opções abaixo para alterar ou deixe em branco para manter:\n'+kinds.join(', '),p.kind);p.title=title.trim();if(chosen&&kinds.includes(chosen.trim()))p.kind=chosen.trim();if(save())toast('Tema/abordagem atualizados.');break}case'approve':if(p.needsApproval){p.captionBody=topicBody(p.title,p.kind);p.caption=makeCaption(p);p.images=generateArts(p);p.needsApproval=false;p.status='Aprovada';if(save())toast('Aprovado: texto, legenda e artes gerados.')}else{p.status='Aprovada';if(save())toast('Publicação aprovada.')}break;case'published':p.status='Publicada';if(save())toast('Status atualizado.');break;case'delete':if(confirm('Excluir esta publicação e suas artes?')){posts=posts.filter(x=>x.id!==p.id);if(save())toast('Publicação excluída.')}break;case'copy':copyCaption(p);break}});
 
 const CONTESTS_URL='https://raw.githubusercontent.com/fpontualprog/aprovaja/main/data/concursos_elegiveis.json';
