@@ -112,3 +112,27 @@
 main.wrap>#instagramIntegration{display:block;position:relative;order:-1;margin:0 0 22px;max-width:none;width:100%;box-sizing:border-box}
 main.wrap>#instagramIntegration h2{margin-top:0}
 .history-note{margin-top:10px;font-size:12px}
+
+/* Ajuste de layout: gerador horizontal e calendário em duas colunas */
+.single-generator-panel{width:100%;margin-bottom:18px}
+.single-generator-panel form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:20px;align-items:start}
+.single-generator-panel form>label[for="title"],
+.single-generator-panel form>#title,
+.single-generator-panel form>label[for="kind"],
+.single-generator-panel form>#kind,
+.single-generator-panel form>label[for="date"],
+.single-generator-panel form>#date{grid-column:auto}
+.single-generator-panel form>label[for="brief"],
+.single-generator-panel form>#brief,
+.single-generator-panel form>.generated-preview,
+.single-generator-panel form>.actions,
+.single-generator-panel form>.hint{grid-column:1/-1}
+.single-generator-panel form>label{margin-top:10px}
+.publication-calendar-panel{width:100%}
+.publication-calendar-panel #posts:not(.posts-empty){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
+.publication-calendar-panel .post-card{min-width:0;margin:0;height:100%}
+@media(max-width:760px){
+ .single-generator-panel form{grid-template-columns:1fr}
+ .single-generator-panel form>*{grid-column:1/-1}
+ .publication-calendar-panel #posts:not(.posts-empty){grid-template-columns:1fr}
+}
