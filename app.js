@@ -298,3 +298,64 @@ document.getElementById('posts')?.addEventListener('click', event => {
   event.preventDefault();
   publishApprovedImage(button.dataset.publishId, button);
 });
+
+
+// Geração pedagógica por IA (servidor Supabase; a chave OpenAI nunca vai ao navegador).
+document.getElementById('generateAI')?.addEventListener('click', async () => {
+  const button = document.getElementById('generateAI');
+  const topic = document.getElementById('title').value.trim();
+  if (!topic) { toast('Informe o tema no campo Título antes de chamar a IA.'); document.getElementById('title').focus(); return; }
+  if (!supabaseClient) { toast('A conexão segura ainda está carregando. Atualize a página e tente novamente.'); return; }
+  button.disabled = true;
+  const previousLabel = button.textContent;
+  button.textContent = 'IA trabalhando…';
+  const host = document.getElementById('generatedPreview');
+  host.innerHTML = '<p class="hint">A IA está preparando o conteúdo. Isso pode levar alguns segundos…</p>';
+  try {
+    const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+    if (sessionError) throw sessionError;
+    const session = sessionData?.session;
+    if (!session?.access_token) throw new Error('Entre com a conta administradora na seção “Conectar Instagram” antes de gerar conteúdo com IA.');
+    const response = await fetch(SUPABASE_URL + '/functions/v1/generate-instagram-content', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_PUBLISHABLE_KEY, 'Authorization': 'Bearer ' + session.access_token },
+      body: JSON.stringify({ topic, kind: document.getElementById('kind').value, brief: document.getElementById('brief').value, discipline: document.getElementById('brief').value })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.ok) throw new Error(result.error || ('Falha na IA (HTTP ' + response.status + ').'));
+    const c = result.content || {};
+    const kind = document.getElementById('kind').value;
+    const date = document.getElementById('date').value || localDate(new Date());
+    const time = document.getElementById('time').value;
+    const p = makePost(c.title || topic, kind, date, time, document.getElementById('format').value);
+    let body = String(c.captionBody || '').trim();
+    if (kind === 'Mapa mental' && c.mindMap) {
+      const map = c.mindMap;
+      body += '\n\nMAPA MENTAL — ' + String(map.central || topic) + '\n' +
+        (Array.isArray(map.branches) ? map.branches.map((branch, i) => (i + 1) + '. ' + branch.label + '\n' + (Array.isArray(branch.children) ? branch.children.map(child => '   • ' + child).join('\n') : '')).join('\n') : '');
+    }
+    if (Array.isArray(c.flashcards) && c.flashcards.length) {
+      body += '\n\nFLASHCARDS PARA REVISÃO\n' + c.flashcards.map((card, i) => (i + 1) + '. Pergunta: ' + card.question + '\n   Resposta: ' + card.answer).join('\n');
+    }
+    p.title = String(c.title || topic).slice(0, 100);
+    p.captionBody = body;
+    p.imageText = String(c.imageText || '');
+    p.storyText = String(c.storyText || '');
+    p.mindMap = c.mindMap || null;
+    p.flashcards = Array.isArray(c.flashcards) ? c.flashcards : [];
+    p.caption = makeCaption(p);
+    p.images = generateArts(p);
+    p.aiGenerated = true;
+    p.aiModel = result.model || 'OpenAI';
+    posts.push(p);
+    if (!save()) { posts.pop(); throw new Error('Não foi possível salvar. O armazenamento do navegador pode estar cheio.'); }
+    host.innerHTML = '<p class="hint"><strong>Conteúdo gerado com IA e salvo na agenda.</strong> Revise o material antes de aprovar ou publicar.</p><p><strong>Texto da arte:</strong> ' + esc(p.imageText || 'Use o título como chamada visual') + '</p><p><strong>Mensagem de Stories:</strong> ' + esc(p.storyText || 'Disponível no conteúdo gerado') + '</p><p class="hint">' + esc(body.slice(0, 1400)) + (body.length > 1400 ? '…' : '') + '</p>';
+    toast('Conteúdo gerado com IA e salvo como pendente de aprovação.');
+  } catch (error) {
+    host.innerHTML = '<p class="hint"><strong>Não foi possível gerar com IA.</strong> ' + esc(error?.message || 'Erro inesperado.') + '</p>';
+    toast(error?.message || 'Erro na geração por IA.');
+  } finally {
+    button.disabled = false;
+    button.textContent = previousLabel;
+  }
+});
