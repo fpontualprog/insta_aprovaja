@@ -56,17 +56,28 @@ $('generateBatch').addEventListener('click',()=>{
  const topics=$('bulkTopics').value.split(/\n|;/).map(x=>x.trim()).filter(Boolean);
  if(!topics.length){toast('Insira os temas antes de gerar a agenda.');return}
  if(topics.length>30){toast('Gere no máximo 30 temas por lote.');return}
- const start=$('bulkStart').value||localDate(new Date());let cursor=nextEditorialDate(new Date(start+'T12:00:00'));
- const newPosts=topics.map(topic=>{
-   const d=new Date(cursor);const kind=editorialForDate(d);const time=kind==='Questão comentada'?'12:15':kind==='Dica de prova'||kind==='Mapa mental'?'19:30':kind==='Concursos abertos'?'10:00':'18:30';
-   cursor.setDate(cursor.getDate()+1);cursor=nextEditorialDate(cursor);
+ const startValue=$('bulkStart').value||localDate(new Date());
+ const startDate=new Date(startValue+'T12:00:00');
+ const month=startDate.getMonth(),year=startDate.getFullYear();
+ let cursor=nextEditorialDate(startDate);
+ const slots=[];
+ while(cursor.getMonth()===month&&cursor.getFullYear()===year){
+   slots.push(new Date(cursor));
+   cursor.setDate(cursor.getDate()+1);
+   cursor=nextEditorialDate(cursor);
+ }
+ if(!slots.length){toast('Não há datas editoriais restantes neste mês. Escolha o próximo mês.');return}
+ if(topics.length>slots.length){toast('Há '+topics.length+' temas, mas só '+slots.length+' datas editoriais disponíveis neste mês. Reduza os temas ou escolha outro mês.');return}
+ const newPosts=topics.map((topic,i)=>{
+   const d=slots[i];const kind=editorialForDate(d);
+   const time=kind==='Questão comentada'?'12:15':kind==='Dica de prova'||kind==='Mapa mental'?'19:30':kind==='Concursos abertos'?'10:00':'18:30';
    return {id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),title:topic,kind,format:'Carrossel',date:localDate(d),time,brief:'Conteúdo para revisão de concursos públicos.',status:'Pendente',needsApproval:true,caption:'',captionBody:'',images:[]};
  });
  posts.push(...newPosts);
  if(!save()){posts.splice(-newPosts.length,newPosts.length);return}
- toast('Agenda criada. Analise cada pauta antes de aprovar.');
+ toast('Lista mensal criada. Aprove ou reprove cada publicação.');
  $('bulkTopics').value='';
- $('generatedPreview').innerHTML='<p class="hint">Agenda criada conforme o calendário editorial. Aprove cada item para gerar texto, legenda, hashtags e artes; reprove para retirá-lo da agenda.</p>';
+ $('generatedPreview').innerHTML='<p class="hint">Lista mensal criada. Em “Novas Publicações”, revise cada pauta: aprove para gerar texto, legenda, hashtags e artes; reprove para retirá-la da agenda.</p>';
  $('posts').scrollIntoView({behavior:'smooth',block:'start'});
 });
 $('posts').addEventListener('click',e=>{const b=e.target.closest('button[data-action]');if(!b)return;const p=posts.find(x=>x.id===b.dataset.id);if(!p)return;switch(b.dataset.action){case'edit':{const title=prompt('Edite o tema da publicação:',p.title);if(title===null)return;if(!title.trim()){toast('O tema não pode ficar vazio.');return}p.title=title.trim();if(save())toast('Tema atualizado.');break}case'approve':if(p.needsApproval){p.captionBody=topicBody(p.title,p.kind);p.caption=makeCaption(p);p.images=generateArts(p);p.needsApproval=false;p.status='Aprovada';if(save())toast('Aprovada e adicionada à fila de publicação com texto e artes.')}break;case'reject':posts=posts.filter(x=>x.id!==p.id);if(save())toast('Publicação reprovada e retirada da agenda.');break;case'published':p.status='Publicada';if(save())toast('Status atualizado.');break;case'delete':if(confirm('Excluir esta publicação e suas artes?')){posts=posts.filter(x=>x.id!==p.id);if(save())toast('Publicação excluída.')}break;case'copy':copyCaption(p);break}});
