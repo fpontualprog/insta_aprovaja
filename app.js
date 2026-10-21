@@ -19,117 +19,6 @@ function topicBody(topic,kind){
  return 'RESUMO RÁPIDO\nTema: '+topic+'.\n\n• Conceito: identifique a definição principal.\n• Atenção: memorize a regra central e as exceções mais cobradas.\n• Na prova: observe os termos que podem mudar o sentido da afirmação.\n\nRevise a legislação ou o material de referência aplicável.';
 }
 function wrapWords(text,max){const words=text.split(/\s+/),lines=[];let line='';for(const word of words){if((line+' '+word).trim().length>max){lines.push(line);line=word}else line=(line+' '+word).trim()}if(line)lines.push(line);return lines}
-function svgArt(title,kind,body,page,total,format='Feed'){
- const story=format==='Stories';
- const W=1080,H=story?1920:1350;
- const c={navy:'#071b43',blue:kind==='Mapa mental'?'#087f8c':'#1453a1',orange:'#ff9418',pale:'#f2f6fc',ink:'#10254b'};
- const xml=s=>esc(String(s??''));
- function linesFor(value,maxChars,maxLines=8){
-  const words=String(value||'').replace(/\s+/g,' ').trim().split(' ').filter(Boolean);
-  const out=[];let line='';
-  for(let word of words){
-   if(word.length>maxChars){
-    if(line){out.push(line);line='';}
-    while(word.length>maxChars){out.push(word.slice(0,maxChars));word=word.slice(maxChars);}
-   }
-   const next=line?line+' '+word:word;
-   if(next.length>maxChars){if(line)out.push(line);line=word;}else line=next;
-  }
-  if(line)out.push(line);
-  return out.slice(0,maxLines);
- }
- const titleLines=linesFor(title,story?20:23,2);
- const titleStart=story?490:440;
- const titleSize=story?58:62;
- const titleSvg=titleLines.map((t,i)=>'<text x="72" y="'+(titleStart+i*(titleSize+10))+'" font-family="Arial,sans-serif" font-size="'+titleSize+'" font-weight="800" fill="'+(i===titleLines.length-1?'#ffad35':'#ffffff')+'">'+xml(t)+'</text>').join('');
- const shortText=story
-  ? (kind==='Questão comentada'?'Tente responder antes de conferir o gabarito.':kind==='Mapa mental'?'Revise o tema em quatro pontos essenciais.':kind==='Concursos abertos'?'Confira o edital e os prazos na fonte oficial.':kind==='Planejamento de estudos'?'Teoria, questões e revisão: avance um passo por vez.':kind==='Motivação e disciplina'?'Constância hoje. Mais preparo no dia da prova.':kind==='Divulgação da plataforma'?'Organize sua preparação gratuitamente na AprovaJá.':'Uma dica objetiva para sua próxima prova.')
-  : (kind==='Questão comentada'?'QUESTÃO DE REVISÃO  •  RESPONDA ANTES DE CONFERIR':kind==='Mapa mental'?'CONCEITO  •  REGRAS  •  EXCEÇÕES  •  PROVA':kind==='Concursos abertos'?'OPORTUNIDADES: CONFIRA SEMPRE O EDITAL OFICIAL':kind==='Planejamento de estudos'?'TEORIA  •  QUESTÕES  •  REVISÃO':kind==='Motivação e disciplina'?'UM PASSO DE CADA VEZ. MANTENHA A CONSTÂNCIA.':kind==='Divulgação da plataforma'?'ORGANIZE SEUS ESTUDOS GRATUITAMENTE.':'RESUMO PRÁTICO PARA REVISAR ANTES DA PROVA.');
- const copyLines=linesFor(shortText,story?24:36,story?4:3);
- const copySize=story?34:30;
- const copyStart=story?900:850;
- const copySvg=copyLines.map((t,i)=>'<text x="72" y="'+(copyStart+i*(copySize+18))+'" font-family="Arial,sans-serif" font-size="'+copySize+'" font-weight="'+(i===0?'700':'500')+'" fill="'+c.ink+'">'+xml(t)+'</text>').join('');
- const footerY=story?1570:1115;
- const footerHeight=story?240:170;
- const svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="'+c.navy+'"/><stop offset="1" stop-color="'+c.blue+'"/></linearGradient><linearGradient id="or" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#ffb12b"/><stop offset="1" stop-color="#ff8317"/></linearGradient></defs><rect width="'+W+'" height="'+H+'" fill="#f4f7fc"/><rect width="'+W+'" height="'+(story?760:650)+'" fill="url(#bg)"/><circle cx="1015" cy="115" r="220" fill="#fff" opacity=".05"/><circle cx="1015" cy="115" r="160" fill="none" stroke="'+c.orange+'" stroke-width="4"/><g transform="translate(62 40)"><path d="M0 42 L24 0 L48 0 L26 42Z" fill="#ff951a"/><path d="M26 42 L56 9 L80 56 L60 56 L49 34 L34 56 L8 56Z" fill="#fff"/><path d="M33 56 L45 38 L54 56Z" fill="#ff951a"/><text x="94" y="27" font-family="Arial,sans-serif" font-size="30" font-weight="800" fill="#fff">APROVAJÁ</text><text x="96" y="52" font-family="Arial,sans-serif" font-size="15" letter-spacing="4" font-weight="700" fill="#fff">CONCURSOS</text><text x="96" y="75" font-family="Arial,sans-serif" font-size="16" fill="#fff">@aprovaja_seuconcurso</text></g><rect x="62" y="155" width="360" height="48" rx="24" fill="url(#or)"/><text x="242" y="187" text-anchor="middle" font-family="Arial,sans-serif" font-size="21" font-weight="800" fill="'+c.navy+'">'+xml(kind.toUpperCase())+'</text>'+titleSvg+'<rect x="52" y="'+(story?800:730)+'" width="976" height="'+(story?600:330)+'" rx="34" fill="#fff"/><rect x="52" y="'+(story?800:730)+'" width="16" height="'+(story?600:330)+'" rx="8" fill="'+c.orange+'"/>'+copySvg+'<rect x="52" y="'+footerY+'" width="976" height="'+footerHeight+'" rx="30" fill="url(#bg)"/><text x="90" y="'+(footerY+55)+'" font-family="Arial,sans-serif" font-size="'+(story?31:28)+'" font-weight="800" fill="#fff">'+(story?'APRENDA. REVISE. AVANCE.':'SALVE PARA REVISAR ANTES DA PROVA')+'</text><text x="90" y="'+(footerY+105)+'" font-family="Arial,sans-serif" font-size="'+(story?25:23)+'" fill="#fff">Acesse grátis: aprovajaconcurso.netlify.app</text><rect x="790" y="'+(H-90)+'" width="238" height="48" rx="24" fill="'+c.orange+'"/><text x="909" y="'+(H-59)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="19" font-weight="800" fill="'+c.navy+'">APROVAJÁ CONCURSOS</text></svg>';
- return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
-}
-function summarySvgArt(p){
- const W=1080,H=1080;
- const xml=v=>esc(String(v??''));
- const raw=Array.isArray(p.keyPoints)?p.keyPoints.map(String).filter(x=>x.trim()):[];
- const fallback=String(p.captionBody||'').split(/\\n+/).map(x=>x.replace(/^\\s*(?:[-•*]|\\d+[.)])\\s*/,'').trim()).filter(x=>x.length>18);
- const points=raw.length?raw:fallback;
- while(points.length<3)points.push('Revise a regra central e suas exceções na fonte oficial.');
- const shown=points.slice(0,5);
- const wrap=(value,max)=>{const raw=String(value||'').trim().split(/\\s+/).filter(Boolean),words=[];for(let word of raw){while(word.length>max){words.push(word.slice(0,max));word=word.slice(max)}if(word)words.push(word)}const lines=[];let line='';for(const word of words){const next=(line+' '+word).trim();if(next.length>max&&line){lines.push(line);line=word}else line=next}if(line)lines.push(line);return lines};
- const fit=(value,maxChars,maxLines,maxFont,minFont)=>{const lines=wrap(value,maxChars);const font=Math.max(minFont,Math.min(maxFont,Math.floor(maxFont*maxLines/Math.max(maxLines,lines.length))));const out=lines.slice(0,maxLines);if(lines.length>maxLines&&out.length)out[out.length-1]=out[out.length-1].replace(/[.,;:]?$/,'…');return {lines:out,font}};
- const title=fit(p.title||'Resumo do conteúdo',22,2,52,36);
- const titleSvg=title.lines.map((t,i)=>'<text x="70" y="'+(240+i*(title.font+8))+'" font-family="Arial,sans-serif" font-size="'+title.font+'" font-weight="800" fill="'+(i===title.lines.length-1?'#ff9e1b':'#ffffff')+'">'+xml(t)+'</text>').join('');
- const boxY=375,boxH=510,pad=22,rowH=(boxH-pad*2)/shown.length;
- const rows=shown.map((point,i)=>{
-  const cy=boxY+pad+i*rowH+rowH/2;
-  const fitted=fit(point,48,2,24,17);
-  const startY=cy-((fitted.lines.length-1)*(fitted.font+5))/2+fitted.font*.35;
-  return '<circle cx="100" cy="'+cy+'" r="25" fill="#ff9e1b"/><text x="100" y="'+(cy+9)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="25" font-weight="800" fill="#071b43">'+(i+1)+'</text>'+fitted.lines.map((line,j)=>'<text x="150" y="'+(startY+j*(fitted.font+5))+'" font-family="Arial,sans-serif" font-size="'+fitted.font+'" font-weight="'+(j===0?'700':'500')+'" fill="#10254b">'+xml(line)+'</text>').join('');
- }).join('');
- const svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" viewBox="0 0 1080 1080"><defs><linearGradient id="navy" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#061a3a"/><stop offset="1" stop-color="#0b3970"/></linearGradient></defs><rect width="1080" height="1080" fill="url(#navy)"/><path d="M790 0H1080V350Z" fill="#ff9e1b"/><rect x="52" y="38" width="590" height="76" rx="20" fill="#ff9e1b"/><text x="82" y="87" font-family="Arial,sans-serif" font-size="36" font-weight="900" fill="#071b43">APROVAJÁ</text><text x="370" y="86" font-family="Arial,sans-serif" font-size="19" font-weight="700" fill="#071b43">REVISÃO PARA CONCURSOS</text><text x="70" y="180" font-family="Arial,sans-serif" font-size="24" font-weight="800" letter-spacing="2" fill="#ffb347">'+xml(String(p.discipline||'RESUMO PARA CONCURSOS').toUpperCase().slice(0,36))+'</text>'+titleSvg+'<rect x="48" y="'+boxY+'" width="984" height="'+boxH+'" rx="28" fill="#f5f7fb"/>'+rows+'<rect x="48" y="905" width="984" height="112" rx="25" fill="#ff9e1b"/><text x="82" y="950" font-family="Arial,sans-serif" font-size="27" font-weight="900" fill="#071b43">TESTE SEUS CONHECIMENTOS!</text><text x="82" y="985" font-family="Arial,sans-serif" font-size="22" font-weight="700" fill="#071b43">Mais conteúdo e revisão na plataforma AprovaJá</text><text x="540" y="1050" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" font-weight="700" fill="#ffffff">APROVAJACONCURSO.NETLIFY.APP</text></svg>';
- return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
-}
-function modalitySvgArt(p){
- const W=1080,H=1080,kind=String(p.kind||''),title=String(p.title||kind);
- const escXml=s=>esc(String(s??''));
- const points=(p.keyPoints||[]).map(String).filter(Boolean);
- const fallback=String(p.captionBody||'').split(/\\n+/).map(s=>s.replace(/^[-•*\\d.) ]+/,'').trim()).filter(s=>s.length>12);
- while(points.length<3&&fallback.length)points.push(fallback.shift());
- while(points.length<3)points.push('Confira a regra aplicável na fonte oficial.');
- const wrap=(value,max)=>{const raw=String(value||'').trim().split(/\\s+/).filter(Boolean),words=[];for(let word of raw){while(word.length>max){words.push(word.slice(0,max));word=word.slice(max)}if(word)words.push(word)}const lines=[];let line='';for(const word of words){const next=(line+' '+word).trim();if(next.length>max&&line){lines.push(line);line=word}else line=next}if(line)lines.push(line);return lines};
- const fitted=(value,maxChars,maxLines,minFont=15,maxFont=27)=>{const lines=wrap(value,maxChars);const font=Math.max(minFont,Math.min(maxFont,Math.floor(maxFont*(maxLines/Math.max(maxLines,lines.length)))));const shown=lines.slice(0,maxLines);if(lines.length>maxLines&&shown.length)shown[shown.length-1]=shown[shown.length-1].replace(/[.,;:]?$/,'…');return {lines:shown,font}};
- const titleFit=fitted(title,24,2,34,58);
- const titleSvg=titleFit.lines.map((t,i)=>'<text x="70" y="'+(235+i*(titleFit.font+8))+'" font-family="Arial,sans-serif" font-size="'+titleFit.font+'" font-weight="800" fill="'+(i===titleFit.lines.length-1?'#ff9e1b':'#ffffff')+'">'+escXml(t)+'</text>').join('');
- const typeLabel=kind.toLocaleUpperCase('pt-BR').slice(0,42);
- let body='';
- if(kind==='Mapa mental'){
-  const mm=p.mindMap&&Array.isArray(p.mindMap.branches)?p.mindMap:null;
-  const branches=(mm?mm.branches:points.map((x,i)=>({title:['PONTO-CHAVE 1','PONTO-CHAVE 2','PONTO-CHAVE 3'][i]||'PONTO-CHAVE',description:x}))).filter(x=>x&&(x.title||x.description)).slice(0,8);
-  while(branches.length<3)branches.push({title:'PONTO-CHAVE',description:'Confira a regra aplicável na fonte oficial.'});
-  const count=branches.length;
-  const layouts={
-   3:[{x:250,y:600},{x:830,y:600},{x:540,y:835}],
-   4:[{x:260,y:570},{x:820,y:570},{x:260,y:825},{x:820,y:825}],
-   5:[{x:540,y:475},{x:230,y:650},{x:850,y:650},{x:330,y:855},{x:750,y:855}],
-   6:[{x:260,y:510},{x:820,y:510},{x:260,y:690},{x:820,y:690},{x:260,y:870},{x:820,y:870}],
-   7:[{x:260,y:480},{x:820,y:480},{x:260,y:635},{x:820,y:635},{x:260,y:790},{x:820,y:790},{x:540,y:930}],
-   8:[{x:260,y:460},{x:820,y:460},{x:260,y:610},{x:820,y:610},{x:260,y:760},{x:820,y:760},{x:260,y:910},{x:820,y:910}]
-  };
-  const pos=layouts[Math.min(8,Math.max(3,count))];
-  const cardW=count<=4?350:count<=6?285:250;
-  const cardH=count<=4?145:count<=6?125:108;
-  const titleSize=count<=5?18:15,descSize=count<=5?15:12;
-  const titleChars=count<=5?22:27,descChars=count<=5?30:34;
-  const descMax=count<=5?3:2;
-  const cards=branches.map((br,i)=>{
-   const q=pos[i],head=wrap(br.title||'PONTO-CHAVE',titleChars),desc=wrap(br.description||'',descChars);
-   const headMax=2,headLines=head.slice(0,headMax),descLines=desc.slice(0,descMax);
-   if(head.length>headMax&&headLines.length)headLines[headLines.length-1]=headLines[headLines.length-1].replace(/[.,;:]?$/,'…');
-   if(desc.length>descMax&&descLines.length)descLines[descLines.length-1]=descLines[descLines.length-1].replace(/[.,;:]?$/,'…');
-   const top=q.y-cardH/2,headY=top+25,descY=headY+headLines.length*(titleSize+3)+8;
-   return '<rect x="'+(q.x-cardW/2)+'" y="'+top+'" width="'+cardW+'" height="'+cardH+'" rx="17" fill="'+(i%2?'#fff0d6':'#f5f7fb')+'"/>'+headLines.map((t,j)=>'<text x="'+q.x+'" y="'+(headY+j*(titleSize+3))+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="'+titleSize+'" font-weight="900" fill="#10254b">'+escXml(t)+'</text>').join('')+descLines.map((t,j)=>'<text x="'+q.x+'" y="'+(descY+j*(descSize+4))+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="'+descSize+'" fill="#10254b">'+escXml(t)+'</text>').join('');
-  }).join('');
-  const center=count<=4?680:675;
-  const links=pos.map(q=>'<line x1="540" y1="'+center+'" x2="'+q.x+'" y2="'+q.y+'" stroke="#ff9e1b" stroke-width="5"/>').join('');
-  const centerLines=wrap(String(mm?.central||title),14).slice(0,3);
-  body=links+cards+'<circle cx="540" cy="'+center+'" r="73" fill="#ff9e1b" stroke="#071b43" stroke-width="5"/>'+centerLines.map((t,i)=>'<text x="540" y="'+(center-14+i*21)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" font-weight="900" fill="#071b43">'+escXml(t)+'</text>').join('');
- }else{
-  const heads=kind==='Questão comentada'?['QUESTÃO','ALTERNATIVAS','COMENTÁRIO']:kind==='Dica de prova'?['PEGADINHA','REGRA CORRETA','COMO CAI']:kind==='Planejamento de estudos'?['META','ROTINA','PRÁTICA']:kind==='Divulgação da plataforma'?['RECURSOS','ORGANIZAÇÃO','ACESSO']:kind==='Motivação e disciplina'?['ROTINA','CONSTÂNCIA','PROGRESSO']:kind==='Concursos abertos'?['EDITAL','VAGAS','PRAZOS']:['PONTO-CHAVE','APLICAÇÃO','ATENÇÃO'];
-  const items=points.slice(0,4);
-  const cardY=410,cardH=540,topPad=28,usable=cardH-topPad*2,rowH=Math.floor(usable/items.length);
-  body=items.map((item,i)=>{const y=cardY+topPad+i*rowH;const head=heads[i]||'PONTO-CHAVE';const headLines=wrap(head,38).slice(0,1);const maxLines=Math.max(1,Math.floor((rowH-52)/25));const fittedBody=fitted(item,49,maxLines,15,23);return '<circle cx="105" cy="'+(y+10)+'" r="24" fill="#ff9e1b"/><text x="105" y="'+(y+18)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" font-weight="900" fill="#071b43">'+(i+1)+'</text>'+headLines.map((t,j)=>'<text x="150" y="'+(y+5+j*22)+'" font-family="Arial,sans-serif" font-size="18" font-weight="900" fill="#ff9e1b">'+escXml(t)+'</text>').join('')+fittedBody.lines.map((t,j)=>'<text x="150" y="'+(y+34+j*(fittedBody.font+5))+'" font-family="Arial,sans-serif" font-size="'+fittedBody.font+'" fill="#ffffff">'+escXml(t)+'</text>').join('')}).join('');
- }
- const svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" viewBox="0 0 1080 1080"><rect width="1080" height="1080" fill="#071b43"/><circle cx="990" cy="70" r="200" fill="#1453a1" opacity=".6"/><path d="M790 0H1080V330Z" fill="#ff9418"/><rect x="52" y="38" width="590" height="76" rx="20" fill="#ff9e1b"/><text x="82" y="87" font-family="Arial,sans-serif" font-size="36" font-weight="900" fill="#071b43">APROVAJÁ</text><text x="370" y="86" font-family="Arial,sans-serif" font-size="19" font-weight="700" fill="#071b43">REVISÃO PARA CONCURSOS</text><text x="70" y="180" font-family="Arial,sans-serif" font-size="22" font-weight="800" letter-spacing="2" fill="#ffb347">'+escXml(typeLabel)+'</text>'+titleSvg+'<rect x="34" y="395" width="1012" height="565" rx="28" fill="'+(kind==='Mapa mental'?'#0b3970':'#102c53')+'"/>'+body+'<line x1="60" y1="1000" x2="1020" y2="1000" stroke="#ff9e1b" stroke-width="4"/><text x="540" y="1045" text-anchor="middle" font-family="Arial,sans-serif" font-size="21" font-weight="700" fill="#ffffff">APROVAJACONCURSO.NETLIFY.APP</text></svg>';
- return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
-}
-
 function sanitizeEditorialHtml(html){
  const parsed=new DOMParser().parseFromString(String(html||""),"text/html");
  const allowed=new Set(["SECTION","DIV","H1","H2","H3","P","UL","OL","LI","STRONG","EM","B","SPAN","BLOCKQUOTE"]);
@@ -188,11 +77,7 @@ async function htmlEditorialToImage(html,post){
  }finally{frame.remove();}
 }
 
-function generateArts(p){
- const visualKinds=['Resumo de conteúdo','Dica de prova','Questão comentada','Mapa mental','Planejamento de estudos','Divulgação da plataforma','Motivação e disciplina','Concursos abertos'];
- return [visualKinds.includes(p.kind)?(p.kind==='Resumo de conteúdo'?summarySvgArt(p):modalitySvgArt(p)):svgArt(p.title,p.kind,p.captionBody,1,1,p.format||'Feed')];
-}
-function makePost(topic,kind,date,time,format='Carrossel'){const p={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),title:topic.trim(),kind,format,date,time,brief:'Conteúdo educativo para candidatos a concursos públicos. Identidade visual azul-marinho, branco e laranja.',status:'Pendente'};p.captionBody=topicBody(p.title,kind);p.caption=makeCaption(p);p.images=generateArts(p);return p}
+function makePost(topic,kind,date,time,format='Carrossel'){const p={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),title:topic.trim(),kind,format,date,time,brief:'Conteúdo educativo para candidatos a concursos públicos. Identidade visual azul-marinho, branco e laranja.',status:'Pendente'};p.captionBody=topicBody(p.title,kind);p.caption=makeCaption(p);p.images=[];return p}
 function render(){const filter=$('filter').value;const monthFilter=$('monthFilter')?.value||localDate(new Date()).slice(0,7);const list=posts.filter(p=>(!p.date||p.date.slice(0,7)===monthFilter)&&(filter==='all'||filter==='Pendente'?(filter==='all'||p.status==='Pendente'||p.needsApproval):p.status===filter)).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));$('count').textContent=posts.length;$('pendingCount').textContent=posts.filter(p=>p.status==='Pendente'||p.needsApproval).length;$('approvedCount').textContent=posts.filter(p=>p.status==='Aprovada'&&!p.needsApproval).length;$('publishedCount').textContent=posts.filter(p=>p.status==='Publicada').length;const host=$('posts');if(!list.length){host.className='posts-empty';host.innerHTML='<div class="empty-icon">✦</div><strong>Agenda vazia</strong><p>Gere as pautas para montar o calendário mensal.</p>';return}host.className='';host.innerHTML=list.map(p=>{const needsApproval=!!p.needsApproval||p.status==='Pendente';return '<article class="post-card layout-'+esc((p.kind||'dica').toLowerCase().replace(/[^a-z0-9]+/g,'-'))+'"><div class="post-top"><div><h3>'+esc(p.title)+'</h3><div class="meta">'+esc(p.kind)+' · '+esc(p.format||'Carrossel')+'<br>'+esc(formatDate(p.date))+' às '+esc(p.time)+'</div></div><span class="status '+esc(p.status)+'">'+esc(needsApproval?'Aguardando aprovação':p.status==='Aprovada'?'Na fila de publicação':p.status)+'</span></div><p class="post-caption">'+esc(needsApproval?'Prévia da pauta. Aprove para gerar o texto, a legenda e as artes.':p.caption||'')+'</p>'+(p.images&&p.images.length?'<div class="post-images">'+p.images.map((src,i)=>'<a href="'+src+'" download="aprovaja-arte-'+(i+1)+'.svg" target="_blank" rel="noopener"><img src="'+src+'" alt="Arte '+(i+1)+' do carrossel"><span>Baixar arte '+(i+1)+'</span></a>').join('')+'</div>':'')+'<div class="post-actions">'+(needsApproval?'<button class="small-btn" data-action="edit" data-id="'+p.id+'">Alterar</button><button class="small-btn approve-btn" data-action="approve" data-id="'+p.id+'">Aprovar e gerar conteúdo</button><button class="small-btn" data-action="reject" data-id="'+p.id+'">Reprovar</button>':'<button class="small-btn" data-action="copy" data-id="'+p.id+'">Copiar legenda</button>')+(p.status==='Aprovada'&&!needsApproval?'<button class="small-btn publish-btn" data-publish-id="'+p.id+'">Publicar agora</button><button class="small-btn" data-action="published" data-id="'+p.id+'">Marcar publicada</button>':'')+'<button class="small-btn" data-action="delete" data-id="'+p.id+'">Excluir</button></div></article>'}).join('')}function setDefaultDate(){const d=new Date();d.setDate(d.getDate()+((2-d.getDay()+7)%7||7));$('date').value=localDate(d);$('bulkStart').value=localDate(d)}
 const RANDOM_EDITORIAL_KINDS=['Dica de prova','Questão comentada','Mapa mental','Planejamento de estudos','Divulgação da plataforma','Motivação e disciplina'];
 function randomItem(items){return items[Math.floor(Math.random()*items.length)]}
@@ -271,7 +156,7 @@ $('generateBatch').addEventListener('click',async()=>{
    const ai=data.content||{};
    if(!String(ai.captionBody||'').trim())throw new Error('A IA retornou conteúdo vazio para: '+topic);
    const p={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),title:String(ai.title||topic),kind,format:'Feed',date:localDate(d),time,brief:'Gerado com IA a partir da pauta: '+topic,status:'Pendente',needsApproval:false,captionBody:String(ai.captionBody).trim(),aiHashtags:Array.isArray(ai.hashtags)?ai.hashtags:[],imageText:String(ai.imageText||'')};
-   p.keyPoints=Array.isArray(ai.keyPoints)?ai.keyPoints:[];p.mindMap=ai.mindMap&&typeof ai.mindMap==='object'?ai.mindMap:null;p.discipline='Concursos públicos';p.imageText=String(ai.imageText||'');p.caption=makeCaption(p);p.images=generateArts(p);newPosts.push(p);
+   p.keyPoints=Array.isArray(ai.keyPoints)?ai.keyPoints:[];p.mindMap=ai.mindMap&&typeof ai.mindMap==='object'?ai.mindMap:null;p.discipline='Concursos públicos';p.imageText=String(ai.imageText||'');p.caption=makeCaption(p);if(!String(ai.html||'').trim())throw new Error('A IA não retornou HTML para a arte: '+topic);p.images=[await htmlEditorialToImage(ai.html,p)];p.generatedHtml=String(ai.html);newPosts.push(p);
   }
   posts.push(...newPosts);
   if(!save()){posts.splice(-newPosts.length,newPosts.length);throw new Error('Não foi possível salvar as publicações no navegador.');}
@@ -286,14 +171,12 @@ $('generateBatch').addEventListener('click',async()=>{
   if(newPosts.length){posts.push(...newPosts);save();}
  }finally{button.disabled=false;button.textContent=original;}
 });
-$('posts').addEventListener('click',e=>{const b=e.target.closest('button[data-action]');if(!b)return;const p=posts.find(x=>x.id===b.dataset.id);if(!p)return;switch(b.dataset.action){case'edit':{const title=prompt('Edite o tema da publicação:',p.title);if(title===null)return;if(!title.trim()){toast('O tema não pode ficar vazio.');return}p.title=title.trim();if(save())toast('Tema atualizado.');break}case'approve':if(p.needsApproval||p.status==='Pendente'){if(!String(p.captionBody||'').trim())p.captionBody=topicBody(p.title,p.kind);p.caption=makeCaption(p);if(!p.images||!p.images.length)p.images=generateArts(p);p.needsApproval=false;p.status='Aprovada';if(save())toast('Aprovada e adicionada à fila de publicação com o conteúdo gerado preservado.')}break;case'reject':posts=posts.filter(x=>x.id!==p.id);if(save())toast('Publicação reprovada e retirada da agenda.');break;case'published':p.status='Publicada';if(save())toast('Status atualizado.');break;case'delete':if(confirm('Excluir esta publicação e suas artes?')){posts=posts.filter(x=>x.id!==p.id);if(save())toast('Publicação excluída.')}break;case'copy':copyCaption(p);break}});
+$('posts').addEventListener('click',e=>{const b=e.target.closest('button[data-action]');if(!b)return;const p=posts.find(x=>x.id===b.dataset.id);if(!p)return;switch(b.dataset.action){case'edit':{const title=prompt('Edite o tema da publicação:',p.title);if(title===null)return;if(!title.trim()){toast('O tema não pode ficar vazio.');return}p.title=title.trim();if(save())toast('Tema atualizado.');break}case'approve':if(p.needsApproval||p.status==='Pendente'){if(!p.images||!p.images.length){toast('Esta publicação ainda não tem arte HTML do DeepSeek. Gere novamente o conteúdo com IA antes de aprovar.');break;}p.caption=makeCaption(p);p.needsApproval=false;p.status='Aprovada';if(save())toast('Aprovada e adicionada à fila de publicação com a arte HTML preservada.')}break;case'reject':posts=posts.filter(x=>x.id!==p.id);if(save())toast('Publicação reprovada e retirada da agenda.');break;case'published':p.status='Publicada';if(save())toast('Status atualizado.');break;case'delete':if(confirm('Excluir esta publicação e suas artes?')){posts=posts.filter(x=>x.id!==p.id);if(save())toast('Publicação excluída.')}break;case'copy':copyCaption(p);break}});
 
 const CONTESTS_URL='https://raw.githubusercontent.com/fpontualprog/aprovaja/main/data/concursos_elegiveis.json';
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
-function contestSvg(title,body,page,total){const lines=wrapWords(title,24).slice(0,3);const bodyLines=wrapWords(body,31).slice(0,7);const titleSvg=lines.map((l,i)=>'<text x="70" y="'+(390+i*64)+'" font-family="Arial,sans-serif" font-size="46" font-weight="700" fill="#ffffff">'+esc(l)+'</text>').join('');const bodySvg=bodyLines.map((l,i)=>'<text x="76" y="'+(650+i*42)+'" font-family="Arial,sans-serif" font-size="27" fill="#102c63">'+esc(l)+'</text>').join('');const svg='<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350" viewBox="0 0 1080 1350"><rect width="1080" height="1350" fill="#f4f7fc"/><rect width="1080" height="300" fill="#102c63"/><circle cx="1020" cy="70" r="200" fill="#ff9e18"/><text x="70" y="95" font-family="Arial,sans-serif" font-size="31" font-weight="700" fill="#ffffff">APROVAJÁ CONCURSOS</text><text x="70" y="150" font-family="Arial,sans-serif" font-size="22" fill="#ffffff">@aprovaja_seuconcurso</text><rect x="70" y="205" width="420" height="54" rx="27" fill="#ff9e18"/><text x="94" y="241" font-family="Arial,sans-serif" font-size="22" font-weight="700" fill="#102c63">'+(page===1?'5 CONCURSOS PARA CONHECER':page===total?'ACOMPANHE NA APROVAJÁ':'OPORTUNIDADE '+(page-1))+'</text>'+titleSvg+'<rect x="60" y="560" width="960" height="470" rx="28" fill="#e8f1ff"/>'+bodySvg+'<rect x="60" y="1100" width="960" height="5" fill="#ff9e18"/><text x="70" y="1160" font-family="Arial,sans-serif" font-size="25" font-weight="700" fill="#102c63">Confira as informações na fonte oficial</text><text x="70" y="1215" font-family="Arial,sans-serif" font-size="22" fill="#52627a">Acesse a página do concurso pelo link da legenda.</text><rect x="900" y="1260" width="110" height="55" rx="27" fill="#102c63"/><text x="930" y="1296" font-family="Arial,sans-serif" font-size="22" fill="#ffffff">'+page+'/'+total+'</text></svg>';return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)}
-function makeContestCarousel(contests){const total=7;const today=localDate(new Date());const p={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),title:'5 concursos públicos para acompanhar',kind:'Concursos abertos',format:'Feed',date:today,time:'10:00',brief:'Seleção aleatória da base de concursos do AprovaJá.',status:'Pendente'};const slides=[{title:'5 concursos públicos para acompanhar',body:'Seleção aleatória de oportunidades disponíveis na base. Verifique o edital e a situação atual das inscrições.',url:'https://aprovajaconcurso.netlify.app'}];contests.forEach(c=>{const body=[c.uf?'Estado: '+c.uf:'',c.vagas?'Vagas: '+c.vagas:'',c.nivel?'Escolaridade: '+c.nivel:'',c.salario?'Remuneração: '+c.salario:'',c.inscricao_ate?'Prazo informado: '+c.inscricao_ate:'','Situação deve ser confirmada na fonte oficial.'].filter(Boolean).join('\n');slides.push({title:c.concurso||'Concurso público',body,url:c.edital_url||c.fonte_url||c.banca_url||'https://aprovajaconcurso.netlify.app'})});slides.push({title:'Veja mais oportunidades na AprovaJá',body:'Consulte informações, confira os editais oficiais e organize sua preparação.',url:'https://aprovajaconcurso.netlify.app'});p.contests=contests;p.captionBody=slides.map((s,i)=>(i===0?'CAPA':i===6?'ACESSE A APROVAJÁ':'CONCURSO '+i)+': '+s.title+'\n'+s.body+(s.url?'\nFonte/link: '+s.url:'')).join('\n\n');p.caption=makeCaption(p);p.images=slides.map((s,i)=>contestSvg(s.title,s.body,i+1,total));return p}
-$('generateContests').addEventListener('click',async()=>{const status=$('contestStatus');status.textContent='Consultando a base pública de concursos do AprovaJá…';const b=$('generateContests');b.disabled=true;try{const response=await fetch(CONTESTS_URL,{cache:'no-store'});if(!response.ok)throw new Error('A base de concursos não respondeu (HTTP '+response.status+').');const data=await response.json();const today=localDate(new Date());const eligible=(Array.isArray(data)?data:[]).filter(c=>{if(!c||!c.concurso||!c.inscricao_ate)return false;const deadline=String(c.inscricao_ate).slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(deadline)||deadline<today)return false;const status=String(c.situacao_prazo||'').toLowerCase();return !status.includes('vencido')&&!status.includes('sem_data')});const unique=[...new Map(eligible.map(c=>[String(c.concurso).trim().toLowerCase(),c])).values()];if(unique.length<5)throw new Error('Há apenas '+unique.length+' registros elegíveis com data válida. Não criarei um carrossel incompleto nem inventarei concursos.');const picked=shuffle(unique).slice(0,5);const post=makeContestCarousel(picked);posts.push(post);if(!save()){posts.pop();return}status.textContent='Carrossel criado com 5 concursos sorteados. A situação de inscrição ainda precisa de confirmação oficial.';toast('Carrossel de 5 concursos gerado com 7 artes.')}catch(e){status.textContent=e.message+' Confira o repositório e a atualização da base.';toast('Não foi possível gerar o carrossel de concursos.')}finally{b.disabled=false}});
-
+const contestGeneratorButton=$('generateContests');
+if(contestGeneratorButton)contestGeneratorButton.addEventListener('click',()=>{const status=$('contestStatus');if(status)status.textContent='A geração de artes para concursos será reativada quando este fluxo usar HTML gerado pelo DeepSeek. Nenhuma arte predefinida será criada.';toast('Este fluxo ainda precisa ser integrado ao HTML do DeepSeek.');});
 $('filter').addEventListener('change',render);$('monthFilter').addEventListener('change',render);setDefaultDate();$('monthFilter').value=localDate(new Date()).slice(0,7);render();
 
 
@@ -515,21 +398,6 @@ function localEducationalContent(topic, kind, brief) {
   {question:'Como revisar '+t+' para concurso?',answer:'Recupere o conteúdo sem consulta, resolva questões e registre os erros.'}
  ];
  return {title:t,captionBody:body,imageText:branches.slice(0,3).map(b=>b[0]).join(' • '),storyText:'Revise '+t+': identifique a regra, os limites e as exceções.',mindMap:{central,branches:branches.map(b=>({label:b[0],children:b[1]}))},flashcards,hashtags:['AprovaJa','ConcursosPublicos','EstudosParaConcursos','Revisao']};
-}
-function mindMapSvgData(map){
- const W=1200,H=850, cx=600,cy=420;
- const branches=(map?.branches||[]).slice(0,6);
- const colors=['#1453a1','#087f8c','#d97706','#4f46a5','#0f766e','#be185d'];
- const nodes=branches.map((b,i)=>{
-  const angle=-Math.PI/2+i*2*Math.PI/Math.max(branches.length,1);
-  const x=cx+330*Math.cos(angle),y=cy+265*Math.sin(angle);
-  const lines=[String(b.label||'Tópico'),...(b.children||[]).slice(0,3).map(String)];
-  const startY=y-(lines.length-1)*18;
-  const text=lines.map((line,j)=>'<text x="'+x+'" y="'+(startY+j*36)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="'+(j===0?22:17)+'" font-weight="'+(j===0?800:500)+'" fill="'+(j===0?'#ffffff':'#eef4ff')+'">'+esc(line.slice(0,29))+'</text>').join('');
-  return '<line x1="'+cx+'" y1="'+cy+'" x2="'+x+'" y2="'+y+'" stroke="'+colors[i%colors.length]+'" stroke-width="7" stroke-linecap="round"/><rect x="'+(x-125)+'" y="'+(y-85)+'" width="250" height="170" rx="24" fill="'+colors[i%colors.length]+'"/>'+text;
- }).join('');
- const svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'"><rect width="100%" height="100%" fill="#f4f7fc"/>'+nodes+'<circle cx="'+cx+'" cy="'+cy+'" r="112" fill="#071b43" stroke="#ff9418" stroke-width="8"/><text x="'+cx+'" y="'+(cy-8)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="27" font-weight="800" fill="#ffffff">'+esc(String(map?.central||'MAPA MENTAL').slice(0,24))+'</text><text x="'+cx+'" y="'+(cy+32)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" fill="#ffb347">APROVAJÁ</text></svg>';
- return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
 }
 $('postForm')?.addEventListener('submit', async e=>{
  e.preventDefault();
