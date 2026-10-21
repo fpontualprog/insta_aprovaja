@@ -236,7 +236,7 @@ async function initializeSupabaseConnection() {
   try {
     if (!window.supabase?.createClient) throw new Error('A biblioteca Supabase não carregou. Atualize a página.');
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
     });
     // A conexão é validada por uma chamada leve de saúde do Auth, sem exigir login.
     const response = await fetch(SUPABASE_URL + '/auth/v1/health', {
@@ -275,6 +275,16 @@ function imageDataToJpegBlob(dataUrl) {
     img.onerror = () => reject(new Error('Não foi possível carregar a imagem gerada pelo HTML para conversão.'));
     img.src = dataUrl;
   });
+}
+function updateAuthUI() {
+  const form = document.getElementById('instagramLoginForm');
+  const signed = document.getElementById('instagramSignedIn');
+  const signedEmail = document.getElementById('instagramSignedEmail');
+  const loginButton = document.getElementById('instagramLoginButton');
+  if (form) form.hidden = !!currentSession;
+  if (signed) signed.hidden = !currentSession;
+  if (signedEmail) signedEmail.textContent = currentSession?.user?.email || '';
+  if (loginButton) loginButton.disabled = false;
 }
 async function signInInstagramAdmin(event) {
   event.preventDefault();
@@ -375,7 +385,19 @@ async function publishApprovedImage(postId, button) {
   }
 }
 document.addEventListener('DOMContentLoaded', async () => {
-  initializeSupabaseConnection();
+  await initializeSupabaseConnection();
+  const loginForm = document.getElementById('instagramLoginForm');
+  const logoutButton = document.getElementById('instagramLogoutButton');
+  if (loginForm) loginForm.addEventListener('submit', signInInstagramAdmin);
+  if (logoutButton) logoutButton.addEventListener('click', signOutInstagramAdmin);
+  if (supabaseClient) {
+    const { data, error } = await supabaseClient.auth.getSession();
+    if (!error) {
+      currentSession = data.session;
+      updateAuthUI();
+      if (currentSession) integrationStatus('Sessão administrativa restaurada.');
+    }
+  }
 });
  
 // Listener delegado registrado imediatamente: também funciona para cards criados dinamicamente.
