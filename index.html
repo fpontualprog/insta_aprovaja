@@ -14,11 +14,15 @@
   <h2>Login administrativo</h2>
   <p class="hint">Entre com a conta administradora do Supabase Auth. O indicador abaixo informa se a sessão está conectada. A senha é enviada diretamente ao Supabase Auth e não é armazenada pelo painel.</p>
   <form id="instagramLoginForm" class="instagram-login-form">
-    <label for="instagramEmail">E-mail do administrador</label>
-    <input id="instagramEmail" type="email" autocomplete="username" required placeholder="E-mail cadastrado no Supabase Auth">
-    <label for="instagramPassword">Senha do Supabase Auth</label>
-    <input id="instagramPassword" type="password" autocomplete="current-password" required placeholder="Sua senha do Supabase">
-    <div class="actions"><button class="btn primary" id="instagramLoginButton" type="submit">Entrar com segurança</button></div>
+    <div class="login-field">
+      <label for="instagramEmail">E-mail do administrador</label>
+      <input id="instagramEmail" type="email" autocomplete="username" required placeholder="E-mail cadastrado no Supabase Auth">
+    </div>
+    <div class="login-field">
+      <label for="instagramPassword">Senha do Supabase Auth</label>
+      <input id="instagramPassword" type="password" autocomplete="current-password" required placeholder="Sua senha do Supabase">
+    </div>
+    <div class="actions login-actions"><button class="btn primary" id="instagramLoginButton" type="submit">Entrar com segurança</button></div>
   </form>
   <div id="instagramSignedIn" hidden>
     <p class="hint">Sessão ativa: <strong id="instagramSignedEmail"></strong></p>
