@@ -37,3 +37,11 @@
   opacity:1;
 }
 #bulkTopics:focus{outline:2px solid #1769d2;outline-offset:1px;border-color:#1769d2;box-shadow:0 0 0 4px #1769d21a}
+
+.instagram-panel{margin:18px 0;border-color:#cbd8ed}
+.instagram-login-form{max-width:520px}
+.instagram-panel [hidden]{display:none!important}
+.integration-error{color:#a12626!important}
+.publish-btn{background:#102c63;color:#fff;border-color:#102c63}
+.publish-btn:hover{background:#1769d2;color:#fff}
+.publish-btn:disabled{opacity:.6;cursor:wait}
