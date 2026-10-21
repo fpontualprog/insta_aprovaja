@@ -255,8 +255,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   logoutButton?.addEventListener('click', signOutInstagramAdmin);
   if (currentSession) integrationStatus('Sessão Supabase recuperada. A autorização administrativa será conferida pelo servidor.');
   else integrationStatus('Entre com a conta administradora do Supabase para habilitar a publicação.');
-  document.getElementById('posts')?.addEventListener('click', event => {
-    const button = event.target.closest('button[data-publish-id]');
-    if (button) publishApprovedImage(button.dataset.publishId, button);
-  });
+});
+ 
+// Listener delegado registrado imediatamente: também funciona para cards criados dinamicamente.
+document.getElementById('posts')?.addEventListener('click', event => {
+  const button = event.target.closest('button[data-publish-id]');
+  if (!button) return;
+  event.preventDefault();
+  publishApprovedImage(button.dataset.publishId, button);
 });
