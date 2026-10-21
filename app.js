@@ -74,66 +74,54 @@ function summarySvgArt(p){
 function modalitySvgArt(p){
  const W=1080,H=1080,kind=String(p.kind||''),title=String(p.title||kind);
  const escXml=s=>esc(String(s??''));
- const points=(p.keyPoints||[]).map(String).filter(Boolean).slice(0,5);
+ const points=(p.keyPoints||[]).map(String).filter(Boolean);
  const fallback=String(p.captionBody||'').split(/\\n+/).map(s=>s.replace(/^[-•*\\d.) ]+/,'').trim()).filter(s=>s.length>12);
  while(points.length<3&&fallback.length)points.push(fallback.shift());
- while(points.length<3)points.push('Consulte a fonte oficial e revise os pontos essenciais.');
- const wrap=(s,max,n=2)=>{let lines=[],line='';for(const w of String(s).split(/\\s+/)){if((line+' '+w).trim().length>max&&line){lines.push(line);line=w}else line=(line+' '+w).trim()}if(line)lines.push(line);return lines.slice(0,n)};
- const titleLines=wrap(title,23,2);
- const titleSvg=titleLines.map((t,i)=>'<text x="70" y="'+(244+i*66)+'" font-family="Arial,sans-serif" font-size="58" font-weight="800" fill="'+(i===titleLines.length-1?'#ff9e1b':'#ffffff')+'">'+escXml(t)+'</text>').join('');
+ while(points.length<3)points.push('Confira a regra aplicável na fonte oficial.');
+ const wrap=(value,max)=>{const words=String(value||'').trim().split(/\\s+/);const lines=[];let line='';for(const word of words){const next=(line+' '+word).trim();if(next.length>max&&line){lines.push(line);line=word}else line=next}if(line)lines.push(line);return lines};
+ const fitted=(value,maxChars,maxLines,minFont=15,maxFont=27)=>{const lines=wrap(value,maxChars);const font=Math.max(minFont,Math.min(maxFont,Math.floor(maxFont*(maxLines/Math.max(maxLines,lines.length)))));const shown=lines.slice(0,maxLines);if(lines.length>maxLines&&shown.length)shown[shown.length-1]=shown[shown.length-1].replace(/[.,;:]?$/,'…');return {lines:shown,font}};
+ const titleFit=fitted(title,24,2,34,58);
+ const titleSvg=titleFit.lines.map((t,i)=>'<text x="70" y="'+(235+i*(titleFit.font+8))+'" font-family="Arial,sans-serif" font-size="'+titleFit.font+'" font-weight="800" fill="'+(i===titleFit.lines.length-1?'#ff9e1b':'#ffffff')+'">'+escXml(t)+'</text>').join('');
  const typeLabel=kind.toLocaleUpperCase('pt-BR').slice(0,42);
  let body='';
- if(kind==='Questão comentada'){
-  const raw=String(p.captionBody||'');
-  const question=raw.split(/\\n/).filter(x=>/enunciado|questão|assinale|qual das|alternativa/i.test(x)).slice(0,2).join(' ')||points[0];
-  const opts=raw.split(/\\n/).filter(x=>/^\\s*[A-E][).]/.test(x)).slice(0,4);
-  const explanation=raw.split(/\\n/).find(x=>/comentário|gabarito/i.test(x))||points[1];
-  body='<text x="86" y="465" font-family="Arial,sans-serif" font-size="30" font-weight="800" fill="#10254b">TESTE SEUS CONHECIMENTOS</text>'+
-   wrap(question,55,3).map((x,i)=>'<text x="86" y="'+(515+i*38)+'" font-family="Arial,sans-serif" font-size="25" fill="#10254b">'+escXml(x)+'</text>').join('')+
-   (opts.length?opts:points.slice(0,3).map((x,i)=>String.fromCharCode(65+i)+') '+x)).map((x,i)=>'<rect x="78" y="'+(630+i*54)+'" width="920" height="45" rx="12" fill="'+(i===0?'#ffedd1':'#ffffff')+'"/><text x="98" y="'+(660+i*54)+'" font-family="Arial,sans-serif" font-size="21" fill="#10254b">'+escXml(x.slice(0,78))+'</text>').join('')+
-   '<text x="86" y="880" font-family="Arial,sans-serif" font-size="22" font-weight="700" fill="#ff9418">'+escXml(wrap(explanation,65,2).join(' ').slice(0,125))+'</text>';
- }else if(kind==='Mapa mental'){
+ if(kind==='Mapa mental'){
   const mm=p.mindMap&&Array.isArray(p.mindMap.branches)?p.mindMap:null;
-  const branches=(mm?mm.branches:points.slice(0,5).map((x,i)=>({title:['RAMO 1','RAMO 2','RAMO 3','RAMO 4','RAMO 5'][i],description:x}))).filter(x=>x&&(x.title||x.description)).slice(0,8);
+  const branches=(mm?mm.branches:points.map((x,i)=>({title:['PONTO-CHAVE 1','PONTO-CHAVE 2','PONTO-CHAVE 3'][i]||'PONTO-CHAVE',description:x}))).filter(x=>x&&(x.title||x.description)).slice(0,8);
   while(branches.length<3)branches.push({title:'PONTO-CHAVE',description:'Confira a regra aplicável na fonte oficial.'});
-  const center=String(mm?.central||title);
-  const wrapBranch=(value,max)=>{const words=String(value||'').trim().split(/\s+/);const lines=[];let line='';for(const w of words){const next=(line+' '+w).trim();if(next.length>max&&line){lines.push(line);line=w}else line=next}if(line)lines.push(line);return lines};
-  const branchCount=branches.length;
-  const positionsByCount={
-   3:[{x:540,y:480},{x:300,y:805},{x:780,y:805}],
-   4:[{x:270,y:565},{x:810,y:565},{x:270,y:825},{x:810,y:825}],
-   5:[{x:540,y:475},{x:220,y:630},{x:860,y:630},{x:340,y:850},{x:740,y:850}],
-   6:[{x:270,y:505},{x:810,y:505},{x:270,y:690},{x:810,y:690},{x:270,y:865},{x:810,y:865}],
-   7:[{x:270,y:485},{x:810,y:485},{x:270,y:640},{x:810,y:640},{x:270,y:795},{x:810,y:795},{x:540,y:930}],
-   8:[{x:270,y:470},{x:810,y:470},{x:270,y:620},{x:810,y:620},{x:270,y:770},{x:810,y:770},{x:270,y:920},{x:810,y:920}]
+  const count=branches.length;
+  const layouts={
+   3:[{x:250,y:600},{x:830,y:600},{x:540,y:835}],
+   4:[{x:260,y:570},{x:820,y:570},{x:260,y:825},{x:820,y:825}],
+   5:[{x:540,y:475},{x:230,y:650},{x:850,y:650},{x:330,y:855},{x:750,y:855}],
+   6:[{x:260,y:510},{x:820,y:510},{x:260,y:690},{x:820,y:690},{x:260,y:870},{x:820,y:870}],
+   7:[{x:260,y:480},{x:820,y:480},{x:260,y:635},{x:820,y:635},{x:260,y:790},{x:820,y:790},{x:540,y:930}],
+   8:[{x:260,y:460},{x:820,y:460},{x:260,y:610},{x:820,y:610},{x:260,y:760},{x:820,y:760},{x:260,y:910},{x:820,y:910}]
   };
-  const positions=positionsByCount[Math.min(8,Math.max(3,branchCount))];
-  const cardW=branchCount<=4?330:branchCount<=6?280:255;
-  const cardH=branchCount<=4?142:branchCount<=6?126:112;
-  const fontTitle=branchCount<=5?16:14;
-  const fontDesc=branchCount<=5?14:12;
-  const maxTitle=branchCount<=5?21:25;
-  const maxDesc=branchCount<=5?31:34;
-  const descLinesMax=branchCount<=5?3:2;
-  const centerY=branchCount<=4?680:branchCount<=6?680:675;
-  const branchSvg=branches.map((br,i)=>{
-    const pos=positions[i],titleLines=wrapBranch(br.title||'PONTO-CHAVE',maxTitle),descLines=wrapBranch(br.description||'');
-    const fitDesc=descLines.length>descLinesMax?descLines.slice(0,descLinesMax):descLines;
-    if(descLines.length>descLinesMax&&fitDesc.length)fitDesc[fitDesc.length-1]=fitDesc[fitDesc.length-1].replace(/[.,;:]?$/,'…');
-    const top=pos.y-cardH/2,titleY=top+25,descY=titleY+titleLines.length*(fontTitle+3)+7;
-    return '<rect x="'+(pos.x-cardW/2)+'" y="'+top+'" width="'+cardW+'" height="'+cardH+'" rx="16" fill="'+(i%2?'#fff0d6':'#f5f7fb')+'"/>'+titleLines.map((t,j)=>'<text x="'+pos.x+'" y="'+(titleY+j*(fontTitle+3))+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="'+fontTitle+'" font-weight="900" fill="#10254b">'+escXml(t)+'</text>').join('')+fitDesc.map((t,j)=>'<text x="'+pos.x+'" y="'+(descY+j*(fontDesc+5))+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="'+fontDesc+'" fill="#10254b">'+escXml(t)+'</text>').join('');
+  const pos=layouts[Math.min(8,Math.max(3,count))];
+  const cardW=count<=4?350:count<=6?285:250;
+  const cardH=count<=4?145:count<=6?125:108;
+  const titleSize=count<=5?18:15,descSize=count<=5?15:12;
+  const titleChars=count<=5?22:27,descChars=count<=5?30:34;
+  const descMax=count<=5?3:2;
+  const cards=branches.map((br,i)=>{
+   const q=pos[i],head=wrap(br.title||'PONTO-CHAVE',titleChars),desc=wrap(br.description||'',descChars);
+   const headMax=2,headLines=head.slice(0,headMax),descLines=desc.slice(0,descMax);
+   if(head.length>headMax&&headLines.length)headLines[headLines.length-1]=headLines[headLines.length-1].replace(/[.,;:]?$/,'…');
+   if(desc.length>descMax&&descLines.length)descLines[descLines.length-1]=descLines[descLines.length-1].replace(/[.,;:]?$/,'…');
+   const top=q.y-cardH/2,headY=top+25,descY=headY+headLines.length*(titleSize+3)+8;
+   return '<rect x="'+(q.x-cardW/2)+'" y="'+top+'" width="'+cardW+'" height="'+cardH+'" rx="17" fill="'+(i%2?'#fff0d6':'#f5f7fb')+'"/>'+headLines.map((t,j)=>'<text x="'+q.x+'" y="'+(headY+j*(titleSize+3))+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="'+titleSize+'" font-weight="900" fill="#10254b">'+escXml(t)+'</text>').join('')+descLines.map((t,j)=>'<text x="'+q.x+'" y="'+(descY+j*(descSize+4))+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="'+descSize+'" fill="#10254b">'+escXml(t)+'</text>').join('');
   }).join('');
-  const connectors=positions.map(pos=>'<line x1="540" y1="'+centerY+'" x2="'+pos.x+'" y2="'+pos.y+'" stroke="#ff9e1b" stroke-width="5"/>').join('');
-  body=connectors+branchSvg+'<circle cx="540" cy="'+centerY+'" r="76" fill="#ff9e1b" stroke="#071b43" stroke-width="5"/>'+wrapBranch(center,13).slice(0,3).map((t,i)=>'<text x="540" y="'+(centerY-15+i*21)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" font-weight="900" fill="#071b43">'+escXml(t)+'</text>').join('');
+  const center=count<=4?680:675;
+  const links=pos.map(q=>'<line x1="540" y1="'+center+'" x2="'+q.x+'" y2="'+q.y+'" stroke="#ff9e1b" stroke-width="5"/>').join('');
+  const centerLines=wrap(String(mm?.central||title),14).slice(0,3);
+  body=links+cards+'<circle cx="540" cy="'+center+'" r="73" fill="#ff9e1b" stroke="#071b43" stroke-width="5"/>'+centerLines.map((t,i)=>'<text x="540" y="'+(center-14+i*21)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" font-weight="900" fill="#071b43">'+escXml(t)+'</text>').join('');
  }else{
-  const headings=kind==='Dica de prova'?['ATENÇÃO À BANCA','REGRA ESSENCIAL','NA HORA DA PROVA']:kind==='Planejamento de estudos'?['DEFINA A META','ORGANIZE A ROTINA','PRATIQUE E REVISE','ACOMPANHE O PROGRESSO']:kind==='Divulgação da plataforma'?['BANCO DE QUESTÕES','AGENDA DE ESTUDOS','SIMULADOS E REVISÃO']:kind==='Motivação e disciplina'?['ESTABELEÇA UMA ROTINA','MANTENHA O FOCO','VALORIZE O PROGRESSO']:kind==='Concursos abertos'?['EDITAL E INSCRIÇÕES','CARGOS E VAGAS','PRAZOS E FONTE OFICIAL']:['PONTO ESSENCIAL','COMO APLICAR','REVISÃO'];
-  const items=points.slice(0,Math.min(4,headings.length));
-  while(items.length<Math.min(3,headings.length))items.push(fallback.shift()||'Confira os requisitos e as exceções aplicáveis.');
-  body=items.map((x,i)=>{const y=470+i*135;return '<circle cx="110" cy="'+(y-10)+'" r="31" fill="#ff9e1b"/><text x="110" y="'+(y-1)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="27" font-weight="900" fill="#071b43">'+(i+1)+'</text><text x="165" y="'+(y-20)+'" font-family="Arial,sans-serif" font-size="24" font-weight="900" fill="#ff9e1b">'+escXml(headings[i]||'PONTO-CHAVE')+'</text>'+wrap(x,52,2).map((t,j)=>'<text x="165" y="'+(y+15+j*32)+'" font-family="Arial,sans-serif" font-size="25" fill="#ffffff">'+escXml(t)+'</text>').join('')}).join('');
-  if(kind==='Divulgação da plataforma')body+='<rect x="70" y="880" width="940" height="85" rx="24" fill="#ff9e1b"/><text x="540" y="933" text-anchor="middle" font-family="Arial,sans-serif" font-size="30" font-weight="900" fill="#071b43">PLATAFORMA 100% GRATUITA</text>';
+  const heads=kind==='Questão comentada'?['QUESTÃO','ALTERNATIVAS','COMENTÁRIO']:kind==='Dica de prova'?['PEGADINHA','REGRA CORRETA','COMO CAI']:kind==='Planejamento de estudos'?['META','ROTINA','PRÁTICA']:kind==='Divulgação da plataforma'?['RECURSOS','ORGANIZAÇÃO','ACESSO']:kind==='Motivação e disciplina'?['ROTINA','CONSTÂNCIA','PROGRESSO']:kind==='Concursos abertos'?['EDITAL','VAGAS','PRAZOS']:['PONTO-CHAVE','APLICAÇÃO','ATENÇÃO'];
+  const items=points.slice(0,4);
+  const cardY=410,cardH=540,topPad=28,usable=cardH-topPad*2,rowH=Math.floor(usable/items.length);
+  body=items.map((item,i)=>{const y=cardY+topPad+i*rowH;const head=heads[i]||'PONTO-CHAVE';const headLines=wrap(head,38).slice(0,1);const maxLines=Math.max(1,Math.floor((rowH-52)/25));const fittedBody=fitted(item,49,maxLines,15,23);return '<circle cx="105" cy="'+(y+10)+'" r="24" fill="#ff9e1b"/><text x="105" y="'+(y+18)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" font-weight="900" fill="#071b43">'+(i+1)+'</text>'+headLines.map((t,j)=>'<text x="150" y="'+(y+5+j*22)+'" font-family="Arial,sans-serif" font-size="18" font-weight="900" fill="#ff9e1b">'+escXml(t)+'</text>').join('')+fittedBody.lines.map((t,j)=>'<text x="150" y="'+(y+34+j*(fittedBody.font+5))+'" font-family="Arial,sans-serif" font-size="'+fittedBody.font+'" fill="#ffffff">'+escXml(t)+'</text>').join('')}).join('');
  }
- const footerY=kind==='Questão comentada'?970:1010;
- const svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" viewBox="0 0 1080 1080"><rect width="1080" height="1080" fill="#071b43"/><circle cx="990" cy="70" r="200" fill="#1453a1" opacity=".6"/><path d="M790 0H1080V330Z" fill="#ff9418"/><rect x="52" y="38" width="590" height="76" rx="20" fill="#ff9e1b"/><text x="82" y="87" font-family="Arial,sans-serif" font-size="36" font-weight="900" fill="#071b43">APROVAJÁ</text><text x="370" y="86" font-family="Arial,sans-serif" font-size="19" font-weight="700" fill="#071b43">REVISÃO PARA CONCURSOS</text><text x="70" y="180" font-family="Arial,sans-serif" font-size="22" font-weight="800" letter-spacing="2" fill="#ffb347">'+escXml(typeLabel)+'</text>'+titleSvg+'<rect x="48" y="405" width="984" height="'+(kind==='Questão comentada'?550:560)+'" rx="28" fill="'+(kind==='Mapa mental'?'#0b3970':'#102c53')+'"/>'+body+'<line x1="60" y1="'+footerY+'" x2="1020" y2="'+footerY+'" stroke="#ff9e1b" stroke-width="4"/><text x="540" y="1050" text-anchor="middle" font-family="Arial,sans-serif" font-size="21" font-weight="700" fill="#ffffff">APROVAJACONCURSO.NETLIFY.APP</text></svg>';
+ const svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" viewBox="0 0 1080 1080"><rect width="1080" height="1080" fill="#071b43"/><circle cx="990" cy="70" r="200" fill="#1453a1" opacity=".6"/><path d="M790 0H1080V330Z" fill="#ff9418"/><rect x="52" y="38" width="590" height="76" rx="20" fill="#ff9e1b"/><text x="82" y="87" font-family="Arial,sans-serif" font-size="36" font-weight="900" fill="#071b43">APROVAJÁ</text><text x="370" y="86" font-family="Arial,sans-serif" font-size="19" font-weight="700" fill="#071b43">REVISÃO PARA CONCURSOS</text><text x="70" y="180" font-family="Arial,sans-serif" font-size="22" font-weight="800" letter-spacing="2" fill="#ffb347">'+escXml(typeLabel)+'</text>'+titleSvg+'<rect x="34" y="395" width="1012" height="565" rx="28" fill="'+(kind==='Mapa mental'?'#0b3970':'#102c53')+'"/>'+body+'<line x1="60" y1="1000" x2="1020" y2="1000" stroke="#ff9e1b" stroke-width="4"/><text x="540" y="1045" text-anchor="middle" font-family="Arial,sans-serif" font-size="21" font-weight="700" fill="#ffffff">APROVAJACONCURSO.NETLIFY.APP</text></svg>';
  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
 }
 function generateArts(p){
