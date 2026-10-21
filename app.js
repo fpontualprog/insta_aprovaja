@@ -300,62 +300,78 @@ document.getElementById('posts')?.addEventListener('click', event => {
 });
 
 
-// Geração pedagógica por IA (servidor Supabase; a chave OpenAI nunca vai ao navegador).
-document.getElementById('generateAI')?.addEventListener('click', async () => {
-  const button = document.getElementById('generateAI');
-  const topic = document.getElementById('title').value.trim();
-  if (!topic) { toast('Informe o tema no campo Título antes de chamar a IA.'); document.getElementById('title').focus(); return; }
-  if (!supabaseClient) { toast('A conexão segura ainda está carregando. Atualize a página e tente novamente.'); return; }
-  button.disabled = true;
-  const previousLabel = button.textContent;
-  button.textContent = 'IA trabalhando…';
-  const host = document.getElementById('generatedPreview');
-  host.innerHTML = '<p class="hint">A IA está preparando o conteúdo. Isso pode levar alguns segundos…</p>';
-  try {
-    const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
-    if (sessionError) throw sessionError;
-    const session = sessionData?.session;
-    if (!session?.access_token) throw new Error('Entre com a conta administradora na seção “Conectar Instagram” antes de gerar conteúdo com IA.');
-    const response = await fetch(SUPABASE_URL + '/functions/v1/generate-instagram-content', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_PUBLISHABLE_KEY, 'Authorization': 'Bearer ' + session.access_token },
-      body: JSON.stringify({ topic, kind: document.getElementById('kind').value, brief: document.getElementById('brief').value, discipline: document.getElementById('brief').value })
-    });
-    const result = await response.json().catch(() => ({}));
-    if (!response.ok || !result.ok) throw new Error(result.error || ('Falha na IA (HTTP ' + response.status + ').'));
-    const c = result.content || {};
-    const kind = document.getElementById('kind').value;
-    const date = document.getElementById('date').value || localDate(new Date());
-    const time = document.getElementById('time').value;
-    const p = makePost(c.title || topic, kind, date, time, document.getElementById('format').value);
-    let body = String(c.captionBody || '').trim();
-    if (kind === 'Mapa mental' && c.mindMap) {
-      const map = c.mindMap;
-      body += '\n\nMAPA MENTAL — ' + String(map.central || topic) + '\n' +
-        (Array.isArray(map.branches) ? map.branches.map((branch, i) => (i + 1) + '. ' + branch.label + '\n' + (Array.isArray(branch.children) ? branch.children.map(child => '   • ' + child).join('\n') : '')).join('\n') : '');
-    }
-    if (Array.isArray(c.flashcards) && c.flashcards.length) {
-      body += '\n\nFLASHCARDS PARA REVISÃO\n' + c.flashcards.map((card, i) => (i + 1) + '. Pergunta: ' + card.question + '\n   Resposta: ' + card.answer).join('\n');
-    }
-    p.title = String(c.title || topic).slice(0, 100);
-    p.captionBody = body;
-    p.imageText = String(c.imageText || '');
-    p.storyText = String(c.storyText || '');
-    p.mindMap = c.mindMap || null;
-    p.flashcards = Array.isArray(c.flashcards) ? c.flashcards : [];
-    p.caption = makeCaption(p);
-    p.images = generateArts(p);
-    p.aiGenerated = true;
-    p.aiModel = result.model || 'OpenAI';
-    posts.push(p);
-    if (!save()) { posts.pop(); throw new Error('Não foi possível salvar. O armazenamento do navegador pode estar cheio.'); }
-    host.innerHTML = '<p class="hint"><strong>Conteúdo gerado com IA e salvo na agenda.</strong> Revise o material antes de aprovar ou publicar.</p><p><strong>Texto da arte:</strong> ' + esc(p.imageText || 'Use o título como chamada visual') + '</p><p><strong>Mensagem de Stories:</strong> ' + esc(p.storyText || 'Disponível no conteúdo gerado') + '</p><p class="hint">' + esc(body.slice(0, 1400)) + (body.length > 1400 ? '…' : '') + '</p>';
-    toast('Conteúdo gerado com IA e salvo como pendente de aprovação.');
-  } catch (error) {
-    host.innerHTML = '<p class="hint"><strong>Não foi possível gerar com IA.</strong> ' + esc(error?.message || 'Erro inesperado.') + '</p>';
-    toast(error?.message || 'Erro na geração por IA.');
-  } finally {
-    button.disabled = false;
-    button.textContent = previousLabel;
-  }
+
+// Gerador pedagógico gratuito: roda no navegador, sem API paga e sem enviar dados para terceiros.
+function localEducationalContent(topic, kind, brief) {
+ const t=topic.trim(), extra=brief.trim();
+ const lower=t.toLocaleLowerCase('pt-BR');
+ const mapTopics=[
+  {keys:['constitucional','controle de constitucionalidade'],central:'Controle de constitucionalidade',branches:[['Modelos',['Difuso: caso concreto','Concentrado: ação própria','Preventivo e repressivo']],['Parâmetros',['Constituição como referência','Bloco de constitucionalidade quando aplicável']],['Controle difuso',['Qualquer juiz ou tribunal','Respeito à reserva de plenário','Efeitos em regra inter partes']],['Controle concentrado',['Competência definida pela Constituição','Legitimados específicos','Efeitos conforme ação e decisão']],['Atenção na prova',['Legitimidade ativa varia por ação','Não confundir efeitos e competência']]]},
+  {keys:['ordem social'],central:'Ordem social — CF/88',branches:[['Fundamento',['Primado do trabalho','Bem-estar e justiça sociais']],['Seguridade social',['Saúde','Previdência social','Assistência social']],['Educação e cultura',['Direito à educação','Proteção cultural']],['Meio ambiente',['Direito ao ambiente equilibrado','Dever do poder público e da coletividade']],['Família e grupos',['Família, criança e adolescente','Pessoa idosa e povos indígenas']],['Prova',['Localizar o tema na Constituição','Diferenciar saúde, previdência e assistência']]]},
+  {keys:['administração pública','princípios'],central:'Princípios da Administração Pública',branches:[['LIMPE',['Legalidade','Impessoalidade','Moralidade','Publicidade','Eficiência']],['Legalidade',['Atuação conforme o ordenamento','Competência e finalidade']],['Impessoalidade',['Finalidade pública','Vedação à promoção pessoal']],['Moralidade e publicidade',['Ética e probidade','Transparência com exceções legais']],['Eficiência',['Qualidade e resultados','Uso responsável dos recursos']],['Prova',['Princípios expressos no art. 37, caput','Há também princípios reconhecidos pela doutrina']]]},
+  {keys:['ato administrativo','atos administrativos'],central:'Atos administrativos',branches:[['Elementos',['Competência','Finalidade','Forma','Motivo','Objeto']],['Atributos',['Presunção de legitimidade','Imperatividade quando cabível','Autoexecutoriedade em hipóteses admitidas','Tipicidade']],['Anulação',['Ilegalidade','Controle administrativo ou judicial']],['Revogação',['Conveniência e oportunidade','Ato válido e limites jurídicos']],['Convalidação',['Defeitos sanáveis','Respeito aos requisitos legais']],['Pegadinhas',['Anulação não é revogação','Nem todo ato tem todos os atributos']]]},
+  {keys:['orçamento','afo','financeira'],central:'AFO — ciclo orçamentário',branches:[['Planejamento',['PPA: diretrizes, objetivos e metas','LDO: prioridades e orientação','LOA: estima receita e fixa despesa']],['Princípios',['Unidade e universalidade','Anualidade','Exclusividade com exceções constitucionais']],['Execução',['Empenho','Liquidação','Pagamento']],['Controle',['Controle interno e externo','Fiscalização contábil, financeira e orçamentária']],['Responsabilidade fiscal',['Planejamento e transparência','Metas e limites legais']],['Prova',['Distinguir PPA, LDO e LOA','Observar a ordem dos estágios da despesa']]]},
+  {keys:['contabilidade pública','despesa pública'],central:'Despesa pública',branches:[['Estágios',['Empenho','Liquidação','Pagamento']],['Empenho',['Reserva dotação','Cria obrigação de pagamento pendente ou não de condição']],['Liquidação',['Verifica direito do credor','Confere origem e objeto']],['Pagamento',['Após regular liquidação','Ordem de pagamento pela autoridade competente']],['Créditos',['Orçamentários e adicionais','Observar autorização e finalidade']],['Prova',['Não inverter liquidação e pagamento','Distinguir restos a pagar processados e não processados']]]},
+  {keys:['português','funções da linguagem'],central:'Funções da linguagem',branches:[['Referencial',['Foco no contexto e na informação','Linguagem objetiva']],['Emotiva',['Foco no emissor','Marcas de subjetividade']],['Conativa',['Foco no receptor','Imperativo e apelo']],['Fática',['Canal de comunicação','Testa ou mantém contato']],['Metalinguística',['Código explica o próprio código','Definições e explicações linguísticas']],['Poética',['Forma da mensagem em destaque','Ritmo, figuras e escolhas expressivas']]]},
+  {keys:['conjunto','matemática','raciocínio lógico'],central:'Raciocínio lógico — método de resolução',branches:[['Compreensão',['Identifique dados e restrições','Traduza o enunciado']],['Estratégia',['Liste casos possíveis','Use tabela ou diagrama']],['Cálculo',['Execute operações passo a passo','Confira unidades e sinais']],['Verificação',['Teste o resultado no enunciado','Elimine contradições']],['Prova',['Atenção a “todo”, “algum” e “nenhum”','Diferencie condição necessária e suficiente']]]}
+ ];
+ let found=mapTopics.find(m=>m.keys.some(k=>lower.includes(k)));
+ let branches=found?found.branches:[
+  ['Conceito',['Definição e finalidade de '+t,'Fundamento teórico ou normativo']],['Elementos principais',['Regras centrais do assunto','Classificações e características']],['Requisitos e aplicação',['Quando se aplica','Quem é competente e quais são os limites']],['Exceções e limites',['Exceções relevantes','Condições que alteram a regra']],['Como cai na prova',['Compare conceitos próximos','Treine questões da banca']],['Revisão',['Explique sem consultar o material','Registre erros e revise depois']]
+ ];
+ const central=found?found.central:t;
+ let body='';
+ if(kind==='Mapa mental'){
+  body='MAPA MENTAL: '+central+'\n\n'+branches.map((b,i)=>(i+1)+'. '+b[0]+'\n'+b[1].map(x=>'   • '+x).join('\n')).join('\n\n')+'\n\nNota: mapa-base para estudo; confira legislação, doutrina e edital aplicáveis.';
+ } else if(kind==='Questão comentada'){
+  body='QUESTÃO-MODELO DE REVISÃO\nTema: '+t+'\n\nEnunciado: assinale a alternativa que melhor representa uma conduta adequada ao estudar '+t+'.\n\nA) Aplicar a regra sem verificar requisitos ou exceções.\nB) Distinguir conceito, fundamento, requisitos e exceções antes de concluir.\nC) Considerar todos os conceitos próximos como sinônimos.\nD) Ignorar a fonte normativa ou bibliográfica.\n\nGabarito: B.\nComentário: a análise de um tema jurídico ou técnico exige identificar a regra aplicável e seus limites. As alternativas A, C e D propõem generalizações ou omitem etapas essenciais. Esta é uma questão didática genérica, não uma questão oficial de banca.\n\nPonto de revisão: '+t+'.';
+ } else if(kind==='Planejamento de estudos'){
+  body='ROTEIRO DE ESTUDO — '+t+'\n\n1. Teoria (25 min): leia o conceito, os fundamentos e a terminologia.\n2. Organização (15 min): transforme o conteúdo em tópicos ou mapa mental.\n3. Questões (20 min): resolva itens da banca do seu concurso.\n4. Caderno de erros (10 min): explique por que errou e registre a regra correta.\n5. Revisão espaçada: retome em 24 horas, 7 dias e 30 dias.\n\nMeta: compreender e aplicar, não apenas reler.';
+ } else if(kind==='Divulgação da plataforma'){
+  body='A sua preparação pode ser mais organizada. Na AprovaJá, reúna seus temas, planeje a rotina e transforme cada sessão de estudo em um próximo passo.\n\nAcesse gratuitamente: '+PLATFORM_URL+'\n\nEscolha uma meta realista para hoje e acompanhe sua evolução.';
+ } else if(kind==='Motivação e disciplina'){
+  body='ESTUDO POSSÍVEL, PROGRESSO REAL\n\nEscolha uma parte concreta de '+t+'. Estude por 25 minutos, anote uma dúvida e resolva algumas questões. Ao terminar, registre o que aprendeu e qual será o próximo passo.\n\nA constância nasce de metas claras e sustentáveis, não da obrigação de fazer tudo de uma vez.';
+ } else if(kind==='Concursos abertos'){
+  body='PAUTA: '+t+'\n\nAntes de divulgar esta oportunidade, confirme no site oficial do órgão e no edital: situação do concurso, período de inscrição, cargos, vagas, remuneração, banca, requisitos e link oficial.\n\nNão publique datas, quantitativos ou salários sem fonte verificável. Este texto é um checklist editorial, não uma notícia confirmada.';
+ } else {
+  body='RESUMO PARA CONCURSOS — '+t+'\n\n1. CONCEITO\nIdentifique a definição do tema e sua finalidade. Registre os termos técnicos que diferenciam esse assunto de outros semelhantes.\n\n2. REGRAS CENTRAIS\nOrganize as regras em ordem lógica. Para cada uma, identifique requisitos, efeitos e quem tem competência para aplicá-la.\n\n3. EXCEÇÕES E LIMITES\nVerifique exceções, prazos, condições e situações em que a regra geral não se aplica. São pontos que costumam exigir atenção em questões objetivas.\n\n4. COMO REVISAR\nExplique o assunto com suas próprias palavras, compare conceitos próximos e resolva questões da banca do seu concurso.\n\n5. CONFERÊNCIA\nValide conceitos e referências na legislação, bibliografia ou fonte oficial aplicável. Este roteiro é uma base de estudo, não substitui a conferência da fonte.';
+ }
+ if(extra) body+='\n\nORIENTAÇÃO ADICIONAL\n'+extra;
+ const flashcards=[
+  {question:'Qual é o conceito central de '+t+'?',answer:'Defina o tema com base no material oficial ou bibliografia indicada.'},
+  {question:'Quais são os principais elementos de '+t+'?',answer:branches.slice(0,3).map(b=>b[0]).join('; ')+'.'},
+  {question:'Qual exceção ou limite merece atenção em '+t+'?',answer:'Confira as exceções expressas na norma, no edital ou na referência utilizada.'},
+  {question:'Como revisar '+t+' para concurso?',answer:'Recupere o conteúdo sem consulta, resolva questões e registre os erros.'}
+ ];
+ return {title:t,captionBody:body,imageText:branches.slice(0,3).map(b=>b[0]).join(' • '),storyText:'Revise '+t+': identifique a regra, os limites e as exceções.',mindMap:{central,branches:branches.map(b=>({label:b[0],children:b[1]}))},flashcards,hashtags:['AprovaJa','ConcursosPublicos','EstudosParaConcursos','Revisao']};
+}
+function mindMapSvgData(map){
+ const W=1200,H=850, cx=600,cy=420;
+ const branches=(map?.branches||[]).slice(0,6);
+ const colors=['#1453a1','#087f8c','#d97706','#4f46a5','#0f766e','#be185d'];
+ const nodes=branches.map((b,i)=>{
+  const angle=-Math.PI/2+i*2*Math.PI/Math.max(branches.length,1);
+  const x=cx+330*Math.cos(angle),y=cy+265*Math.sin(angle);
+  const lines=[String(b.label||'Tópico'),...(b.children||[]).slice(0,3).map(String)];
+  const startY=y-(lines.length-1)*18;
+  const text=lines.map((line,j)=>'<text x="'+x+'" y="'+(startY+j*36)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="'+(j===0?22:17)+'" font-weight="'+(j===0?800:500)+'" fill="'+(j===0?'#ffffff':'#eef4ff')+'">'+esc(line.slice(0,29))+'</text>').join('');
+  return '<line x1="'+cx+'" y1="'+cy+'" x2="'+x+'" y2="'+y+'" stroke="'+colors[i%colors.length]+'" stroke-width="7" stroke-linecap="round"/><rect x="'+(x-125)+'" y="'+(y-85)+'" width="250" height="170" rx="24" fill="'+colors[i%colors.length]+'"/>'+text;
+ }).join('');
+ const svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'"><rect width="100%" height="100%" fill="#f4f7fc"/>'+nodes+'<circle cx="'+cx+'" cy="'+cy+'" r="112" fill="#071b43" stroke="#ff9418" stroke-width="8"/><text x="'+cx+'" y="'+(cy-8)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="27" font-weight="800" fill="#ffffff">'+esc(String(map?.central||'MAPA MENTAL').slice(0,24))+'</text><text x="'+cx+'" y="'+(cy+32)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" fill="#ffb347">APROVAJÁ</text></svg>';
+ return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+}
+document.getElementById('generateAI')?.addEventListener('click',()=>{
+ const button=document.getElementById('generateAI'), topic=document.getElementById('title').value.trim();
+ if(!topic){toast('Informe o tema no campo Título.');document.getElementById('title').focus();return;}
+ button.disabled=true;
+ try{
+  const kind=document.getElementById('kind').value, date=document.getElementById('date').value||localDate(new Date()), time=document.getElementById('time').value, format=document.getElementById('format').value;
+  const c=localEducationalContent(topic,kind,document.getElementById('brief').value);
+  const p=makePost(c.title,kind,date,time,format);
+  p.captionBody=c.captionBody;p.imageText=c.imageText;p.storyText=c.storyText;p.mindMap=c.mindMap;p.flashcards=c.flashcards;p.caption=makeCaption(p);p.aiGenerated=false;p.generator='Biblioteca local gratuita';p.images=kind==='Mapa mental'?[mindMapSvgData(c.mindMap)]:generateArts(p);
+  posts.push(p);if(!save()){posts.pop();return;}
+  const host=document.getElementById('generatedPreview');
+  host.innerHTML='<p class="hint"><strong>Material criado sem API paga.</strong> Revise antes de aprovar ou publicar.</p><p><strong>Chamada:</strong> '+esc(c.imageText)+'</p><p><strong>Stories:</strong> '+esc(c.storyText)+'</p>'+(kind==='Mapa mental'?'<div class="image-preview"><div class="image-thumb"><img style="width:100%;height:auto" src="'+p.images[0]+'" alt="Mapa mental de '+esc(topic)+'"><span>Mapa mental visual</span></div></div>':'')+'<p class="hint">'+esc(c.captionBody.slice(0,1800))+(c.captionBody.length>1800?'…':'')+'</p><p class="hint">Gerado com regras e modelos locais; não é uma resposta de modelo generativo. Confira fatos, legislação e gabaritos em fontes confiáveis.</p>';
+  toast(kind==='Mapa mental'?'Mapa mental visual criado gratuitamente.':'Material de estudo criado gratuitamente.');
+ }catch(error){toast('Não foi possível gerar o material: '+(error?.message||'erro inesperado'));}finally{button.disabled=false;}
 });
