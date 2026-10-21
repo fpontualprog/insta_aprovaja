@@ -16,7 +16,50 @@ function render(){const filter=$('filter').value;const list=posts.filter(p=>filt
 function setDefaultDate(){const d=new Date();d.setDate(d.getDate()+((2-d.getDay()+7)%7||7));$('date').value=localDate(d);$('bulkStart').value=localDate(d)}
 $('postForm').addEventListener('submit',e=>{e.preventDefault();const title=$('title').value.trim();if(!title||!$('date').value){toast('Informe título e data.');return}const p=makePost(title,$('kind').value,$('date').value,$('time').value,$('format').value);posts.push(p);if(!save()){posts.pop();return}e.target.reset();setDefaultDate();$('generatedPreview').innerHTML='<p class="hint">Artes geradas e anexadas à publicação na fila.</p>';toast('Conteúdo e artes gerados automaticamente.')});
 $('suggestBtn').addEventListener('click',()=>{const ideas={'Questão comentada':['Questão de Direito Constitucional','Questão CEBRASPE: certo ou errado?'],'Dica de prova':['Princípios da Administração Pública','Controle de constitucionalidade'],'Mapa mental':['Poderes administrativos','Organização político-administrativa'],'Planejamento de estudos':['Como organizar a semana de estudos'],'Divulgação da plataforma':['Como organizar sua preparação'],'Motivação e disciplina':['Constância nos estudos'],'Concursos abertos':['Concursos abertos no Nordeste']};$('title').value=(ideas[$('kind').value]||ideas['Dica de prova'])[0];toast('Tema sugerido. Você pode editar antes de gerar.')});
-$('generateBatch').addEventListener('click',()=>{const topics=$('bulkTopics').value.split(/\n|;/).map(x=>x.trim()).filter(Boolean);if(!topics.length){toast('Digite um tema por linha.');return}if(topics.length>30){toast('Gere no máximo 30 temas por lote.');return}const kind=$('bulkKind').value;const start=$('bulkStart').value||localDate(new Date());const base=new Date(start+'T12:00:00');const newPosts=topics.map((topic,i)=>{const d=new Date(base);d.setDate(d.getDate()+Math.floor(i/4)*7+[0,2,4,5][i%4]);const times=['12:15','19:30','18:30','10:00'];return makePost(topic,kind,localDate(d),times[i%4])});posts.push(...newPosts);if(!save()){posts.splice(-newPosts.length,newPosts.length);return}toast(newPosts.length+' publicações geradas com artes.');$('bulkTopics').value='';$('generatedPreview').innerHTML='<p class="hint">Lote gerado. Confira as artes e as legendas na fila editorial.</p>'});
+const RANDOM_EDITORIAL_KINDS=['Dica de prova','Questão comentada','Mapa mental','Planejamento de estudos','Divulgação da plataforma','Motivação e disciplina'];
+const RANDOM_TOPIC_POOL=[
+{kind:'Questão comentada',topic:'Questão de Direito Constitucional: direitos fundamentais'},
+{kind:'Questão comentada',topic:'Questão CEBRASPE sobre Administração Pública'},
+{kind:'Questão comentada',topic:'Questão de AFO: orçamento público'},
+{kind:'Dica de prova',topic:'Princípios da Administração Pública'},
+{kind:'Dica de prova',topic:'Controle de constitucionalidade'},
+{kind:'Dica de prova',topic:'Crase: erros comuns em provas'},
+{kind:'Mapa mental',topic:'Organização político-administrativa do Brasil'},
+{kind:'Mapa mental',topic:'Poderes administrativos'},
+{kind:'Mapa mental',topic:'Atos administrativos'},
+{kind:'Planejamento de estudos',topic:'Como revisar o conteúdo em 24 horas'},
+{kind:'Planejamento de estudos',topic:'Como montar um ciclo de estudos'},
+{kind:'Divulgação da plataforma',topic:'Organize sua preparação com a AprovaJá'},
+{kind:'Motivação e disciplina',topic:'Como manter a constância nos estudos'}
+];
+function randomItem(items){return items[Math.floor(Math.random()*items.length)]}
+$('generateBatch').addEventListener('click',()=>{
+ const selectedKind=$('bulkKind').value;
+ let topics=$('bulkTopics').value.split(/\n|;/).map(x=>x.trim()).filter(Boolean);
+ if(selectedKind==='Aleatória'&&!topics.length){
+   topics=shuffle([...RANDOM_TOPIC_POOL]).slice(0,8).map(x=>x.topic);
+ }
+ if(!topics.length){toast('Digite temas ou selecione a categoria Aleatória para sortear uma pauta.');return}
+ if(topics.length>30){toast('Gere no máximo 30 temas por lote.');return}
+ const start=$('bulkStart').value||localDate(new Date());
+ const base=new Date(start+'T12:00:00');
+ const newPosts=topics.map((topic,i)=>{
+   const d=new Date(base);d.setDate(d.getDate()+Math.floor(i/4)*7+[0,2,4,5][i%4]);
+   const times=['12:15','19:30','18:30','10:00'];
+   let kind=selectedKind;
+   let finalTopic=topic;
+   if(selectedKind==='Aleatória'){
+     const pool=RANDOM_TOPIC_POOL.filter(x=>x.topic.toLowerCase()===topic.toLowerCase());
+     kind=pool.length?pool[0].kind:randomItem(RANDOM_EDITORIAL_KINDS);
+   }
+   return makePost(finalTopic,kind,localDate(d),times[i%4]);
+ });
+ posts.push(...newPosts);
+ if(!save()){posts.splice(-newPosts.length,newPosts.length);return}
+ toast(newPosts.length+' publicações geradas com artes.');
+ $('bulkTopics').value='';
+ $('generatedPreview').innerHTML='<p class="hint">Lote gerado com temas e categorias sorteados quando a opção Aleatória foi selecionada. Confira as artes e legendas na fila editorial.</p>';
+});
 async function copyCaption(p){try{await navigator.clipboard.writeText(p.caption);toast('Legenda copiada.')}catch{window.prompt('Copie a legenda abaixo:',p.caption)}}
 $('posts').addEventListener('click',e=>{const b=e.target.closest('button[data-action]');if(!b)return;const p=posts.find(x=>x.id===b.dataset.id);if(!p)return;switch(b.dataset.action){case'approve':p.status='Aprovada';if(save())toast('Publicação aprovada.');break;case'published':p.status='Publicada';if(save())toast('Status atualizado.');break;case'delete':if(confirm('Excluir esta publicação e suas artes?')){posts=posts.filter(x=>x.id!==p.id);if(save())toast('Publicação excluída.')}break;case'copy':copyCaption(p);break}});
 
