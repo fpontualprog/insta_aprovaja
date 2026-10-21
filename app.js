@@ -502,3 +502,26 @@ $('postForm')?.addEventListener('submit', async e=>{
    toast(error?.message||'Falha na geração com IA.');
  }finally{button.disabled=false;button.textContent='Gerar Conteúdo Com IA';}
 });
+
+function openArtworkPopup(src,title){
+ let modal=document.getElementById('artworkModal');
+ if(!modal){
+  modal=document.createElement('div');modal.id='artworkModal';modal.className='artwork-modal';
+  modal.innerHTML='<div class="artwork-modal-backdrop" data-close-artwork></div><section class="artwork-modal-dialog" role="dialog" aria-modal="true" aria-label="Visualização ampliada da arte"><div class="artwork-modal-head"><strong id="artworkModalTitle">Prévia da arte</strong><button type="button" class="artwork-modal-close" aria-label="Fechar visualização" data-close-artwork>×</button></div><div class="artwork-modal-body"><img id="artworkModalImage" alt="Arte ampliada AprovaJá"></div><div class="artwork-modal-actions"><a id="artworkModalDownload" class="btn primary" download="arte-aprovaja.svg">Baixar arte</a><button type="button" class="btn secondary" data-close-artwork>Fechar</button></div></section>';
+  document.body.appendChild(modal);
+  modal.addEventListener('click',e=>{if(e.target.closest('[data-close-artwork]'))modal.classList.remove('open');});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')modal.classList.remove('open');});
+ }
+ document.getElementById('artworkModalTitle').textContent=title||'Prévia da arte';
+ document.getElementById('artworkModalImage').src=src;
+ document.getElementById('artworkModalDownload').href=src;
+ modal.classList.add('open');
+}
+document.addEventListener('click',e=>{
+ const img=e.target.closest('.post-images img, .image-preview img, .generated-grid img');
+ if(!img)return;
+ e.preventDefault();
+ const link=img.closest('a');
+ const title=img.alt||link?.querySelector('span')?.textContent||'Prévia da arte';
+ openArtworkPopup(img.currentSrc||img.src,title);
+});
