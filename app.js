@@ -362,13 +362,24 @@ function mindMapSvgData(map){
 }
 document.getElementById('generateAI')?.addEventListener('click',()=>{
  const button=document.getElementById('generateAI'), topic=document.getElementById('title').value.trim();
- if(!topic){toast('Informe o tema no campo Título.');document.getElementById('title').focus();return;}
+ if(!topic){toast('Informe o tema.');document.getElementById('title').focus();return;}
+ const discipline=document.getElementById('aiDiscipline').value.trim();
+ const board=document.getElementById('aiBoard').value.trim();
+ const aiFormat=document.getElementById('aiFormat').value;
+ const quantity=Math.max(1,Math.min(10,Number(document.getElementById('aiQuantity').value)||5));
+ if(!discipline||!board){toast('Informe a disciplina e a banca.');return;}
+ const editorialKind=aiFormat==='mapa_mental'?'Mapa mental':aiFormat==='questoes'?'Questão comentada':aiFormat==='carrossel'?'Dica de prova':aiFormat==='flashcards'?'Questão comentada':'Dica de prova';
  button.disabled=true;
  try{
-  const kind=document.getElementById('kind').value, date=document.getElementById('date').value||localDate(new Date()), time=document.getElementById('time').value, format=document.getElementById('format').value;
-  const c=localEducationalContent(topic,kind,document.getElementById('brief').value);
+  const kind=editorialKind, date=document.getElementById('date').value||localDate(new Date()), time=document.getElementById('time').value, format=document.getElementById('format').value;
+  const existingBrief=document.getElementById('brief').value.trim();
+  const parameterBrief='Parâmetros solicitados: disciplina '+discipline+'; banca '+board+'; formato '+aiFormat+'; quantidade '+quantity+'. Este painel usa modelos locais estruturados, não o modelo generativo do workflow GitHub. Não inventar citações jurídicas; conferir fontes oficiais.'+(existingBrief?'\nOrientações adicionais: '+existingBrief:'');
+  const c=localEducationalContent(topic,kind,parameterBrief);
+  if(aiFormat==='flashcards') c.captionBody='FLASHCARDS DE REVISÃO — '+topic+'\n\n'+c.flashcards.slice(0,quantity).map((f,i)=>(i+1)+'. Pergunta: '+f.question+'\nResposta: '+f.answer).join('\n\n')+'\n\nDisciplina: '+discipline+' | Banca de referência: '+board+'\nConfira o material oficial antes de publicar.';
+  if(aiFormat==='questoes') c.captionBody='QUESTÕES-MODELO DE REVISÃO — '+topic+'\n\n'+Array.from({length:quantity},(_,i)=>(i+1)+'. Questão de revisão: identifique o conceito, a regra e as exceções aplicáveis a '+topic+'.\nResposta esperada: explique o fundamento com base no material de estudo e confira na fonte oficial.').join('\n\n')+'\n\nDisciplina: '+discipline+' | Banca de referência: '+board+'\nAtenção: são prompts didáticos genéricos, não questões oficiais nem gabaritos validados.';
+  if(aiFormat==='carrossel') c.captionBody='CARROSSEL — '+topic+'\n\n'+['Capa: '+topic,'Conceito central','Regras principais','Elementos e requisitos','Exceções e limites','Como costuma ser cobrado','Fechamento: revise e confira a fonte oficial'].map((s,i)=>'Slide '+(i+1)+': '+s).join('\n\n')+'\n\nDisciplina: '+discipline+' | Banca de referência: '+board;
   const p=makePost(c.title,kind,date,time,format);
-  p.captionBody=c.captionBody;p.imageText=c.imageText;p.storyText=c.storyText;p.mindMap=c.mindMap;p.flashcards=c.flashcards;p.caption=makeCaption(p);p.aiGenerated=false;p.generator='Biblioteca local gratuita';p.images=kind==='Mapa mental'?[mindMapSvgData(c.mindMap)]:generateArts(p);
+  p.captionBody=c.captionBody;p.imageText=c.imageText;p.storyText=c.storyText;p.mindMap=c.mindMap;p.flashcards=c.flashcards;p.caption=makeCaption(p);p.aiGenerated=false;p.generator='Biblioteca local gratuita';p.aiParameters={topic,discipline,format:aiFormat,quantity,exam_board:board};p.images=kind==='Mapa mental'?[mindMapSvgData(c.mindMap)]:generateArts(p);
   posts.push(p);if(!save()){posts.pop();return;}
   const host=document.getElementById('generatedPreview');
   host.innerHTML='<p class="hint"><strong>Material criado sem API paga.</strong> Revise antes de aprovar ou publicar.</p><p><strong>Chamada:</strong> '+esc(c.imageText)+'</p><p><strong>Stories:</strong> '+esc(c.storyText)+'</p>'+(kind==='Mapa mental'?'<div class="image-preview"><div class="image-thumb"><img style="width:100%;height:auto" src="'+p.images[0]+'" alt="Mapa mental de '+esc(topic)+'"><span>Mapa mental visual</span></div></div>':'')+'<p class="hint">'+esc(c.captionBody.slice(0,1800))+(c.captionBody.length>1800?'…':'')+'</p><p class="hint">Gerado com regras e modelos locais; não é uma resposta de modelo generativo. Confira fatos, legislação e gabaritos em fontes confiáveis.</p>';
