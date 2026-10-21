@@ -31,16 +31,16 @@ jobs:
     steps:
       - name: Verificar chave configurada
         env:
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          DEEPSEEK_API_PUBLICA: ${{ secrets.DEEPSEEK_API_PUBLICA }}
         run: |
-          if [ -z "$DEEPSEEK_API_KEY" ]; then
-            echo "::error::Cadastre DEEPSEEK_API_KEY em Settings > Secrets and variables > Actions."
+          if [ -z "$DEEPSEEK_API_PUBLICA" ]; then
+            echo "::error::Cadastre DEEPSEEK_API_PUBLICA em Settings > Secrets and variables > Actions."
             exit 1
           fi
 
       - name: Gerar postagem com DeepSeek
         env:
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          DEEPSEEK_API_PUBLICA: ${{ secrets.DEEPSEEK_API_PUBLICA }}
           TEMA: ${{ inputs.tema }}
           DISCIPLINA: ${{ inputs.disciplina }}
           TIPO: ${{ inputs.tipo }}
@@ -80,7 +80,7 @@ jobs:
               data=json.dumps(body).encode("utf-8"),
               headers={
                   "Content-Type": "application/json",
-                  "Authorization": "Bearer " + os.environ["DEEPSEEK_API_KEY"]
+                  "Authorization": "Bearer " + os.environ["DEEPSEEK_API_PUBLICA"]
               },
               method="POST"
           )
