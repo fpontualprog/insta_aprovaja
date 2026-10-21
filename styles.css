@@ -17,3 +17,23 @@
 @media(max-width:480px){.generated-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 .contest-slide-note{font-size:11px;color:var(--muted);line-height:1.45}.contest-label{display:inline-block;background:#fff3dd;color:#7d4a00;border-radius:20px;padding:5px 8px;font-size:10px;font-weight:800}
+
+
+/* Correção de interação do campo de pauta em lote */
+.bulk-panel label[for="bulkTopics"]{position:relative;z-index:6;display:block;pointer-events:auto}
+#bulkTopics{
+  position:relative;
+  z-index:6;
+  display:block;
+  width:100%;
+  min-height:140px;
+  pointer-events:auto!important;
+  user-select:text!important;
+  -webkit-user-select:text!important;
+  touch-action:auto;
+  cursor:text;
+  background:#fff;
+  color:#18243b;
+  opacity:1;
+}
+#bulkTopics:focus{outline:2px solid #1769d2;outline-offset:1px;border-color:#1769d2;box-shadow:0 0 0 4px #1769d21a}
