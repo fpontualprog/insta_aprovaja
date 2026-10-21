@@ -63,7 +63,7 @@ jobs:
             sleep 3
           done
           curl -fsS http://127.0.0.1:11434/api/tags >/dev/null
-          ollama pull qwen2.5:1.5b
+          ollama pull qwen2.5:3b
 
       - name: Instalar dependências Python
         run: |
@@ -72,7 +72,7 @@ jobs:
 
       - name: Iniciar serviço de conteúdo
         env:
-          OLLAMA_MODEL: qwen2.5:1.5b
+          OLLAMA_MODEL: qwen2.5:3b
           GOOGLE_DRIVE_FOLDER_URL: https://drive.google.com/drive/folders/1EUof9_ZX-FiLA1GTi8le5AQpccKH08je?usp=sharing
           MATERIALS_DIR: ${{ github.workspace }}/python-ai/materiais
         shell: bash
@@ -90,8 +90,8 @@ jobs:
       - name: Sincronizar materiais públicos do Drive
         continue-on-error: true
         run: |
-          curl -sS -X POST http://127.0.0.1:8000/sync-drive -o output/sincronizacao.json
-          cat output/sincronizacao.json
+          curl --max-time 180 -sS -X POST http://127.0.0.1:8000/sync-drive -o output/sincronizacao.json || true
+          if [ -f output/sincronizacao.json ]; then cat output/sincronizacao.json; fi
 
       - name: Gerar conteúdo
         env:
@@ -110,27 +110,29 @@ jobs:
               "quantity": max(1, min(10, int(os.environ["QUANTIDADE"]))),
               "exam_board": os.environ["BANCA"],
           }
-          response = requests.post("http://127.0.0.1:8000/generate", json=payload, timeout=300)
+          response = requests.post("http://127.0.0.1:8000/generate", json=payload, timeout=660)
           response.raise_for_status()
           data = response.json()
           with open("output/conteudo.md", "w", encoding="utf-8") as f:
-              f.write("# " + data["topic"] + "\n\n")
-              f.write("**Disciplina:** " + payload["discipline"] + "  \n")
-              f.write("**Formato:** " + data["kind"] + "  \n")
-              f.write("**Modelo local:** " + data["model"] + "\n\n")
+              f.write("# " + data["topic"] + "\\n\\n")
+              f.write("**Disciplina:** " + payload["discipline"] + "  \\n")
+              f.write("**Formato:** " + data["kind"] + "  \\n")
+              f.write("**Modelo local:** " + data["model"] + "\\n\\n")
               if data.get("warning"):
-                  f.write("> **Atenção:** " + data["warning"] + "\n\n")
-              f.write(data["content"] + "\n\n")
-              f.write("## Fontes recuperadas pelo sistema\n")
+                  f.write("> **Atenção:** " + data["warning"] + "\\n\\n")
+              f.write(data["content"] + "\\n\\n")
+              f.write("## Fontes recuperadas pelo sistema\\n")
               if data.get("sources"):
                   for s in data["sources"]:
                       suffix = f", página/slide {s['page']}" if s.get("page") else ""
-                      f.write(f"- {s['source']}{suffix}\n")
+                      f.write(f"- {s['source']}{suffix}\\n")
               else:
-                  f.write("- Nenhuma fonte local foi recuperada para este tema.\n")
+                  f.write("- Nenhuma fonte local relevante foi recuperada para este tema.\\n")
           with open("output/metadata.json", "w", encoding="utf-8") as f:
-              json.dump({"request": payload, "model": data.get("model"), "sources": data.get("sources", [])}, f, ensure_ascii=False, indent=2)
+              json.dump({"request": payload, "model": data.get("model"), "sources": data.get("sources", []), "warnings": data.get("warnings", []), "retrieval": data.get("retrieval", {})}, f, ensure_ascii=False, indent=2)
           print("Conteúdo gerado em output/conteudo.md")
+          if data.get("warnings"):
+              print("ALERTAS DE QUALIDADE:", data["warnings"])
           PY
 
       - name: Montar artes do Instagram
