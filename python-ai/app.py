@@ -20,7 +20,7 @@ OLLAMA_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434").rstrip("/")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
 MAX_FILE_MB = int(os.getenv("MAX_FILE_MB", "50"))
 SUPPORTED = {".pdf", ".docx", ".pptx", ".txt", ".md"}
-app = FastAPI(title="AprovaJá — IA local gratuita", version="1.0.0")
+app = FastAPI(title="AprovaJá — IA local gratuita", version="1.1.0")
 app.add_middleware(CORSMiddleware, allow_origins=["https://fpontualprog.github.io", "https://aprovajaconcurso.netlify.app", "http://localhost:8000", "http://127.0.0.1:8000", "http://localhost:5500", "http://127.0.0.1:5500"], allow_credentials=False, allow_methods=["GET", "POST"], allow_headers=["Content-Type"])
 
 class GenerateRequest(BaseModel):
@@ -65,35 +65,110 @@ def load_chunks() -> list[dict]:
             result.extend(extract_file(p))
     return result
 
-def retrieve(topic: str, chunks: list[dict], limit: int = 8) -> list[dict]:
-    if not chunks: return []
-    docs = [re.sub(r"\s+", " ", c["text"])[:12000] for c in chunks]
+def split_into_passages(chunk: dict, max_chars: int = 1800) -> list[dict]:
+    """Divide páginas/documentos longos em passagens menores para evitar diluir a relevância."""
+    text = re.sub(r"\r", "", chunk.get("text", "")).strip()
+    if len(text) <= max_chars:
+        return [{**chunk, "text": text}] if text else []
+    paragraphs = [re.sub(r"\s+", " ", p).strip() for p in re.split(r"\n\s*\n|\n", text) if p.strip()]
+    passages, current = [], ""
+    for paragraph in paragraphs:
+        # Parágrafo enorme: fragmenta em janelas com pequena sobreposição.
+        pieces = [paragraph[i:i + max_chars] for i in range(0, len(paragraph), max_chars - 180)] if len(paragraph) > max_chars else [paragraph]
+        for piece in pieces:
+            if current and len(current) + len(piece) + 1 > max_chars:
+                passages.append({**chunk, "text": current})
+                current = piece
+            else:
+                current = (current + "\n" + piece).strip()
+    if current:
+        passages.append({**chunk, "text": current})
+    return passages
+
+def retrieve(topic: str, discipline: str, chunks: list[dict], limit: int = 6) -> list[dict]:
+    if not chunks:
+        return []
+    passages = [p for c in chunks for p in split_into_passages(c)]
+    if not passages:
+        return []
+    query = f"{discipline} {topic} conceitos definição legislação exemplos questões concurso"
+    docs = [re.sub(r"\s+", " ", c["text"])[:4000] for c in passages]
     try:
-        vec = TfidfVectorizer(max_features=50000, ngram_range=(1, 2), strip_accents="unicode")
-        matrix = vec.fit_transform(docs + [topic])
+        vec = TfidfVectorizer(max_features=60000, ngram_range=(1, 2), strip_accents="unicode", sublinear_tf=True)
+        matrix = vec.fit_transform(docs + [query])
         scores = cosine_similarity(matrix[-1], matrix[:-1]).ravel()
-        return [chunks[i] for i in scores.argsort()[::-1][:limit] if scores[i] > 0]
-    except ValueError: return []
+        ranked = scores.argsort()[::-1]
+        selected = []
+        # Limite de duas passagens por arquivo para não lotar o contexto com uma única fonte.
+        per_source = {}
+        for idx in ranked:
+            score = float(scores[idx])
+            if score < 0.035:
+                break
+            source = passages[idx]["source"]
+            if per_source.get(source, 0) >= 2:
+                continue
+            selected.append({**passages[idx], "relevance_score": round(score, 4)})
+            per_source[source] = per_source.get(source, 0) + 1
+            if len(selected) >= limit:
+                break
+        return selected
+    except ValueError:
+        return []
 
 def make_prompt(req: GenerateRequest, sources: list[dict]) -> str:
-    snippets = "\n\n".join(f"[Fonte: {s['source']}" + (f", página/slide {s['page']}" if s.get("page") else "") + f"]\n{s['text'][:9000]}" for s in sources)
+    snippets = "\n\n".join(
+        f"[FONTE {i}: {s['source']}" + (f", página/slide {s['page']}" if s.get("page") else "") + f", relevância {s.get('relevance_score', 'n/d')}]\n{s['text'][:2400]}"
+        for i, s in enumerate(sources, 1)
+    )
     if not snippets:
-        snippets = "Nenhum documento relevante foi encontrado na pasta local sincronizada. Informe claramente que a resposta é baseada em conhecimento geral e não finja ter consultado materiais."
+        snippets = "Nenhum trecho atingiu o nível mínimo de relevância nos materiais locais. Não alegue ter consultado apostilas. Produza somente o que puder sustentar com conhecimento geral e inclua aviso claro para conferir fontes oficiais."
     fmt = {
-        "resumo": "Resumo didático com conceitos, tópicos-chave, exemplos e pegadinhas de concurso.",
-        "mapa_mental": "Mapa mental textual hierárquico com tema central, ramos, sub-ramos, relações e palavras-chave.",
-        "questoes": f"Crie {req.quantity} questões inéditas no estilo {req.exam_board}, com enunciado, alternativas quando adequado, gabarito e comentário fundamentado.",
-        "flashcards": f"Crie {req.quantity} flashcards no formato Pergunta / Resposta, objetivos e úteis para revisão.",
-        "carrossel": "Carrossel de Instagram com 7 slides: capa, cinco slides de conteúdo e fechamento/CTA; texto conciso."
+        "resumo": f"Faça um resumo de estudo sobre EXATAMENTE o tema solicitado. Inclua definição, regras/elementos centrais, distinções importantes, exemplo curto e pegadinhas de concurso. Não se desvie para outro assunto.",
+        "mapa_mental": "Crie um mapa mental textual hierárquico: tema central > ramos > sub-ramos. Use frases curtas e relações claras, apenas sobre o tema solicitado.",
+        "questoes": f"Crie EXATAMENTE {req.quantity} questões inéditas sobre o tema e a disciplina solicitados, no estilo {req.exam_board}. Numere de 1 a {req.quantity}. Cada questão deve ter enunciado completo, alternativas quando apropriado, gabarito e comentário explicando o fundamento. Não repita questões e não troque o tema por assunto relacionado.",
+        "flashcards": f"Crie EXATAMENTE {req.quantity} flashcards sobre o tema solicitado. Numere de 1 a {req.quantity}, cada um com Pergunta e Resposta curtas. Não acrescente cartões extras.",
+        "carrossel": "Crie EXATAMENTE 7 slides numerados: 1 capa, 2 a 6 conteúdo didático, 7 fechamento/CTA. Cada slide deve conter título e texto curto, sobre o tema pedido."
     }[req.kind]
-    return f"""Você é professor experiente de concursos públicos no Brasil. Escreva em português brasileiro.
-Disciplina: {req.discipline}
-Tema: {req.topic}
-Formato: {req.kind}
-Instrução: {fmt}
-Use os materiais abaixo como fonte prioritária. Não invente citações, artigos de lei ou páginas. Sinalize lacunas e conflitos e recomende conferência em fonte oficial. Entregue conteúdo bem estruturado, sem enrolação. Ao final liste apenas as fontes efetivamente utilizadas, com página/slide quando houver. Se não houver fonte pertinente, diga isso explicitamente.
-MATERIAIS RECUPERADOS:
-{snippets}"""
+    return f"""Você é um professor rigoroso e revisor de material para concursos públicos brasileiros. Escreva em português brasileiro claro.
+
+REQUISITOS OBRIGATÓRIOS
+- Disciplina exata: {req.discipline}
+- Tema exato: {req.topic}
+- Formato: {req.kind}
+- Banca de referência, se aplicável: {req.exam_board}
+- Instrução específica: {fmt}
+- Antes de responder, confirme mentalmente que cada seção trata diretamente do tema. Não substitua o tema por um caso isolado nem por um assunto apenas relacionado.
+- Use primeiro os trechos recuperados, mas avalie sua pertinência. Um trecho de outro assunto NÃO deve servir de fundamento só porque veio da mesma pasta.
+- Não invente fontes, citações, números de páginas, enunciados de lei ou jurisprudência. Só atribua uma afirmação a uma fonte quando ela estiver apoiada no trecho correspondente.
+- Para Direito, diferencie texto legal, entendimento jurisprudencial e explicação didática. Se não tiver certeza de artigo, prazo ou entendimento atual, não chute: sinalize a necessidade de conferência em fonte oficial.
+- Se os materiais não forem pertinentes ou forem insuficientes, diga isso com transparência e não finja que foram utilizados.
+- Evite introduções genéricas, repetições e conclusões vagas. Priorize precisão, utilidade para prova e aderência ao pedido.
+- Ao final, inclua “Pontos que exigem conferência” somente se houver incerteza real e “Fontes efetivamente utilizadas” apenas para trechos realmente aproveitados.
+
+MATERIAIS RECUPERADOS (podem ser irrelevantes; use com senso crítico):
+{snippets}
+
+Agora produza a resposta obedecendo todos os requisitos acima."""
+
+def validate_content(req: GenerateRequest, content: str) -> list[str]:
+    warnings = []
+    if len(content.strip()) < 180:
+        warnings.append("Resposta muito curta; revisar antes de usar.")
+    if req.kind in {"questoes", "flashcards"}:
+        # Detecta itens numerados no início de linhas; é um controle simples, não uma avaliação semântica.
+        nums = set()
+        for line in content.splitlines():
+            match = re.match(r"^\s*(?:#{1,4}\s*)?(?:Questão\s*)?(\d{1,2})[.)\-:]\s+", line, re.I)
+            if match:
+                nums.add(int(match.group(1)))
+        if len(nums) < req.quantity:
+            warnings.append(f"Controle de quantidade: foram detectados {len(nums)} itens numerados; eram esperados {req.quantity}. Verifique e regenere se necessário.")
+    if req.kind == "carrossel":
+        slides = set(re.findall(r"(?im)^\s*(?:slide\s*)?(\d{1,2})\s*[:.)\-]", content))
+        if len(slides) < 7:
+            warnings.append(f"Controle de formato: foram detectados {len(slides)} slides numerados; eram esperados 7.")
+    return warnings
 
 @app.get("/health")
 def health():
@@ -123,22 +198,45 @@ def sync_drive():
         chunks = load_chunks()
         names = sorted({c["source"].split(" (tabela")[0] for c in chunks})
         return {"downloaded_entries": len(downloaded), "files_read": len(names), "chunks_indexed": len(chunks), "directory": str(MATERIALS_DIR), "files": names, "note": "Cópias locais baixadas; os originais do Drive não foram alterados."}
-    except HTTPException: raise
-    except Exception as exc: raise HTTPException(status_code=502, detail=f"Falha ao sincronizar o Drive: {exc}")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Falha ao sincronizar o Drive: {exc}")
 
 @app.post("/generate")
 def generate(req: GenerateRequest):
-    sources = retrieve(req.topic, load_chunks())
+    all_chunks = load_chunks()
+    sources = retrieve(req.topic, req.discipline, all_chunks)
     prompt = make_prompt(req, sources)
     try:
-        r = requests.post(f"{OLLAMA_URL}/api/chat", json={"model": OLLAMA_MODEL, "messages": [{"role": "system", "content": "Produza material educacional confiável e transparente sobre incertezas."}, {"role": "user", "content": prompt}], "stream": False, "options": {"temperature": 0.35}}, timeout=300)
-        if r.status_code == 404: raise HTTPException(status_code=503, detail=f"Modelo '{OLLAMA_MODEL}' não instalado. Execute: ollama pull {OLLAMA_MODEL}")
+        r = requests.post(
+            f"{OLLAMA_URL}/api/chat",
+            json={"model": OLLAMA_MODEL,
+                  "messages": [
+                      {"role": "system", "content": "Você produz materiais educacionais para concursos. Siga exatamente o tema, a disciplina e a quantidade solicitados. Não invente fontes nem complete lacunas jurídicas com palpites."},
+                      {"role": "user", "content": prompt}],
+                  "stream": False,
+                  "options": {"temperature": 0.2, "top_p": 0.8}},
+            timeout=600)
+        if r.status_code == 404:
+            raise HTTPException(status_code=503, detail=f"Modelo '{OLLAMA_MODEL}' não instalado. Execute: ollama pull {OLLAMA_MODEL}")
         r.raise_for_status()
         content = r.json().get("message", {}).get("content", "").strip()
-        if not content: raise HTTPException(status_code=502, detail="O modelo local retornou conteúdo vazio.")
-        refs = [{"source": s["source"], "page": s.get("page")} for s in sources]
-        return {"content": content, "topic": req.topic, "kind": req.kind, "model": OLLAMA_MODEL, "sources": refs, "source_count": len(refs), "warning": None if refs else "Nenhuma fonte da pasta foi recuperada; revise o conteúdo antes de publicar."}
-    except HTTPException: raise
-    except requests.ConnectionError: raise HTTPException(status_code=503, detail="Ollama não está em execução. Instale e inicie o Ollama localmente.")
-    except requests.Timeout: raise HTTPException(status_code=504, detail="O modelo local demorou demais. Tente um modelo menor.")
-    except requests.RequestException as exc: raise HTTPException(status_code=502, detail=f"Erro ao chamar o modelo local: {exc}")
+        if not content:
+            raise HTTPException(status_code=502, detail="O modelo local retornou conteúdo vazio.")
+        refs = [{"source": s["source"], "page": s.get("page"), "relevance_score": s.get("relevance_score")} for s in sources]
+        warnings = validate_content(req, content)
+        if not refs:
+            warnings.append("Nenhuma fonte local atingiu o limite de relevância. Revise todas as afirmações, especialmente legislação e gabaritos.")
+        return {"content": content, "topic": req.topic, "discipline": req.discipline, "kind": req.kind,
+                "model": OLLAMA_MODEL, "sources": refs, "source_count": len(refs),
+                "warnings": warnings, "warning": "; ".join(warnings) if warnings else None,
+                "retrieval": {"chunks_available": len(all_chunks), "passages_considered": sum(len(split_into_passages(c)) for c in all_chunks), "passages_selected": len(sources)}}
+    except HTTPException:
+        raise
+    except requests.ConnectionError:
+        raise HTTPException(status_code=503, detail="Ollama não está em execução. Instale e inicie o Ollama localmente.")
+    except requests.Timeout:
+        raise HTTPException(status_code=504, detail="O modelo local demorou demais. Tente um modelo menor.")
+    except requests.RequestException as exc:
+        raise HTTPException(status_code=502, detail=f"Erro ao chamar o modelo local: {exc}")
