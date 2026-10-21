@@ -26,7 +26,7 @@ def font(size, bold=False):
 
 def wrap_pixels(draw, text, fnt, max_width):
     lines, current = [], ""
-    for word in re.sub(r"\\s+", " ", text).split():
+    for word in re.sub(r"\s+", " ", text).split():
         candidate = word if not current else current + " " + word
         if draw.textbbox((0,0), candidate, font=fnt)[2] <= max_width:
             current = candidate
@@ -37,10 +37,10 @@ def wrap_pixels(draw, text, fnt, max_width):
     return lines
 
 def clean_text(s):
-    s = re.sub(r"^#+\\s*", "", s)
-    s = re.sub(r"^[-*•]\\s*", "", s)
-    s = re.sub(r"^\\d+[.)]\\s*", "", s)
-    s = re.sub(r"\\*{1,2}", "", s)
+    s = re.sub(r"^#+\s*", "", s)
+    s = re.sub(r"^[-*•]\s*", "", s)
+    s = re.sub(r"^\d+[.)]\s*", "", s)
+    s = re.sub(r"\*{1,2}", "", s)
     return s.strip()
 
 def split_content(text, max_chars=430):
@@ -120,7 +120,7 @@ def main():
     lines = raw.splitlines()
     title = next((clean_text(x) for x in lines if x.startswith("# ")), "Dica para concursos")
     content_start = next((i+1 for i,x in enumerate(lines) if x.startswith("**Modelo local:**")), 0)
-    body_text = "\\n".join(lines[content_start:])
+    body_text = "\n".join(lines[content_start:])
     body_text = re.split(r"(?im)^## Fontes recuperadas", body_text)[0]
     paras = split_content(body_text)
     chunks, current = [], []
@@ -144,7 +144,7 @@ def main():
         p=OUT/f"slide_{i:02d}.png"
         im.save(p, "PNG", optimize=True)
         paths.append(p)
-    caption = f"{title}\\n\\nEstude com estratégia e revise os pontos principais. Salve esta publicação para consultar depois.\\n\\nSiga @aprovaja_seuconcurso para mais conteúdos gratuitos.\\n\\n#AprovaJá #ConcursosPúblicos #Estudos #DicasDeConcurso #Concurseiro"
+    caption = f"{title}\n\nEstude com estratégia e revise os pontos principais. Salve esta publicação para consultar depois.\n\nSiga @aprovaja_seuconcurso para mais conteúdos gratuitos.\n\n#AprovaJá #ConcursosPúblicos #Estudos #DicasDeConcurso #Concurseiro"
     (OUT/"legenda_instagram.txt").write_text(caption,encoding="utf-8")
     with zipfile.ZipFile(OUT/"carrossel_instagram.zip","w",zipfile.ZIP_DEFLATED) as z:
         for p in paths: z.write(p,p.name)
