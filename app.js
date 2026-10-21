@@ -11,12 +11,12 @@ function makeCaption(p){
  const tags='#AprovaJá #ConcursosPúblicos #Concurseiro #DicasDeConcurso #EstudeGrátis';
  const promo='📚 Conheça o AprovaJá: uma plataforma gratuita para organizar sua preparação para concursos. Acesse: '+PLATFORM_URL;
  const call=p.kind==='Divulgação da plataforma'?'Sua preparação pode começar hoje. Conheça as ferramentas gratuitas do AprovaJá!':p.kind==='Questão de revisão'?'Comente sua resposta antes de conferir o material. Salve para revisar!':'Salve esta dica para revisar antes da prova e compartilhe com quem também está estudando.';
- return p.title+'\\n\\n'+p.captionBody+'\\n\\n'+call+'\\n\\n'+promo+'\\n\\n'+tags;
+ return p.title+'\n\n'+p.captionBody+'\n\n'+call+'\n\n'+promo+'\n\n'+tags;
 }
 function topicBody(topic,kind){
  if(kind==='Divulgação da plataforma')return 'Está se preparando para concursos? Conheça o AprovaJá, organize seus estudos e acompanhe conteúdos de revisão. A plataforma está em fase de testes e é gratuita.';
- if(kind==='Questão de revisão')return 'DESAFIO RÁPIDO\\nTema: '+topic+'.\\n\\nPense na regra prevista na Constituição ou na lei e tente responder: qual é o conceito ou requisito central deste assunto?\\n\\nConfira a letra da lei ou uma questão de banca antes de publicar o gabarito.';
- return 'RESUMO RÁPIDO\\nTema: '+topic+'.\\n\\n• Conceito: identifique a definição principal.\\n• Atenção: memorize a regra central e as exceções mais cobradas.\\n• Na prova: observe os termos que podem mudar o sentido da afirmação.\\n\\nRevise a legislação ou o material de referência aplicável.';
+ if(kind==='Questão de revisão')return 'DESAFIO RÁPIDO\nTema: '+topic+'.\n\nPense na regra prevista na Constituição ou na lei e tente responder: qual é o conceito ou requisito central deste assunto?\n\nConfira a letra da lei ou uma questão de banca antes de publicar o gabarito.';
+ return 'RESUMO RÁPIDO\nTema: '+topic+'.\n\n• Conceito: identifique a definição principal.\n• Atenção: memorize a regra central e as exceções mais cobradas.\n• Na prova: observe os termos que podem mudar o sentido da afirmação.\n\nRevise a legislação ou o material de referência aplicável.';
 }
 function wrapWords(text,max){const words=text.split(/\s+/),lines=[];let line='';for(const word of words){if((line+' '+word).trim().length>max){lines.push(line);line=word}else line=(line+' '+word).trim()}if(line)lines.push(line);return lines}
 function svgArt(title,kind,body,page,total,format='Feed'){
