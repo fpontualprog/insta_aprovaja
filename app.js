@@ -8,7 +8,7 @@ function formatDate(v){if(!v)return 'Data não definida';const [y,m,d]=v.split('
 function localDate(d){return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')}
 const PLATFORM_URL='https://aprovajaconcurso.netlify.app';
 function makeCaption(p){
- const tags='#AprovaJá #ConcursosPúblicos #Concurseiro #DicasDeConcurso #EstudeGrátis';
+ const tags=Array.isArray(p.aiHashtags)&&p.aiHashtags.length?p.aiHashtags.map(t=>String(t).startsWith('#')?String(t):'#'+String(t).replace(/\\s+/g,'')).join(' '):'#AprovaJá #ConcursosPúblicos #Concurseiro #DicasDeConcurso #EstudeGrátis';
  const promo='📚 Conheça o AprovaJá: uma plataforma gratuita para organizar sua preparação para concursos. Acesse: '+PLATFORM_URL;
  const call=p.kind==='Divulgação da plataforma'?'Sua preparação pode começar hoje. Conheça as ferramentas gratuitas do AprovaJá!':p.kind==='Questão de revisão'?'Comente sua resposta antes de conferir o material. Salve para revisar!':'Salve esta dica para revisar antes da prova e compartilhe com quem também está estudando.';
  return p.title+'\n\n'+p.captionBody+'\n\n'+call+'\n\n'+promo+'\n\n'+tags;
