@@ -62,7 +62,7 @@ function summarySvgArt(p){
  const points=raw.length?raw:fallback;
  while(points.length<3)points.push('Revise a regra central e suas exceções na fonte oficial.');
  const shown=points.slice(0,5);
- const wrap=(value,max)=>{const words=String(value||'').trim().split(/\\s+/);const lines=[];let line='';for(const word of words){const next=(line+' '+word).trim();if(next.length>max&&line){lines.push(line);line=word}else line=next}if(line)lines.push(line);return lines};
+ const wrap=(value,max)=>{const raw=String(value||'').trim().split(/\\s+/).filter(Boolean),words=[];for(let word of raw){while(word.length>max){words.push(word.slice(0,max));word=word.slice(max)}if(word)words.push(word)}const lines=[];let line='';for(const word of words){const next=(line+' '+word).trim();if(next.length>max&&line){lines.push(line);line=word}else line=next}if(line)lines.push(line);return lines};
  const fit=(value,maxChars,maxLines,maxFont,minFont)=>{const lines=wrap(value,maxChars);const font=Math.max(minFont,Math.min(maxFont,Math.floor(maxFont*maxLines/Math.max(maxLines,lines.length))));const out=lines.slice(0,maxLines);if(lines.length>maxLines&&out.length)out[out.length-1]=out[out.length-1].replace(/[.,;:]?$/,'…');return {lines:out,font}};
  const title=fit(p.title||'Resumo do conteúdo',22,2,52,36);
  const titleSvg=title.lines.map((t,i)=>'<text x="70" y="'+(240+i*(title.font+8))+'" font-family="Arial,sans-serif" font-size="'+title.font+'" font-weight="800" fill="'+(i===title.lines.length-1?'#ff9e1b':'#ffffff')+'">'+xml(t)+'</text>').join('');
@@ -83,7 +83,7 @@ function modalitySvgArt(p){
  const fallback=String(p.captionBody||'').split(/\\n+/).map(s=>s.replace(/^[-•*\\d.) ]+/,'').trim()).filter(s=>s.length>12);
  while(points.length<3&&fallback.length)points.push(fallback.shift());
  while(points.length<3)points.push('Confira a regra aplicável na fonte oficial.');
- const wrap=(value,max)=>{const words=String(value||'').trim().split(/\\s+/);const lines=[];let line='';for(const word of words){const next=(line+' '+word).trim();if(next.length>max&&line){lines.push(line);line=word}else line=next}if(line)lines.push(line);return lines};
+ const wrap=(value,max)=>{const raw=String(value||'').trim().split(/\\s+/).filter(Boolean),words=[];for(let word of raw){while(word.length>max){words.push(word.slice(0,max));word=word.slice(max)}if(word)words.push(word)}const lines=[];let line='';for(const word of words){const next=(line+' '+word).trim();if(next.length>max&&line){lines.push(line);line=word}else line=next}if(line)lines.push(line);return lines};
  const fitted=(value,maxChars,maxLines,minFont=15,maxFont=27)=>{const lines=wrap(value,maxChars);const font=Math.max(minFont,Math.min(maxFont,Math.floor(maxFont*(maxLines/Math.max(maxLines,lines.length)))));const shown=lines.slice(0,maxLines);if(lines.length>maxLines&&shown.length)shown[shown.length-1]=shown[shown.length-1].replace(/[.,;:]?$/,'…');return {lines:shown,font}};
  const titleFit=fitted(title,24,2,34,58);
  const titleSvg=titleFit.lines.map((t,i)=>'<text x="70" y="'+(235+i*(titleFit.font+8))+'" font-family="Arial,sans-serif" font-size="'+titleFit.font+'" font-weight="800" fill="'+(i===titleFit.lines.length-1?'#ff9e1b':'#ffffff')+'">'+escXml(t)+'</text>').join('');
