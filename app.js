@@ -177,7 +177,7 @@ async function htmlEditorialToImage(html,post){
   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
   const target=doc.body;
   const measured=Math.max(1080,target.scrollHeight);
-  if(measured>1500)throw new Error("A arte ficou muito alta ("+measured+" px). Reduza o conteúdo para preservar a legibilidade.");
+  if(measured>1080)throw new Error("O conteúdo excedeu a área quadrada da arte ("+measured+" px). Reduza o texto ou divida a publicação para evitar cortes.");
   const canvas=await render(target,{width:1080,height:1080,scale:1,backgroundColor:"#f3f6fb",windowWidth:1080,windowHeight:1080,scrollX:0,scrollY:0});
   if(canvas.height>1080){
    const cropped=document.createElement("canvas");cropped.width=1080;cropped.height=1080;
