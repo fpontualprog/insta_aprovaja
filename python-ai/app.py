@@ -117,42 +117,44 @@ def retrieve(topic: str, discipline: str, chunks: list[dict], limit: int = 6) ->
         return []
 
 def make_prompt(req: GenerateRequest, sources: list[dict]) -> str:
-    snippets = "\n\n".join(
-        f"[FONTE {i}: {s['source']}" + (f", página/slide {s['page']}" if s.get("page") else "") + f", relevância {s.get('relevance_score', 'n/d')}]\n{s['text'][:2400]}"
+    snippets = "\\n\\n".join(
+        f"[MATERIAL {i}: {s['source']}" + (f", página/slide {s['page']}" if s.get("page") else "") + f"]\\n{s['text'][:1800]}"
         for i, s in enumerate(sources, 1)
     )
     if not snippets:
-        snippets = "Nenhum trecho atingiu o nível mínimo de relevância nos materiais locais. Não alegue ter consultado apostilas. Produza somente o que puder sustentar com conhecimento geral e inclua aviso claro para conferir fontes oficiais."
+        snippets = "Nenhum trecho local claramente relevante foi encontrado. Não diga que consultou materiais. Faça uma revisão básica e objetiva usando apenas informações que possa apresentar com segurança."
     fmt = {
-        "resumo": f"Faça um resumo de estudo sobre EXATAMENTE o tema solicitado. Inclua definição, regras/elementos centrais, distinções importantes, exemplo curto e pegadinhas de concurso. Não se desvie para outro assunto.",
-        "mapa_mental": "Crie um mapa mental textual hierárquico, com ramos e sub-ramos reais e preenchidos. Organize em 4 a 7 ramos úteis, sem níveis vazios como 'Ramos' e 'Sub-ramos'. Use frases curtas, não repita o mesmo item e apenas inclua artigos de lei ou referências normativas que estejam nos trechos recuperados. Se não houver base para uma referência específica, omita-a em vez de adivinhar.",
-        "questoes": f"Crie EXATAMENTE {req.quantity} questões inéditas sobre o tema e a disciplina solicitados, no estilo {req.exam_board}. Numere de 1 a {req.quantity}. Cada questão deve ter enunciado completo, alternativas quando apropriado, gabarito e comentário explicando o fundamento. Não repita questões e não troque o tema por assunto relacionado.",
-        "flashcards": f"Crie EXATAMENTE {req.quantity} flashcards sobre o tema solicitado. Numere de 1 a {req.quantity}, cada um com Pergunta e Resposta curtas. Não acrescente cartões extras.",
-        "carrossel": "Crie EXATAMENTE 7 slides numerados: 1 capa, 2 a 6 conteúdo didático, 7 fechamento/CTA. Cada slide deve conter título e texto curto, sobre o tema pedido."
+        "resumo": "Faça uma revisão rápida para Instagram: definição simples, 3 a 5 pontos importantes e uma pegadinha de prova, se houver. Use frases curtas e linguagem direta.",
+        "mapa_mental": "Faça um mapa mental simples em texto: tema central e 4 a 6 ramos com palavras-chave. Nada de parágrafos longos. Inclua artigo de lei somente se puder confirmar com segurança.",
+        "questoes": f"Crie EXATAMENTE {req.quantity} questões curtas no estilo da banca {req.exam_board}, sobre o tema indicado. Cada questão deve ter enunciado, alternativas quando fizer sentido, gabarito e comentário de no máximo 2 frases. Não diga que são questões oficiais; se adaptar questão fornecida, identifique como adaptada.",
+        "flashcards": f"Crie EXATAMENTE {req.quantity} flashcards. Cada um deve ter uma pergunta direta e uma resposta curta, ideal para memorização.",
+        "carrossel": "Crie um carrossel de EXATAMENTE 7 slides: slide 1 capa; slides 2 a 6 com um conceito ou regra por slide; slide 7 chamada para salvar e seguir. Cada slide deve ter título curto e no máximo 3 tópicos breves."
     }[req.kind]
-    return f"""Você é um professor rigoroso e revisor de material para concursos públicos brasileiros. Escreva em português brasileiro claro.
+    return f\"\"\"Você cria conteúdo simples e correto para o Instagram da plataforma AprovaJá, voltada a concursos públicos brasileiros. Escreva em português brasileiro.
 
-REQUISITOS OBRIGATÓRIOS
-- Disciplina exata: {req.discipline}
-- Tema exato: {req.topic}
+PARÂMETROS
+- Disciplina: {req.discipline}
+- Tema: {req.topic}
 - Formato: {req.kind}
-- Banca de referência, se aplicável: {req.exam_board}
-- Instrução específica: {fmt}
-- Antes de responder, confirme mentalmente que cada seção trata diretamente do tema. Não substitua o tema por um caso isolado nem por um assunto apenas relacionado.
-- Use primeiro os trechos recuperados, mas avalie sua pertinência. Um trecho de outro assunto NÃO deve servir de fundamento só porque veio da mesma pasta.
-- REGRA CRÍTICA PARA DIREITO: não invente nem improvise números de artigos, leis, processos, decisões, súmulas ou jurisprudência. Só mencione referências normativas específicas que constem literalmente dos trechos recuperados. Se não houver trecho relevante, explique os conceitos sem fabricar citações ou precedentes. Nunca atribua à educação a Lei nº 8.080/1990 (ela é da saúde); nunca atribua moradia ao art. 194 (o direito à moradia está no art. 6º; art. 194 trata da seguridade social).
-- Não invente fontes, citações, números de páginas, enunciados de lei ou jurisprudência. Só atribua uma afirmação a uma fonte quando ela estiver apoiada no trecho correspondente.
-- Para Direito, diferencie texto legal, entendimento jurisprudencial e explicação didática. Se não tiver certeza de artigo, prazo ou entendimento atual, não chute: sinalize a necessidade de conferência em fonte oficial.
-- Se os materiais não forem pertinentes ou forem insuficientes, diga isso com transparência e não finja que foram utilizados.
-- Evite introduções genéricas, repetições e conclusões vagas. Priorize precisão, utilidade para prova e aderência ao pedido.
-- Ao final, inclua “Pontos que exigem conferência” somente se houver incerteza real e “Fontes efetivamente utilizadas” apenas para trechos realmente aproveitados.
-- Não produza listas com duplicações para preencher espaço. Para mapa mental, use hierarquia substantiva e direta, por exemplo: Direitos Sociais > Art. 6º; Direitos dos Trabalhadores > Arts. 7º a 11; Saúde > Art. 196; Educação > Art. 205. Não force este exemplo se o tema for outro.
+- Banca: {req.exam_board}
+- Quantidade: {req.quantity}
+- Orientação: {fmt}
 
-MATERIAIS RECUPERADOS (podem ser irrelevantes; use com senso crítico):
+ESTILO OBRIGATÓRIO
+- Pense em postagem de Instagram, não em capítulo de livro ou tratado doutrinário.
+- Seja breve, didático e direto. Use linguagem simples, frases curtas e informação fácil de memorizar.
+- Priorize a letra da Constituição/lei e conceitos básicos cobrados em concurso. Não acrescente teorias, autores ou contextualização complexa sem necessidade.
+- Para mapas mentais e carrosséis, use palavras-chave e tópicos; evite blocos grandes de texto.
+- Para questões, dê gabarito e explicação curta. Nunca apresente questão inventada como questão oficial de banca.
+- Use somente referências legais que conheça com segurança ou que estejam nos materiais relevantes. Se não tiver certeza do artigo, não invente o número: apresente o conceito sem número de artigo.
+- Ignore trechos que não tratem do tema exato. Se não houver material útil, produza uma revisão básica sem fingir que consultou fontes.
+- Não inclua alertas técnicos, explicações sobre o processo de geração ou listas de fontes na arte destinada ao público.
+- Evite introduções, conclusões genéricas e repetição. Entregue somente o conteúdo solicitado, pronto para revisão e publicação.
+
+MATERIAIS RECUPERADOS (use apenas se forem pertinentes):
 {snippets}
 
-Agora produza a resposta obedecendo todos os requisitos acima."""
-
+Agora produza o conteúdo curto, claro e útil para revisão de concurso.\"\"\"
 def validate_content(req: GenerateRequest, content: str) -> list[str]:
     warnings = []
     if len(content.strip()) < 180:
