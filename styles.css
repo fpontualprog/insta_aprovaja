@@ -75,3 +75,15 @@
 .artwork-modal-body img{display:block;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;box-shadow:0 4px 24px #071b4320}
 .artwork-modal-actions{display:flex;justify-content:flex-end;gap:10px;padding:12px 16px;border-top:1px solid #e1e7f0}
 @media(max-width:600px){.artwork-modal{padding:8px}.artwork-modal-dialog{width:100%;height:94vh;border-radius:12px}.artwork-modal-body{padding:6px}.artwork-modal-body img{max-width:100%;max-height:100%}}
+
+
+/* Agenda visível e histórico de publicações */
+.post-card .meta{line-height:1.7}
+.post-card .meta strong{color:#102c63}
+.published-history-panel{margin-top:22px}
+.table-wrap{width:100%;overflow-x:auto}
+.published-table{width:100%;border-collapse:collapse;font-size:13px;background:#fff}
+.published-table th,.published-table td{padding:11px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+.published-table th{background:#f1f5fb;color:#102c63;font-weight:800;white-space:nowrap}
+.published-table td code{font-size:11px;overflow-wrap:anywhere;white-space:normal;color:#33445f}
+.published-table tbody tr:hover{background:#f8faff}
