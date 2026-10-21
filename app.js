@@ -209,15 +209,20 @@ function imageDataToJpegBlob(dataUrl) {
     const img = new Image();
     img.onload = () => {
       try {
+        // Preserve as dimensões e a proporção originais; não esticar nem recortar a arte.
+        const width = img.naturalWidth;
+        const height = img.naturalHeight;
+        if (!width || !height) throw new Error('A imagem gerada não possui dimensões válidas.');
         const canvas = document.createElement('canvas');
-        canvas.width = 1080;
-        canvas.height = img.naturalHeight > 1080 ? 1920 : 1080;
-        const ctx = canvas.getContext('2d');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d', { alpha: false });
         if (!ctx) throw new Error('O navegador não disponibilizou o canvas.');
+        // JPEG não suporta transparência; o fundo branco só aparece nas áreas transparentes.
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Não foi possível converter a arte para JPEG.')), 'image/jpeg', 0.92);
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Não foi possível converter a arte para JPEG.')), 'image/jpeg', 1.0);
       } catch (e) { reject(e); }
     };
     img.onerror = () => reject(new Error('Não foi possível carregar a imagem gerada pelo HTML para conversão.'));
