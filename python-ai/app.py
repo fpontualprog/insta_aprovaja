@@ -170,6 +170,15 @@ def validate_content(req: GenerateRequest, content: str) -> list[str]:
         slides = set(re.findall(r"(?im)^\s*(?:slide\s*)?(\d{1,2})\s*[:.)\-]", content))
         if len(slides) < 7:
             warnings.append(f"Controle de formato: foram detectados {len(slides)} slides numerados; eram esperados 7.")
+    # Guardrails específicos para erros jurídicos conhecidos e citações suspeitas.
+    legal_text = content.lower()
+    if "direito constitucional" in req.discipline.lower() or any(k in req.topic.lower() for k in ("direito", "constituição", "constitucional", "lei", "artigo", "direitos sociais")):
+        if re.search(r"lei\s*n[ºo.]?\s*8[.]080\s*/?\s*1990.{0,100}(educação|educacional|ldb)", legal_text, re.S):
+            warnings.append("ALERTA JURÍDICO: possível atribuição incorreta da Lei nº 8.080/1990 à educação. Conferir fonte oficial antes de publicar.")
+        if re.search(r"(moradia|direito à moradia).{0,100}art(?:igo|\.)?\s*194", legal_text, re.S):
+            warnings.append("ALERTA JURÍDICO: possível associação incorreta entre moradia e art. 194 da CF. Conferir fonte oficial antes de publicar.")
+        if re.search(r"(decisão|acórdão|processo|súmula|precedente).{0,80}\b(?:\d{1,2}[.]\d{3,}|\d{4}/\d{2,4})\b", legal_text, re.S):
+            warnings.append("ALERTA JURÍDICO: há possível número de processo ou precedente que requer verificação oficial.")
     return warnings
 
 @app.get("/health")
