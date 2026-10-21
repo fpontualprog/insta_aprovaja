@@ -56,19 +56,24 @@ function svgArt(title,kind,body,page,total,format='Feed'){
 }
 function summarySvgArt(p){
  const W=1080,H=1080;
- const xml=s=>esc(String(s??''));
- const points=(Array.isArray(p.keyPoints)&&p.keyPoints.length?p.keyPoints:[])
-  .slice(0,3).map(String);
- while(points.length<3) points.push('Revise a regra central e suas exceções na fonte oficial.');
- const wrap=(s,max)=>{const words=String(s).split(/\\s+/);const lines=[];let line='';for(const w of words){const n=(line+' '+w).trim();if(n.length>max&&line){lines.push(line);line=w}else line=n}if(line)lines.push(line);return lines.slice(0,3)};
- const titleLines=wrap(p.title||'Resumo do conteúdo',22);
- const titleSvg=titleLines.map((t,i)=>'<text x="70" y="'+(245+i*68)+'" font-family="Arial,sans-serif" font-size="58" font-weight="800" fill="'+(i===titleLines.length-1?'#ff9e1b':'#ffffff')+'">'+xml(t)+'</text>').join('');
- const rows=points.map((point,i)=>{
-  const y=490+i*125, lines=wrap(point,47);
-  return '<circle cx="100" cy="'+(y-15)+'" r="29" fill="#ff9e1b"/><text x="100" y="'+(y-5)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="28" font-weight="800" fill="#071b43">'+(i+1)+'</text>'+
-   lines.map((line,j)=>'<text x="150" y="'+(y-10+j*34)+'" font-family="Arial,sans-serif" font-size="29" font-weight="'+(j===0?'700':'500')+'" fill="#10254b">'+xml(line)+'</text>').join('');
+ const xml=v=>esc(String(v??''));
+ const raw=Array.isArray(p.keyPoints)?p.keyPoints.map(String).filter(x=>x.trim()):[];
+ const fallback=String(p.captionBody||'').split(/\\n+/).map(x=>x.replace(/^\\s*(?:[-•*]|\\d+[.)])\\s*/,'').trim()).filter(x=>x.length>18);
+ const points=raw.length?raw:fallback;
+ while(points.length<3)points.push('Revise a regra central e suas exceções na fonte oficial.');
+ const shown=points.slice(0,5);
+ const wrap=(value,max)=>{const words=String(value||'').trim().split(/\\s+/);const lines=[];let line='';for(const word of words){const next=(line+' '+word).trim();if(next.length>max&&line){lines.push(line);line=word}else line=next}if(line)lines.push(line);return lines};
+ const fit=(value,maxChars,maxLines,maxFont,minFont)=>{const lines=wrap(value,maxChars);const font=Math.max(minFont,Math.min(maxFont,Math.floor(maxFont*maxLines/Math.max(maxLines,lines.length))));const out=lines.slice(0,maxLines);if(lines.length>maxLines&&out.length)out[out.length-1]=out[out.length-1].replace(/[.,;:]?$/,'…');return {lines:out,font}};
+ const title=fit(p.title||'Resumo do conteúdo',22,2,52,36);
+ const titleSvg=title.lines.map((t,i)=>'<text x="70" y="'+(240+i*(title.font+8))+'" font-family="Arial,sans-serif" font-size="'+title.font+'" font-weight="800" fill="'+(i===title.lines.length-1?'#ff9e1b':'#ffffff')+'">'+xml(t)+'</text>').join('');
+ const boxY=375,boxH=510,pad=22,rowH=(boxH-pad*2)/shown.length;
+ const rows=shown.map((point,i)=>{
+  const cy=boxY+pad+i*rowH+rowH/2;
+  const fitted=fit(point,48,2,24,17);
+  const startY=cy-((fitted.lines.length-1)*(fitted.font+5))/2+fitted.font*.35;
+  return '<circle cx="100" cy="'+cy+'" r="25" fill="#ff9e1b"/><text x="100" y="'+(cy+9)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="25" font-weight="800" fill="#071b43">'+(i+1)+'</text>'+fitted.lines.map((line,j)=>'<text x="150" y="'+(startY+j*(fitted.font+5))+'" font-family="Arial,sans-serif" font-size="'+fitted.font+'" font-weight="'+(j===0?'700':'500')+'" fill="#10254b">'+xml(line)+'</text>').join('');
  }).join('');
- const svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'"><defs><linearGradient id="navy" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#061a3a"/><stop offset="1" stop-color="#0b3970"/></linearGradient></defs><rect width="1080" height="1080" fill="url(#navy)"/><path d="M790 0H1080V350Z" fill="#ff9e1b"/><rect x="52" y="38" width="590" height="76" rx="20" fill="#ff9e1b"/><text x="82" y="87" font-family="Arial,sans-serif" font-size="36" font-weight="900" fill="#071b43">APROVAJÁ</text><text x="370" y="86" font-family="Arial,sans-serif" font-size="19" font-weight="700" fill="#071b43">REVISÃO PARA CONCURSOS</text><text x="70" y="180" font-family="Arial,sans-serif" font-size="24" font-weight="800" letter-spacing="2" fill="#ffb347">'+xml(String(p.discipline||'RESUMO PARA CONCURSOS').toUpperCase().slice(0,36))+'</text>'+titleSvg+'<rect x="48" y="420" width="984" height="420" rx="28" fill="#f5f7fb"/>'+rows+'<rect x="48" y="865" width="984" height="145" rx="25" fill="#ff9e1b"/><text x="82" y="917" font-family="Arial,sans-serif" font-size="29" font-weight="900" fill="#071b43">TESTE SEUS CONHECIMENTOS!</text><text x="82" y="961" font-family="Arial,sans-serif" font-size="24" font-weight="700" fill="#071b43">Mais conteúdo e revisão na plataforma AprovaJá</text><text x="82" y="1038" font-family="Arial,sans-serif" font-size="20" font-weight="700" fill="#ffffff">APROVAJACONCURSO.NETLIFY.APP</text></svg>';
+ const svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" viewBox="0 0 1080 1080"><defs><linearGradient id="navy" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#061a3a"/><stop offset="1" stop-color="#0b3970"/></linearGradient></defs><rect width="1080" height="1080" fill="url(#navy)"/><path d="M790 0H1080V350Z" fill="#ff9e1b"/><rect x="52" y="38" width="590" height="76" rx="20" fill="#ff9e1b"/><text x="82" y="87" font-family="Arial,sans-serif" font-size="36" font-weight="900" fill="#071b43">APROVAJÁ</text><text x="370" y="86" font-family="Arial,sans-serif" font-size="19" font-weight="700" fill="#071b43">REVISÃO PARA CONCURSOS</text><text x="70" y="180" font-family="Arial,sans-serif" font-size="24" font-weight="800" letter-spacing="2" fill="#ffb347">'+xml(String(p.discipline||'RESUMO PARA CONCURSOS').toUpperCase().slice(0,36))+'</text>'+titleSvg+'<rect x="48" y="'+boxY+'" width="984" height="'+boxH+'" rx="28" fill="#f5f7fb"/>'+rows+'<rect x="48" y="905" width="984" height="112" rx="25" fill="#ff9e1b"/><text x="82" y="950" font-family="Arial,sans-serif" font-size="27" font-weight="900" fill="#071b43">TESTE SEUS CONHECIMENTOS!</text><text x="82" y="985" font-family="Arial,sans-serif" font-size="22" font-weight="700" fill="#071b43">Mais conteúdo e revisão na plataforma AprovaJá</text><text x="540" y="1050" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" font-weight="700" fill="#ffffff">APROVAJACONCURSO.NETLIFY.APP</text></svg>';
  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
 }
 function modalitySvgArt(p){
