@@ -21,22 +21,16 @@ function topicBody(topic,kind){
 function wrapWords(text,max){const words=text.split(/\s+/),lines=[];let line='';for(const word of words){if((line+' '+word).trim().length>max){lines.push(line);line=word}else line=(line+' '+word).trim()}if(line)lines.push(line);return lines}
 function sanitizeEditorialHtml(html){
  const parsed=new DOMParser().parseFromString(String(html||""),"text/html");
- const allowed=new Set(["SECTION","DIV","H1","H2","H3","P","UL","OL","LI","STRONG","EM","B","SPAN","BLOCKQUOTE"]);
- const cleanNode=node=>{
-  if(node.nodeType===Node.TEXT_NODE)return document.createTextNode(node.textContent||"");
-  if(node.nodeType!==Node.ELEMENT_NODE)return document.createDocumentFragment();
-  if(!allowed.has(node.tagName)){const fragment=document.createDocumentFragment();[...node.childNodes].forEach(child=>fragment.append(cleanNode(child)));return fragment;}
-  const el=document.createElement(node.tagName.toLowerCase());
-  if(node.tagName==="DIV"||node.tagName==="SECTION") {
-   const cls=(node.getAttribute("class")||"").split(/\\s+/).filter(c=>/^[a-zA-Z0-9_-]{1,40}$/.test(c)).slice(0,4);
-   if(cls.length)el.className=cls.join(" ");
-  }
-  [...node.childNodes].forEach(child=>el.append(cleanNode(child)));
-  return el;
- };
- const root=document.createElement("div");
- [...parsed.body.childNodes].forEach(node=>root.append(cleanNode(node)));
- return root;
+ parsed.querySelectorAll("script,iframe,object,embed,form,link[rel='stylesheet'],meta[http-equiv='refresh'],base").forEach(n=>n.remove());
+ parsed.querySelectorAll("*").forEach(el=>{
+  [...el.attributes].forEach(attr=>{
+   const name=attr.name.toLowerCase(),value=attr.value.trim();
+   if(name.startsWith("on")||name==="srcdoc"||name==="formaction"||
+      ((name==="href"||name==="src"||name==="xlink:href")&&/^javascript:/i.test(value))||
+      (name==="style"&&/expression\s*\(|javascript\s*:/i.test(value))) el.removeAttribute(attr.name);
+  });
+ });
+ return parsed;
 }
 let html2canvasLoader;
 function loadHtml2Canvas(){
@@ -52,27 +46,33 @@ function loadHtml2Canvas(){
 }
 async function htmlEditorialToImage(html,post){
  const render=await loadHtml2Canvas();
+ const parsed=sanitizeEditorialHtml(html);
  const frame=document.createElement("iframe");
  frame.setAttribute("aria-hidden","true");
  frame.tabIndex=-1;
- frame.style.cssText="position:fixed;left:-12000px;top:0;width:1080px;height:1080px;border:0;visibility:hidden";
+ frame.style.cssText="position:fixed;left:-12000px;top:0;width:1080px;height:1350px;border:0;visibility:hidden";
  document.body.appendChild(frame);
  try{
   const doc=frame.contentDocument;
-  doc.open();doc.write("<!doctype html><html lang='pt-BR'><head><meta charset='utf-8'><meta name='viewport' content='width=1080,initial-scale=1'><style>*{box-sizing:border-box}html,body{margin:0;width:1080px;min-height:1080px;background:#f3f6fb;color:#10254b;font-family:Arial,sans-serif}body{padding:44px}.brand{display:flex;align-items:center;justify-content:center;gap:18px;margin:0 auto 28px;padding:18px 24px;background:#071b43;border-radius:22px;color:#fff;width:100%}.brand-mark{width:62px;height:62px;border-radius:15px;background:#ff9418;color:#071b43;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:25px}.brand-name{font-size:30px;font-weight:900;letter-spacing:1px}.brand-sub{font-size:14px;letter-spacing:3px;margin-top:4px}.content{background:#fff;border-radius:26px;padding:34px 38px;box-shadow:0 12px 34px #071b4318;overflow-wrap:anywhere}.content h1{font-size:42px;line-height:1.12;margin:0 0 22px;color:#071b43}.content h2{font-size:29px;line-height:1.2;margin:22px 0 12px;color:#1453a1}.content h3{font-size:23px;margin:18px 0 10px}.content p,.content li,.content blockquote{font-size:23px;line-height:1.42}.content p{margin:10px 0}.content ul,.content ol{padding-left:32px;margin:12px 0}.content li{margin:8px 0}.content strong{color:#071b43}.footer{margin-top:22px;text-align:center;color:#1453a1;font-size:18px;font-weight:700}.content .card,.content .box{padding:14px;border-radius:14px;background:#f3f6fb;margin:10px 0}</style></head><body><header class='brand'><div class='brand-mark'>A<span style='color:#fff'>J</span></div><div><div class='brand-name'>APROVAJÁ</div><div class='brand-sub'>CONCURSOS · @aprovaja_seuconcurso</div></div></header><main class='content' id='content'></main><footer class='footer'>APROVAJACONCURSO.NETLIFY.APP</footer></body></html>");
-  doc.close();
-  const root=sanitizeEditorialHtml(html);
-  doc.getElementById("content").append(...[...root.childNodes].map(n=>doc.importNode(n,true)));
-  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-  const target=doc.body;
-  const measured=Math.max(1080,target.scrollHeight);
-  if(measured>1080)throw new Error("O conteúdo excedeu a área quadrada da arte ("+measured+" px). Reduza o texto ou divida a publicação para evitar cortes.");
-  const canvas=await render(target,{width:1080,height:1080,scale:1,backgroundColor:"#f3f6fb",windowWidth:1080,windowHeight:1080,scrollX:0,scrollY:0});
-  if(canvas.height>1080){
-   const cropped=document.createElement("canvas");cropped.width=1080;cropped.height=1080;
-   cropped.getContext("2d").drawImage(canvas,0,0,1080,1080,0,0,1080,1080);
-   return cropped.toDataURL("image/png");
+  const sourceDoc=parsed.documentElement;
+  doc.open();
+  if(sourceDoc.querySelector("body")){
+   doc.write("<!doctype html>"+sourceDoc.outerHTML);
+  }else{
+   doc.write("<!doctype html><html lang='pt-BR'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'></head><body>"+parsed.body.innerHTML+"</body></html>");
   }
+  doc.close();
+  if(!doc.querySelector("meta[name='viewport']")){
+   const viewport=doc.createElement("meta");viewport.name="viewport";viewport.content="width=1080,initial-scale=1";doc.head.appendChild(viewport);
+  }
+  doc.documentElement.style.width="1080px";
+  doc.body.style.width="1080px";
+  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  const width=1080;
+  const height=Math.ceil(Math.max(doc.body.scrollHeight,doc.documentElement.scrollHeight));
+  if(!height||height>1350)throw new Error("A arte HTML gerada tem "+height+" px de altura. Para preservar o design sem cortes, solicite à IA uma composição para Instagram de até 1080 × 1350 px e gere novamente.");
+  const canvas=await render(doc.body,{width,height,scale:1,backgroundColor:null,windowWidth:width,windowHeight:height,scrollX:0,scrollY:0,useCORS:false,allowTaint:false});
+  if(canvas.width!==width||canvas.height!==height)throw new Error("A renderização alterou as dimensões da arte. Gere novamente.");
   return canvas.toDataURL("image/png");
  }finally{frame.remove();}
 }
