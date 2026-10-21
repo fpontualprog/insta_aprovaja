@@ -125,7 +125,7 @@ def make_prompt(req: GenerateRequest, sources: list[dict]) -> str:
         snippets = "Nenhum trecho atingiu o nível mínimo de relevância nos materiais locais. Não alegue ter consultado apostilas. Produza somente o que puder sustentar com conhecimento geral e inclua aviso claro para conferir fontes oficiais."
     fmt = {
         "resumo": f"Faça um resumo de estudo sobre EXATAMENTE o tema solicitado. Inclua definição, regras/elementos centrais, distinções importantes, exemplo curto e pegadinhas de concurso. Não se desvie para outro assunto.",
-        "mapa_mental": "Crie um mapa mental textual hierárquico: tema central > ramos > sub-ramos. Use frases curtas e relações claras, apenas sobre o tema solicitado.",
+        "mapa_mental": "Crie um mapa mental textual hierárquico, com ramos e sub-ramos reais e preenchidos. Organize em 4 a 7 ramos úteis, sem níveis vazios como 'Ramos' e 'Sub-ramos'. Use frases curtas, não repita o mesmo item e apenas inclua artigos de lei ou referências normativas que estejam nos trechos recuperados. Se não houver base para uma referência específica, omita-a em vez de adivinhar.",
         "questoes": f"Crie EXATAMENTE {req.quantity} questões inéditas sobre o tema e a disciplina solicitados, no estilo {req.exam_board}. Numere de 1 a {req.quantity}. Cada questão deve ter enunciado completo, alternativas quando apropriado, gabarito e comentário explicando o fundamento. Não repita questões e não troque o tema por assunto relacionado.",
         "flashcards": f"Crie EXATAMENTE {req.quantity} flashcards sobre o tema solicitado. Numere de 1 a {req.quantity}, cada um com Pergunta e Resposta curtas. Não acrescente cartões extras.",
         "carrossel": "Crie EXATAMENTE 7 slides numerados: 1 capa, 2 a 6 conteúdo didático, 7 fechamento/CTA. Cada slide deve conter título e texto curto, sobre o tema pedido."
@@ -140,11 +140,13 @@ REQUISITOS OBRIGATÓRIOS
 - Instrução específica: {fmt}
 - Antes de responder, confirme mentalmente que cada seção trata diretamente do tema. Não substitua o tema por um caso isolado nem por um assunto apenas relacionado.
 - Use primeiro os trechos recuperados, mas avalie sua pertinência. Um trecho de outro assunto NÃO deve servir de fundamento só porque veio da mesma pasta.
+- REGRA CRÍTICA PARA DIREITO: não invente nem improvise números de artigos, leis, processos, decisões, súmulas ou jurisprudência. Só mencione referências normativas específicas que constem literalmente dos trechos recuperados. Se não houver trecho relevante, explique os conceitos sem fabricar citações ou precedentes. Nunca atribua à educação a Lei nº 8.080/1990 (ela é da saúde); nunca atribua moradia ao art. 194 (o direito à moradia está no art. 6º; art. 194 trata da seguridade social).
 - Não invente fontes, citações, números de páginas, enunciados de lei ou jurisprudência. Só atribua uma afirmação a uma fonte quando ela estiver apoiada no trecho correspondente.
 - Para Direito, diferencie texto legal, entendimento jurisprudencial e explicação didática. Se não tiver certeza de artigo, prazo ou entendimento atual, não chute: sinalize a necessidade de conferência em fonte oficial.
 - Se os materiais não forem pertinentes ou forem insuficientes, diga isso com transparência e não finja que foram utilizados.
 - Evite introduções genéricas, repetições e conclusões vagas. Priorize precisão, utilidade para prova e aderência ao pedido.
 - Ao final, inclua “Pontos que exigem conferência” somente se houver incerteza real e “Fontes efetivamente utilizadas” apenas para trechos realmente aproveitados.
+- Não produza listas com duplicações para preencher espaço. Para mapa mental, use hierarquia substantiva e direta, por exemplo: Direitos Sociais > Art. 6º; Direitos dos Trabalhadores > Arts. 7º a 11; Saúde > Art. 196; Educação > Art. 205. Não force este exemplo se o tema for outro.
 
 MATERIAIS RECUPERADOS (podem ser irrelevantes; use com senso crítico):
 {snippets}
