@@ -153,7 +153,7 @@ $('generateBatch').addEventListener('click',async()=>{
  const topics=$('bulkTopics').value.split(/\n|;/).map(x=>x.trim()).filter(Boolean);
  if(!topics.length){toast('Insira os temas antes de gerar a agenda.');return}
  if(topics.length>10){toast('Para usar IA em lote, gere no máximo 10 temas por vez.');return}
- if(!currentSession?.access_token||!supabaseClient){toast('Entre com a conta administradora para gerar conteúdo com IA.');integrationStatus('Entre com a conta administradora para usar o DeepSeek.',true);return;}
+ if(!supabaseConnected||!supabaseClient){toast('O painel ainda não está conectado ao Supabase.');integrationStatus('Aguarde a conexão com o Supabase antes de gerar conteúdo.',true);return;}
  const startValue=$('bulkStart').value||localDate(new Date());
  $('monthFilter').value=startValue.slice(0,7);
  const startDate=new Date(startValue+'T12:00:00');
@@ -182,7 +182,7 @@ $('generateBatch').addEventListener('click',async()=>{
    if(!token)throw new Error('Sua sessão expirou. Entre novamente.');
    const response=await fetch(SUPABASE_URL+'/functions/v1/generate-instagram-content',{
     method:'POST',
-    headers:{'Content-Type':'application/json','Authorization':'Bearer '+token,'apikey':SUPABASE_PUBLISHABLE_KEY},
+    headers:{'Content-Type':'application/json','Authorization': token ? 'Bearer '+token : 'Bearer '+SUPABASE_PUBLISHABLE_KEY,'apikey':SUPABASE_PUBLISHABLE_KEY},
     body:JSON.stringify({topic,kind,discipline:'Concursos públicos',brief:'Crie conteúdo educativo conciso e correto para Instagram sobre esta matéria. Tipo de publicação: '+kind+'.'})
    });
    const data=await response.json().catch(()=>({}));
@@ -220,27 +220,35 @@ const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_vPQVdnjlEY9g0vZKjeb58A_OIhkIiqH
 const INSTAGRAM_PUBLISH_URL = SUPABASE_URL + '/functions/v1/instagram-publish';
 let supabaseClient = null;
 let currentSession = null;
+let supabaseConnected = false;
 let publishBusy = false;
 
 function integrationStatus(message, isError=false) {
   const el = document.getElementById('instagramStatus');
   if (!el) return;
-  const connected = Boolean(currentSession);
-  el.dataset.connection = isError ? 'error' : (connected ? 'connected' : 'disconnected');
-  el.textContent = (connected ? '● CONECTADO — ' : (isError ? '● ERRO DE CONEXÃO — ' : '○ DESCONECTADO — ')) + message;
+  el.dataset.connection = isError ? 'error' : (supabaseConnected ? 'connected' : 'disconnected');
+  el.textContent = (isError ? '● ERRO — ' : (supabaseConnected ? '● SUPABASE CONECTADO — ' : '○ CONECTANDO — ')) + message;
   el.classList.toggle('integration-error', !!isError);
   const panel = document.getElementById('instagramIntegration');
-  if (panel) panel.classList.toggle('is-connected', connected);
+  if (panel) panel.classList.toggle('is-connected', supabaseConnected && !isError);
 }
-function updateAuthUI() {
-  const form = document.getElementById('instagramLoginForm');
-  const signed = document.getElementById('instagramSignedIn');
-  const emailLabel = document.getElementById('instagramSignedEmail');
-  const loginEmail = document.getElementById('instagramEmail');
-  if (form) form.hidden = !!currentSession;
-  if (signed) signed.hidden = !currentSession;
-  if (emailLabel) emailLabel.textContent = currentSession?.user?.email || '';
-  if (loginEmail && currentSession?.user?.email) loginEmail.value = currentSession.user.email;
+async function initializeSupabaseConnection() {
+  try {
+    if (!window.supabase?.createClient) throw new Error('A biblioteca Supabase não carregou. Atualize a página.');
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+    });
+    const response = await fetch(SUPABASE_URL + '/auth/v1/health', {
+      headers: { apikey: SUPABASE_PUBLISHABLE_KEY },
+      cache: 'no-store'
+    });
+    if (!response.ok) throw new Error('O Supabase respondeu HTTP ' + response.status + '.');
+    supabaseConnected = true;
+    integrationStatus('Conexão com o serviço confirmada. A autorização de IA e Instagram é verificada separadamente no servidor.');
+  } catch (error) {
+    supabaseConnected = false;
+    integrationStatus(error?.message || 'Não foi possível conectar ao Supabase.', true);
+  }
 }
 function imageDataToJpegBlob(dataUrl) {
   return new Promise((resolve, reject) => {
@@ -366,26 +374,7 @@ async function publishApprovedImage(postId, button) {
   }
 }
 document.addEventListener('DOMContentLoaded', async () => {
-  const loginForm = document.getElementById('instagramLoginForm');
-  const logoutButton = document.getElementById('instagramLogoutButton');
-  if (!loginForm || !window.supabase?.createClient) {
-    integrationStatus('O módulo de autenticação não carregou. Atualize a página e tente novamente.', true);
-    return;
-  }
-  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-  });
-  const { data } = await supabaseClient.auth.getSession();
-  currentSession = data?.session || null;
-  supabaseClient.auth.onAuthStateChange((_event, session) => {
-    currentSession = session;
-    updateAuthUI();
-  });
-  updateAuthUI();
-  loginForm.addEventListener('submit', signInInstagramAdmin);
-  logoutButton?.addEventListener('click', signOutInstagramAdmin);
-  if (currentSession) integrationStatus('Sessão Supabase recuperada. A autorização administrativa será conferida pelo servidor.');
-  else integrationStatus('Entre com a conta administradora do Supabase para habilitar a publicação.');
+  initializeSupabaseConnection();
 });
  
 // Listener delegado registrado imediatamente: também funciona para cards criados dinamicamente.
