@@ -96,16 +96,16 @@
 
 
 /* Login e estado de conexão destacados no topo */
-#instagramIntegration{max-width:1180px;margin:18px auto 24px;border:1px solid #d7e0ef;box-shadow:0 8px 28px rgba(16,44,99,.08)}
-#instagramIntegration .instagram-login-form{display:grid;grid-template-columns:minmax(180px,1fr) minmax(180px,1fr) auto;align-items:end;gap:10px 14px}
-#instagramIntegration .instagram-login-form label{margin:0}
+#instagramIntegration{max-width:1180px;margin:0 0 24px;border:1px solid #d7e0ef;box-shadow:0 8px 28px rgba(16,44,99,.08);overflow:hidden}
+#instagramIntegration .instagram-login-form{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;align-items:end;gap:12px 14px;width:100%;max-width:100%;min-width:0}
+#instagramIntegration .instagram-login-form .login-field{min-width:0}#instagramIntegration .instagram-login-form label{display:block;margin:0 0 7px}#instagramIntegration .instagram-login-form input{display:block;width:100%;min-width:0;max-width:100%;box-sizing:border-box}
 #instagramIntegration .instagram-login-form input{margin-top:6px}
-#instagramIntegration .instagram-login-form .actions{margin:0;align-self:end}
-#instagramStatus{display:block;margin-top:14px;padding:11px 13px;border-radius:9px;background:#fff4d8;color:#79520a;font-weight:750}
+#instagramIntegration .instagram-login-form .actions{margin:0;align-self:end;min-width:0}#instagramIntegration .instagram-login-form .btn{white-space:nowrap;max-width:100%}
+#instagramStatus{display:block;max-width:100%;overflow-wrap:anywhere;box-sizing:border-box;margin-top:14px;padding:11px 13px;border-radius:9px;background:#fff4d8;color:#79520a;font-weight:750}
 #instagramStatus[data-connection="connected"]{background:#e6f7ec;color:#17643a}
 #instagramStatus[data-connection="error"]{background:#fff0ef;color:#a12620}
 #instagramIntegration.is-connected{border-color:#6cbe8a}
-@media(max-width:720px){#instagramIntegration .instagram-login-form{grid-template-columns:1fr}#instagramIntegration .instagram-login-form .actions .btn{width:100%}}
+@media(max-width:820px){#instagramIntegration .instagram-login-form{grid-template-columns:minmax(0,1fr)}#instagramIntegration .instagram-login-form .login-field{width:100%}#instagramIntegration .instagram-login-form .actions{width:100%}#instagramIntegration .instagram-login-form .actions .btn{width:100%;white-space:normal}}
 
 
 /* Login fixo como primeira seção do conteúdo */
