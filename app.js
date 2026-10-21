@@ -93,10 +93,11 @@ function editorialForDate(d){switch(d.getDay()){case 2:return 'Questão comentad
 function nextEditorialDate(d){const x=new Date(d);while(!editorialForDate(x))x.setDate(x.getDate()+1);return x}
 function editorialForDate(d){switch(d.getDay()){case 2:return 'Questão comentada';case 4:return randomItem(['Dica de prova','Mapa mental']);case 6:return 'Concursos abertos';case 0:return randomItem(['Planejamento de estudos','Divulgação da plataforma']);default:return null}}
 function nextEditorialDate(d){const x=new Date(d);while(!editorialForDate(x))x.setDate(x.getDate()+1);return x}
-$('generateBatch').addEventListener('click',()=>{
+$('generateBatch').addEventListener('click',async()=>{
  const topics=$('bulkTopics').value.split(/\n|;/).map(x=>x.trim()).filter(Boolean);
  if(!topics.length){toast('Insira os temas antes de gerar a agenda.');return}
- if(topics.length>30){toast('Gere no máximo 30 temas por lote.');return}
+ if(topics.length>10){toast('Para usar IA em lote, gere no máximo 10 temas por vez.');return}
+ if(!currentSession?.access_token||!supabaseClient){toast('Entre com a conta administradora para gerar conteúdo com IA.');integrationStatus('Entre com a conta administradora para usar o DeepSeek.',true);return;}
  const startValue=$('bulkStart').value||localDate(new Date());
  $('monthFilter').value=startValue.slice(0,7);
  const startDate=new Date(startValue+'T12:00:00');
@@ -110,17 +111,43 @@ $('generateBatch').addEventListener('click',()=>{
  }
  if(!slots.length){toast('Não há datas editoriais restantes neste mês. Escolha o próximo mês.');return}
  if(topics.length>slots.length){toast('Há '+topics.length+' temas, mas só '+slots.length+' datas editoriais disponíveis neste mês. Reduza os temas ou escolha outro mês.');return}
- const newPosts=topics.map((topic,i)=>{
-   const d=slots[i];const kind=editorialForDate(d);
+ const button=$('generateBatch');
+ const original=button.textContent;
+ button.disabled=true;
+ const newPosts=[];
+ try{
+  for(let i=0;i<topics.length;i++){
+   button.textContent='IA gerando '+(i+1)+'/'+topics.length+'…';
+   const topic=topics[i],d=slots[i],kind=editorialForDate(d);
    const time=kind==='Questão comentada'?'12:15':kind==='Dica de prova'||kind==='Mapa mental'?'19:30':kind==='Concursos abertos'?'10:00':'18:30';
-   const p={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),title:topic,kind,format:'Feed',date:localDate(d),time,brief:'Conteúdo para revisão de concursos públicos.',status:'Pendente',needsApproval:true,caption:'',captionBody:topicBody(topic,kind),images:[]};p.images=generateArts(p);return p;
- });
- posts.push(...newPosts);
- if(!save()){posts.splice(-newPosts.length,newPosts.length);return}
- toast('Lista mensal criada. Aprove ou reprove cada publicação.');
- $('bulkTopics').value='';
- $('generatedPreview').innerHTML='<p class="hint">Lista mensal criada. Em “Novas Publicações”, revise cada pauta: aprove para gerar texto, legenda, hashtags e artes; reprove para retirá-la da agenda.</p>';
- $('posts').scrollIntoView({behavior:'smooth',block:'start'});
+   const {data:sessionData,error:sessionError}=await supabaseClient.auth.getSession();
+   if(sessionError)throw sessionError;
+   const token=sessionData?.session?.access_token;
+   if(!token)throw new Error('Sua sessão expirou. Entre novamente.');
+   const response=await fetch(SUPABASE_URL+'/functions/v1/generate-instagram-content',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+token,'apikey':SUPABASE_PUBLISHABLE_KEY},
+    body:JSON.stringify({topic,kind,discipline:'Concursos públicos',brief:'Crie conteúdo educativo conciso e correto para Instagram sobre esta matéria. Tipo de publicação: '+kind+'.'})
+   });
+   const data=await response.json().catch(()=>({}));
+   if(!response.ok)throw new Error('Falha de IA no tema "'+topic+'": '+(data.error||'HTTP '+response.status));
+   const ai=data.content||{};
+   if(!String(ai.captionBody||'').trim())throw new Error('A IA retornou conteúdo vazio para: '+topic);
+   const p={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),title:String(ai.title||topic),kind,format:'Feed',date:localDate(d),time,brief:'Gerado com IA a partir da pauta: '+topic,status:'Pendente',needsApproval:false,captionBody:String(ai.captionBody).trim(),aiHashtags:Array.isArray(ai.hashtags)?ai.hashtags:[],imageText:String(ai.imageText||'')};
+   p.caption=makeCaption(p);p.images=generateArts(p);newPosts.push(p);
+  }
+  posts.push(...newPosts);
+  if(!save()){posts.splice(-newPosts.length,newPosts.length);throw new Error('Não foi possível salvar as publicações no navegador.');}
+  toast(newPosts.length+' publicação(ões) gerada(s) com IA e salva(s) na agenda.');
+  $('bulkTopics').value='';
+  $('generatedPreview').innerHTML='<p class="hint">Publicações geradas pelo DeepSeek e adicionadas à agenda. Revise cada conteúdo antes de aprovar e publicar.</p>';
+  $('posts').scrollIntoView({behavior:'smooth',block:'start'});
+ }catch(error){
+  hostMessage=error?.message||'Não foi possível gerar o lote com IA.';
+  toast(hostMessage);
+  $('pasteStatus').textContent=hostMessage;
+  if(newPosts.length){posts.push(...newPosts);save();}
+ }finally{button.disabled=false;button.textContent=original;}
 });
 $('posts').addEventListener('click',e=>{const b=e.target.closest('button[data-action]');if(!b)return;const p=posts.find(x=>x.id===b.dataset.id);if(!p)return;switch(b.dataset.action){case'edit':{const title=prompt('Edite o tema da publicação:',p.title);if(title===null)return;if(!title.trim()){toast('O tema não pode ficar vazio.');return}p.title=title.trim();if(save())toast('Tema atualizado.');break}case'approve':if(p.needsApproval||p.status==='Pendente'){p.captionBody=topicBody(p.title,p.kind);p.caption=makeCaption(p);if(!p.images||!p.images.length)p.images=generateArts(p);p.needsApproval=false;p.status='Aprovada';if(save())toast('Aprovada e adicionada à fila de publicação com texto e artes.')}break;case'reject':posts=posts.filter(x=>x.id!==p.id);if(save())toast('Publicação reprovada e retirada da agenda.');break;case'published':p.status='Publicada';if(save())toast('Status atualizado.');break;case'delete':if(confirm('Excluir esta publicação e suas artes?')){posts=posts.filter(x=>x.id!==p.id);if(save())toast('Publicação excluída.')}break;case'copy':copyCaption(p);break}});
 
