@@ -13,7 +13,7 @@ function wrapWords(text,max){const words=text.split(/\s+/),lines=[];let line='';
 function svgArt(title,kind,body,page,total){const titleLines=wrapWords(title,23).slice(0,3);const content=page===1?'APROVAJÁ CONCURSOS':page===total?'SALVE • REVISE • COMPARTILHE':page===2?'IDEIA-CHAVE':page===total-1?'RESUMO FINAL':'PONTO IMPORTANTE';const sub=page===1?kind:page===2?wrapWords(body.replace(/\n/g,' '),34).slice(0,5).join(' '):page===total?'Acompanhe @aprovaja_seuconcurso':wrapWords(body.replace(/\n/g,' '),30).slice((page-2)*2,(page-2)*2+4).join(' ');const titleSvg=titleLines.map((l,i)=>'<text x="70" y="'+(360+i*66)+'" font-family="Arial,sans-serif" font-size="48" font-weight="700" fill="#ffffff">'+esc(l)+'</text>').join('');const safeSub=wrapWords(sub,30).slice(0,6).map((l,i)=>'<text x="72" y="'+(565+i*38)+'" font-family="Arial,sans-serif" font-size="25" fill="#102c63">'+esc(l)+'</text>').join('');const svg='<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350" viewBox="0 0 1080 1350"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#102c63"/><stop offset="1" stop-color="#1769d2"/></linearGradient></defs><rect width="1080" height="1350" fill="#f4f7fc"/><rect width="1080" height="300" fill="url(#bg)"/><circle cx="1000" cy="90" r="220" fill="#ff9e18" opacity=".9"/><path d="M0 280 Q360 360 1080 240 L1080 1350 L0 1350Z" fill="#ffffff"/><text x="70" y="90" font-family="Arial,sans-serif" font-size="30" font-weight="700" fill="#ffffff">A▶ APROVAJÁ CONCURSOS</text><text x="72" y="145" font-family="Arial,sans-serif" font-size="21" fill="#ffffff">@aprovaja_seuconcurso</text><rect x="70" y="205" width="390" height="55" rx="27" fill="#ff9e18"/><text x="92" y="242" font-family="Arial,sans-serif" font-size="23" font-weight="700" fill="#102c63">'+esc(content)+'</text>'+titleSvg+'<rect x="60" y="500" width="960" height="500" rx="28" fill="#e8f1ff"/>'+safeSub+'<rect x="60" y="1100" width="960" height="5" rx="2" fill="#ff9e18"/><text x="70" y="1160" font-family="Arial,sans-serif" font-size="25" font-weight="700" fill="#102c63">CONCURSOS PÚBLICOS • ESTUDO OBJETIVO</text><text x="70" y="1200" font-family="Arial,sans-serif" font-size="20" fill="#1769d2">Acesse grátis: aprovajaconcurso.netlify.app</text><text x="70" y="1220" font-family="Arial,sans-serif" font-size="22" fill="#52627a">Deslize para continuar  →</text><rect x="900" y="1260" width="110" height="55" rx="27" fill="#102c63"/><text x="930" y="1296" font-family="Arial,sans-serif" font-size="22" fill="#ffffff">'+page+'/'+total+'</text></svg>';return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)}
 function generateArts(p){const total=p.format==='Imagem única'?1:6;return Array.from({length:total},(_,i)=>svgArt(p.title,p.kind,p.captionBody,i+1,total))}
 function makePost(topic,kind,date,time,format='Carrossel'){const p={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),title:topic.trim(),kind,format,date,time,brief:'Conteúdo educativo para candidatos a concursos públicos. Identidade visual azul-marinho, branco e laranja.',status:'Pendente'};p.captionBody=topicBody(p.title,kind);p.caption=makeCaption(p);p.images=generateArts(p);return p}
-function render(){const filter=$('filter').value;const monthFilter=$('monthFilter')?.value||localDate(new Date()).slice(0,7);const list=posts.filter(p=>(!p.date||p.date.slice(0,7)===monthFilter)&&(filter==='all'||p.status===filter)).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));$('count').textContent=posts.length;$('pendingCount').textContent=posts.filter(p=>p.status==='Pendente'&&p.needsApproval).length;$('approvedCount').textContent=posts.filter(p=>p.status==='Aprovada'&&!p.needsApproval).length;$('publishedCount').textContent=posts.filter(p=>p.status==='Publicada').length;const host=$('posts');if(!list.length){host.className='posts-empty';host.innerHTML='<div class="empty-icon">✦</div><strong>Agenda vazia</strong><p>Gere as pautas para montar o calendário mensal.</p>';return}host.className='';host.innerHTML=list.map(p=>'<article class="post-card"><div class="post-top"><div><h3>'+esc(p.title)+'</h3><div class="meta">'+esc(p.kind)+' · '+esc(p.format||'Carrossel')+'<br>'+esc(formatDate(p.date))+' às '+esc(p.time)+'</div></div><span class="status '+esc(p.status)+'">'+esc(p.needsApproval?'Aguardando análise':p.status==='Aprovada'?'Na fila de publicação':p.status)+'</span></div><p class="meta post-caption">'+esc(p.needsApproval?'Prévia da pauta. Aprove para gerar o texto, a legenda e as artes.':p.caption||'')+'</p>'+(p.images&&p.images.length?'<div class="post-images">'+p.images.map((src,i)=>'<a href="'+src+'" download="aprovaja-arte-'+(i+1)+'.svg" target="_blank" rel="noopener"><img src="'+src+'" alt="Arte '+(i+1)+' do carrossel"><span>Baixar arte '+(i+1)+'</span></a>').join('')+'</div>':'')+'<div class="post-actions">'+(p.needsApproval?'<button class="small-btn" data-action="edit" data-id="'+p.id+'">Alterar</button><button class="small-btn" data-action="approve" data-id="'+p.id+'">Aprovar e gerar conteúdo</button><button class="small-btn" data-action="reject" data-id="'+p.id+'">Reprovar</button>':'<button class="small-btn" data-action="copy" data-id="'+p.id+'">Copiar legenda</button>')+(p.status==='Aprovada'&&!p.needsApproval?'<button class="small-btn" data-action="published" data-id="'+p.id+'">Marcar publicada</button>':'')+'<button class="small-btn" data-action="delete" data-id="'+p.id+'">Excluir</button></div></article>').join('')}function setDefaultDate(){const d=new Date();d.setDate(d.getDate()+((2-d.getDay()+7)%7||7));$('date').value=localDate(d);$('bulkStart').value=localDate(d)}
+function render(){const filter=$('filter').value;const monthFilter=$('monthFilter')?.value||localDate(new Date()).slice(0,7);const list=posts.filter(p=>(!p.date||p.date.slice(0,7)===monthFilter)&&(filter==='all'||p.status===filter)).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));$('count').textContent=posts.length;$('pendingCount').textContent=posts.filter(p=>p.status==='Pendente'&&p.needsApproval).length;$('approvedCount').textContent=posts.filter(p=>p.status==='Aprovada'&&!p.needsApproval).length;$('publishedCount').textContent=posts.filter(p=>p.status==='Publicada').length;const host=$('posts');if(!list.length){host.className='posts-empty';host.innerHTML='<div class="empty-icon">✦</div><strong>Agenda vazia</strong><p>Gere as pautas para montar o calendário mensal.</p>';return}host.className='';host.innerHTML=list.map(p=>'<article class="post-card"><div class="post-top"><div><h3>'+esc(p.title)+'</h3><div class="meta">'+esc(p.kind)+' · '+esc(p.format||'Carrossel')+'<br>'+esc(formatDate(p.date))+' às '+esc(p.time)+'</div></div><span class="status '+esc(p.status)+'">'+esc(p.needsApproval?'Aguardando análise':p.status==='Aprovada'?'Na fila de publicação':p.status)+'</span></div><p class="meta post-caption">'+esc(p.needsApproval?'Prévia da pauta. Aprove para gerar o texto, a legenda e as artes.':p.caption||'')+'</p>'+(p.images&&p.images.length?'<div class="post-images">'+p.images.map((src,i)=>'<a href="'+src+'" download="aprovaja-arte-'+(i+1)+'.svg" target="_blank" rel="noopener"><img src="'+src+'" alt="Arte '+(i+1)+' do carrossel"><span>Baixar arte '+(i+1)+'</span></a>').join('')+'</div>':'')+'<div class="post-actions">'+(p.needsApproval?'<button class="small-btn" data-action="edit" data-id="'+p.id+'">Alterar</button><button class="small-btn" data-action="approve" data-id="'+p.id+'">Aprovar e gerar conteúdo</button><button class="small-btn" data-action="reject" data-id="'+p.id+'">Reprovar</button>':'<button class="small-btn" data-action="copy" data-id="'+p.id+'">Copiar legenda</button>')+(p.status==='Aprovada'&&!p.needsApproval&&p.format==='Imagem única'?'<button class="small-btn publish-btn" data-publish-id="'+p.id+'">Publicar no Instagram</button>':'')+(p.status==='Aprovada'&&!p.needsApproval?'<button class="small-btn" data-action="published" data-id="'+p.id+'">Marcar publicada</button>':'')+'<button class="small-btn" data-action="delete" data-id="'+p.id+'">Excluir</button></div></article>').join('')}function setDefaultDate(){const d=new Date();d.setDate(d.getDate()+((2-d.getDay()+7)%7||7));$('date').value=localDate(d);$('bulkStart').value=localDate(d)}
 $('postForm').addEventListener('submit',e=>{e.preventDefault();const title=$('title').value.trim();if(!title||!$('date').value){toast('Informe título e data.');return}const p=makePost(title,$('kind').value,$('date').value,$('time').value,$('format').value);posts.push(p);if(!save()){posts.pop();return}e.target.reset();setDefaultDate();$('generatedPreview').innerHTML='<p class="hint">Artes geradas e anexadas à publicação na fila.</p>';toast('Conteúdo e artes gerados automaticamente.')});
 $('suggestBtn').addEventListener('click',()=>{const ideas={'Questão comentada':['Questão de Direito Constitucional','Questão CEBRASPE: certo ou errado?'],'Dica de prova':['Princípios da Administração Pública','Controle de constitucionalidade'],'Mapa mental':['Poderes administrativos','Organização político-administrativa'],'Planejamento de estudos':['Como organizar a semana de estudos'],'Divulgação da plataforma':['Como organizar sua preparação'],'Motivação e disciplina':['Constância nos estudos'],'Concursos abertos':['Concursos abertos no Nordeste']};$('title').value=(ideas[$('kind').value]||ideas['Dica de prova'])[0];toast('Tema sugerido. Você pode editar antes de gerar.')});
 const RANDOM_EDITORIAL_KINDS=['Dica de prova','Questão comentada','Mapa mental','Planejamento de estudos','Divulgação da plataforma','Motivação e disciplina'];
@@ -90,3 +90,166 @@ function makeContestCarousel(contests){const total=7;const today=localDate(new D
 $('generateContests').addEventListener('click',async()=>{const status=$('contestStatus');status.textContent='Consultando a base pública de concursos do AprovaJá…';const b=$('generateContests');b.disabled=true;try{const response=await fetch(CONTESTS_URL,{cache:'no-store'});if(!response.ok)throw new Error('A base de concursos não respondeu (HTTP '+response.status+').');const data=await response.json();const today=localDate(new Date());const eligible=(Array.isArray(data)?data:[]).filter(c=>{if(!c||!c.concurso||!c.inscricao_ate)return false;const deadline=String(c.inscricao_ate).slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(deadline)||deadline<today)return false;const status=String(c.situacao_prazo||'').toLowerCase();return !status.includes('vencido')&&!status.includes('sem_data')});const unique=[...new Map(eligible.map(c=>[String(c.concurso).trim().toLowerCase(),c])).values()];if(unique.length<5)throw new Error('Há apenas '+unique.length+' registros elegíveis com data válida. Não criarei um carrossel incompleto nem inventarei concursos.');const picked=shuffle(unique).slice(0,5);const post=makeContestCarousel(picked);posts.push(post);if(!save()){posts.pop();return}status.textContent='Carrossel criado com 5 concursos sorteados. A situação de inscrição ainda precisa de confirmação oficial.';toast('Carrossel de 5 concursos gerado com 7 artes.')}catch(e){status.textContent=e.message+' Confira o repositório e a atualização da base.';toast('Não foi possível gerar o carrossel de concursos.')}finally{b.disabled=false}});
 
 $('filter').addEventListener('change',render);$('monthFilter').addEventListener('change',render);setDefaultDate();$('monthFilter').value=localDate(new Date()).slice(0,7);render();
+
+
+// --- Integração segura com Supabase Auth, Storage e Instagram ---
+const SUPABASE_URL = 'https://nukddukqilhsdklocout.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_vPQVdnjlEY9g0vZKjeb58A_OIhkIiqH';
+const INSTAGRAM_PUBLISH_URL = SUPABASE_URL + '/functions/v1/instagram-publish';
+let supabaseClient = null;
+let currentSession = null;
+let publishBusy = false;
+
+function integrationStatus(message, isError=false) {
+  const el = document.getElementById('instagramStatus');
+  if (!el) return;
+  el.textContent = message;
+  el.classList.toggle('integration-error', !!isError);
+}
+function updateAuthUI() {
+  const form = document.getElementById('instagramLoginForm');
+  const signed = document.getElementById('instagramSignedIn');
+  const emailLabel = document.getElementById('instagramSignedEmail');
+  const loginEmail = document.getElementById('instagramEmail');
+  if (form) form.hidden = !!currentSession;
+  if (signed) signed.hidden = !currentSession;
+  if (emailLabel) emailLabel.textContent = currentSession?.user?.email || '';
+  if (loginEmail && currentSession?.user?.email) loginEmail.value = currentSession.user.email;
+}
+function svgToJpegBlob(dataUrl) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1080;
+        canvas.height = 1350;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('O navegador não disponibilizou o canvas.');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Não foi possível converter a arte para JPEG.')), 'image/jpeg', 0.92);
+      } catch (e) { reject(e); }
+    };
+    img.onerror = () => reject(new Error('Não foi possível carregar a arte SVG para conversão.'));
+    img.src = dataUrl;
+  });
+}
+async function signInInstagramAdmin(event) {
+  event.preventDefault();
+  const email = document.getElementById('instagramEmail').value.trim();
+  const password = document.getElementById('instagramPassword').value;
+  const button = document.getElementById('instagramLoginButton');
+  button.disabled = true;
+  integrationStatus('Validando a sessão do administrador…');
+  try {
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    currentSession = data.session;
+    document.getElementById('instagramPassword').value = '';
+    updateAuthUI();
+    integrationStatus('Sessão iniciada. A função do servidor ainda verificará se esta conta é o administrador autorizado.');
+    toast('Sessão Supabase iniciada.');
+  } catch (error) {
+    currentSession = null;
+    updateAuthUI();
+    integrationStatus('Não foi possível entrar: ' + (error?.message || 'verifique as credenciais e se o usuário existe no Supabase Auth.'), true);
+  } finally { button.disabled = false; }
+}
+async function signOutInstagramAdmin() {
+  try {
+    await supabaseClient.auth.signOut();
+  } finally {
+    currentSession = null;
+    updateAuthUI();
+    integrationStatus('Sessão encerrada. Entre novamente para publicar.');
+  }
+}
+async function publishApprovedImage(postId, button) {
+  if (publishBusy) return;
+  const post = posts.find(item => item.id === postId);
+  if (!post || post.status !== 'Aprovada' || post.needsApproval) {
+    integrationStatus('Aprove a publicação antes de enviá-la.', true); return;
+  }
+  if (post.format !== 'Imagem única') {
+    integrationStatus('Esta integração inicial publica apenas imagem única. Carrosséis exigem a etapa de publicação em sequência.', true); return;
+  }
+  if (!currentSession) {
+    integrationStatus('Entre com a conta administradora do Supabase antes de publicar.', true); return;
+  }
+  if (!post.images?.[0]) {
+    integrationStatus('Esta publicação não contém uma arte para enviar.', true); return;
+  }
+  publishBusy = true;
+  button.disabled = true;
+  const originalLabel = button.textContent;
+  button.textContent = 'Publicando…';
+  try {
+    const { data: refreshed, error: refreshError } = await supabaseClient.auth.getSession();
+    if (refreshError) throw refreshError;
+    currentSession = refreshed.session;
+    if (!currentSession?.access_token) throw new Error('A sessão expirou. Entre novamente.');
+    const jpegBlob = await svgToJpegBlob(post.images[0]);
+    const objectPath = 'publicacoes/' + Date.now() + '-' + (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)) + '.jpg';
+    const { error: uploadError } = await supabaseClient.storage
+      .from('instagram-publicacoes')
+      .upload(objectPath, jpegBlob, { contentType: 'image/jpeg', upsert: false });
+    if (uploadError) throw new Error('Falha ao enviar a arte ao Storage: ' + uploadError.message);
+    const { data: publicData } = supabaseClient.storage.from('instagram-publicacoes').getPublicUrl(objectPath);
+    if (!publicData?.publicUrl) throw new Error('Não foi possível obter a URL pública da imagem.');
+    const response = await fetch(INSTAGRAM_PUBLISH_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_PUBLISHABLE_KEY,
+        'Authorization': 'Bearer ' + currentSession.access_token
+      },
+      body: JSON.stringify({ image_url: publicData.publicUrl, caption: post.caption || makeCaption(post) })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.ok) {
+      const detail = result.error || result.message || ('HTTP ' + response.status);
+      throw new Error(detail + (result.stage ? ' (etapa: ' + result.stage + ')' : ''));
+    }
+    post.status = 'Publicada';
+    post.instagramMediaId = result.media_id;
+    post.publishedAt = new Date().toISOString();
+    if (save()) {
+      integrationStatus('Publicação confirmada pelo Instagram para @' + (result.instagram_username || 'aprovaja_seuconcurso') + '.');
+      toast('Instagram confirmou a publicação.');
+    }
+  } catch (error) {
+    integrationStatus('Não foi possível publicar: ' + (error?.message || 'erro inesperado') + '. A publicação continua na fila.', true);
+  } finally {
+    publishBusy = false;
+    button.disabled = false;
+    button.textContent = originalLabel;
+  }
+}
+document.addEventListener('DOMContentLoaded', async () => {
+  const loginForm = document.getElementById('instagramLoginForm');
+  const logoutButton = document.getElementById('instagramLogoutButton');
+  if (!loginForm || !window.supabase?.createClient) {
+    integrationStatus('O módulo de autenticação não carregou. Atualize a página e tente novamente.', true);
+    return;
+  }
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+  });
+  const { data } = await supabaseClient.auth.getSession();
+  currentSession = data?.session || null;
+  supabaseClient.auth.onAuthStateChange((_event, session) => {
+    currentSession = session;
+    updateAuthUI();
+  });
+  updateAuthUI();
+  loginForm.addEventListener('submit', signInInstagramAdmin);
+  logoutButton?.addEventListener('click', signOutInstagramAdmin);
+  if (currentSession) integrationStatus('Sessão Supabase recuperada. A autorização administrativa será conferida pelo servidor.');
+  else integrationStatus('Entre com a conta administradora do Supabase para habilitar a publicação.');
+  document.getElementById('posts')?.addEventListener('click', event => {
+    const button = event.target.closest('button[data-publish-id]');
+    if (button) publishApprovedImage(button.dataset.publishId, button);
+  });
+});
