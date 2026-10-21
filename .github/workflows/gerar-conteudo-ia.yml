@@ -114,20 +114,20 @@ jobs:
           response.raise_for_status()
           data = response.json()
           with open("output/conteudo.md", "w", encoding="utf-8") as f:
-              f.write("# " + data["topic"] + "\\n\\n")
-              f.write("**Disciplina:** " + payload["discipline"] + "  \\n")
-              f.write("**Formato:** " + data["kind"] + "  \\n")
-              f.write("**Modelo local:** " + data["model"] + "\\n\\n")
+              f.write("# " + data["topic"] + "\n\n")
+              f.write("**Disciplina:** " + payload["discipline"] + "  \n")
+              f.write("**Formato:** " + data["kind"] + "  \n")
+              f.write("**Modelo local:** " + data["model"] + "\n\n")
               if data.get("warning"):
-                  f.write("> **Atenção:** " + data["warning"] + "\\n\\n")
-              f.write(data["content"] + "\\n\\n")
-              f.write("## Fontes recuperadas pelo sistema\\n")
+                  f.write("> **Atenção:** " + data["warning"] + "\n\n")
+              f.write(data["content"] + "\n\n")
+              f.write("## Fontes recuperadas pelo sistema\n")
               if data.get("sources"):
                   for s in data["sources"]:
                       suffix = f", página/slide {s['page']}" if s.get("page") else ""
-                      f.write(f"- {s['source']}{suffix}\\n")
+                      f.write(f"- {s['source']}{suffix}\n")
               else:
-                  f.write("- Nenhuma fonte local relevante foi recuperada para este tema.\\n")
+                  f.write("- Nenhuma fonte local relevante foi recuperada para este tema.\n")
           with open("output/metadata.json", "w", encoding="utf-8") as f:
               json.dump({"request": payload, "model": data.get("model"), "sources": data.get("sources", []), "warnings": data.get("warnings", []), "retrieval": data.get("retrieval", {})}, f, ensure_ascii=False, indent=2)
           print("Conteúdo gerado em output/conteudo.md")
