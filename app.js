@@ -489,6 +489,7 @@ $('postForm')?.addEventListener('submit', async e=>{
    p.aiHashtags=Array.isArray(ai.hashtags)?ai.hashtags:[];
    p.imageText=String(ai.imageText||'');
    p.keyPoints=Array.isArray(ai.keyPoints)?ai.keyPoints:[];
+   p.mindMap=ai.mindMap&&typeof ai.mindMap==='object'?ai.mindMap:null;
    p.discipline=discipline;
    p.brief=brief;
    p.caption=makeCaption(p);
