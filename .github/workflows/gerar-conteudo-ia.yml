@@ -133,6 +133,9 @@ jobs:
           print("Conteúdo gerado em output/conteudo.md")
           PY
 
+      - name: Montar artes do Instagram
+        run: python python-ai/render_instagram.py
+
       - name: Disponibilizar arquivos gerados
         if: always()
         uses: actions/upload-artifact@v4
