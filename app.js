@@ -93,9 +93,15 @@ function modalitySvgArt(p){
    (opts.length?opts:points.slice(0,3).map((x,i)=>String.fromCharCode(65+i)+') '+x)).map((x,i)=>'<rect x="78" y="'+(630+i*54)+'" width="920" height="45" rx="12" fill="'+(i===0?'#ffedd1':'#ffffff')+'"/><text x="98" y="'+(660+i*54)+'" font-family="Arial,sans-serif" font-size="21" fill="#10254b">'+escXml(x.slice(0,78))+'</text>').join('')+
    '<text x="86" y="880" font-family="Arial,sans-serif" font-size="22" font-weight="700" fill="#ff9418">'+escXml(wrap(explanation,65,2).join(' ').slice(0,125))+'</text>';
  }else if(kind==='Mapa mental'){
-  const labels=points.concat(['Conceito','Aplicação']).slice(0,5);
-  body='<circle cx="540" cy="680" r="105" fill="#ff9e1b"/><text x="540" y="672" text-anchor="middle" font-family="Arial,sans-serif" font-size="26" font-weight="900" fill="#071b43">'+escXml(wrap(title,15,2).join(' '))+'</text><text x="540" y="710" text-anchor="middle" font-family="Arial,sans-serif" font-size="19" font-weight="700" fill="#071b43">APROVAJÁ</text>'+
-  labels.map((x,i)=>{const pos=[{x:540,y:470},{x:820,y:570},{x:780,y:790},{x:300,y:790},{x:260,y:570}][i];return '<line x1="540" y1="680" x2="'+pos.x+'" y2="'+pos.y+'" stroke="#ff9e1b" stroke-width="7"/><rect x="'+(pos.x-120)+'" y="'+(pos.y-47)+'" width="240" height="94" rx="20" fill="'+(i%2?'#f5f7fb':'#fff0d6')+'"/>'+wrap(x,20,3).map((t,j)=>'<text x="'+pos.x+'" y="'+(pos.y-5+j*25)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="19" font-weight="700" fill="#10254b">'+escXml(t)+'</text>').join('')}).join('');
+  const mm=p.mindMap&&Array.isArray(p.mindMap.branches)?p.mindMap:null;
+  const branches=(mm?mm.branches:points.slice(0,3).map((x,i)=>({title:['REGRA PRINCIPAL','APLICAÇÃO','PONTO DE PROVA'][i],description:x}))).slice(0,3);
+  while(branches.length<3)branches.push({title:'PONTO-CHAVE',description:'Confira a regra aplicável na fonte oficial.'});
+  const center=String(mm?.central||title);
+  const wrapBranch=(value,max,n=3)=>{const words=String(value||'').trim().split(/\s+/);const lines=[];let line='';for(const w of words){const next=(line+' '+w).trim();if(next.length>max&&line){lines.push(line);line=w}else line=next}if(line)lines.push(line);return lines.slice(0,n)};
+  const cards=[{x:540,y:500,w:330,h:132},{x:245,y:735,w:330,h:150},{x:835,y:735,w:330,h:150}];
+  body='<line x1="540" y1="720" x2="540" y2="565" stroke="#ff9e1b" stroke-width="8"/><line x1="475" y1="750" x2="320" y2="735" stroke="#ff9e1b" stroke-width="8"/><line x1="605" y1="750" x2="760" y2="735" stroke="#ff9e1b" stroke-width="8"/>'+
+   cards.map((pos,i)=>{const br=branches[i];const head=wrapBranch(br.title,22,2),desc=wrapBranch(br.description,31,3);return '<rect x="'+(pos.x-pos.w/2)+'" y="'+(pos.y-pos.h/2)+'" width="'+pos.w+'" height="'+pos.h+'" rx="20" fill="'+(i===1?'#fff0d6':'#f5f7fb')+'"/>'+head.map((t,j)=>'<text x="'+pos.x+'" y="'+(pos.y-32+j*25)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" font-weight="900" fill="#10254b">'+escXml(t)+'</text>').join('')+desc.map((t,j)=>'<text x="'+pos.x+'" y="'+(pos.y+15+j*22)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="17" fill="#10254b">'+escXml(t)+'</text>').join('')}).join('')+
+   '<circle cx="540" cy="720" r="86" fill="#ff9e1b" stroke="#071b43" stroke-width="5"/>'+wrapBranch(center,15,3).map((t,i)=>'<text x="540" y="'+(706+i*24)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="19" font-weight="900" fill="#071b43">'+escXml(t)+'</text>').join('');
  }else{
   const headings=kind==='Dica de prova'?['ATENÇÃO À BANCA','REGRA ESSENCIAL','NA HORA DA PROVA']:kind==='Planejamento de estudos'?['DEFINA A META','ORGANIZE A ROTINA','PRATIQUE E REVISE','ACOMPANHE O PROGRESSO']:kind==='Divulgação da plataforma'?['BANCO DE QUESTÕES','AGENDA DE ESTUDOS','SIMULADOS E REVISÃO']:kind==='Motivação e disciplina'?['ESTABELEÇA UMA ROTINA','MANTENHA O FOCO','VALORIZE O PROGRESSO']:kind==='Concursos abertos'?['EDITAL E INSCRIÇÕES','CARGOS E VAGAS','PRAZOS E FONTE OFICIAL']:['PONTO ESSENCIAL','COMO APLICAR','REVISÃO'];
   const items=points.slice(0,Math.min(4,headings.length));
@@ -190,7 +196,7 @@ $('generateBatch').addEventListener('click',async()=>{
    const ai=data.content||{};
    if(!String(ai.captionBody||'').trim())throw new Error('A IA retornou conteúdo vazio para: '+topic);
    const p={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),title:String(ai.title||topic),kind,format:'Feed',date:localDate(d),time,brief:'Gerado com IA a partir da pauta: '+topic,status:'Pendente',needsApproval:false,captionBody:String(ai.captionBody).trim(),aiHashtags:Array.isArray(ai.hashtags)?ai.hashtags:[],imageText:String(ai.imageText||'')};
-   p.keyPoints=Array.isArray(ai.keyPoints)?ai.keyPoints:[];p.discipline='Concursos públicos';p.imageText=String(ai.imageText||'');p.caption=makeCaption(p);p.images=generateArts(p);newPosts.push(p);
+   p.keyPoints=Array.isArray(ai.keyPoints)?ai.keyPoints:[];p.mindMap=ai.mindMap&&typeof ai.mindMap==='object'?ai.mindMap:null;p.discipline='Concursos públicos';p.imageText=String(ai.imageText||'');p.caption=makeCaption(p);p.images=generateArts(p);newPosts.push(p);
   }
   posts.push(...newPosts);
   if(!save()){posts.splice(-newPosts.length,newPosts.length);throw new Error('Não foi possível salvar as publicações no navegador.');}
