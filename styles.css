@@ -45,3 +45,6 @@
 .publish-btn{background:#102c63;color:#fff;border-color:#102c63}
 .publish-btn:hover{background:#1769d2;color:#fff}
 .publish-btn:disabled{opacity:.6;cursor:wait}
+
+/* Publicação imediata pelo administrador, independente da data programada */
+.publish-btn{background:#102c63;color:#fff;border-color:#102c63;font-weight:800}.publish-btn:hover{background:#1769d2;color:#fff}.publish-btn:disabled{opacity:.6;cursor:wait}
