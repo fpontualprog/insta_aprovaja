@@ -1,0 +1,143 @@
+name: Gerar conteúdo com IA gratuita
+
+on:
+  workflow_dispatch:
+    inputs:
+      tema:
+        description: "Tema do conteúdo"
+        required: true
+        type: string
+      disciplina:
+        description: "Disciplina"
+        required: true
+        default: "Direito Constitucional"
+        type: string
+      formato:
+        description: "Formato de saída"
+        required: true
+        type: choice
+        options:
+          - resumo
+          - mapa_mental
+          - questoes
+          - flashcards
+          - carrossel
+      quantidade:
+        description: "Quantidade de questões ou flashcards (1 a 10)"
+        required: true
+        default: "5"
+        type: string
+      banca:
+        description: "Banca de concurso"
+        required: true
+        default: "CEBRASPE"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  gerar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - name: Baixar repositório
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: python-ai/requirements.txt
+
+      - name: Instalar Ollama
+        shell: bash
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
+          (ollama serve > /tmp/ollama.log 2>&1 &) 
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:11434/api/tags >/dev/null; then
+              break
+            fi
+            sleep 3
+          done
+          curl -fsS http://127.0.0.1:11434/api/tags >/dev/null
+          ollama pull qwen2.5:1.5b
+
+      - name: Instalar dependências Python
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r python-ai/requirements.txt
+
+      - name: Iniciar serviço de conteúdo
+        env:
+          OLLAMA_MODEL: qwen2.5:1.5b
+          GOOGLE_DRIVE_FOLDER_URL: https://drive.google.com/drive/folders/1EUof9_ZX-FiLA1GTi8le5AQpccKH08je?usp=sharing
+          MATERIALS_DIR: ${{ github.workspace }}/python-ai/materiais
+        shell: bash
+        run: |
+          mkdir -p output
+          nohup uvicorn app:app --app-dir python-ai --host 127.0.0.1 --port 8000 > /tmp/aprovaja-api.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:8000/health >/dev/null; then
+              break
+            fi
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:8000/health
+
+      - name: Sincronizar materiais públicos do Drive
+        continue-on-error: true
+        run: |
+          curl -sS -X POST http://127.0.0.1:8000/sync-drive -o output/sincronizacao.json
+          cat output/sincronizacao.json
+
+      - name: Gerar conteúdo
+        env:
+          TEMA: ${{ inputs.tema }}
+          DISCIPLINA: ${{ inputs.disciplina }}
+          FORMATO: ${{ inputs.formato }}
+          QUANTIDADE: ${{ inputs.quantidade }}
+          BANCA: ${{ inputs.banca }}
+        run: |
+          python - <<'PY'
+          import json, os, requests
+          payload = {
+              "topic": os.environ["TEMA"],
+              "discipline": os.environ["DISCIPLINA"],
+              "kind": os.environ["FORMATO"],
+              "quantity": max(1, min(10, int(os.environ["QUANTIDADE"]))),
+              "exam_board": os.environ["BANCA"],
+          }
+          response = requests.post("http://127.0.0.1:8000/generate", json=payload, timeout=300)
+          response.raise_for_status()
+          data = response.json()
+          with open("output/conteudo.md", "w", encoding="utf-8") as f:
+              f.write("# " + data["topic"] + "\n\n")
+              f.write("**Disciplina:** " + payload["discipline"] + "  \n")
+              f.write("**Formato:** " + data["kind"] + "  \n")
+              f.write("**Modelo local:** " + data["model"] + "\n\n")
+              if data.get("warning"):
+                  f.write("> **Atenção:** " + data["warning"] + "\n\n")
+              f.write(data["content"] + "\n\n")
+              f.write("## Fontes recuperadas pelo sistema\n")
+              if data.get("sources"):
+                  for s in data["sources"]:
+                      suffix = f", página/slide {s['page']}" if s.get("page") else ""
+                      f.write(f"- {s['source']}{suffix}\n")
+              else:
+                  f.write("- Nenhuma fonte local foi recuperada para este tema.\n")
+          with open("output/metadata.json", "w", encoding="utf-8") as f:
+              json.dump({"request": payload, "model": data.get("model"), "sources": data.get("sources", [])}, f, ensure_ascii=False, indent=2)
+          print("Conteúdo gerado em output/conteudo.md")
+          PY
+
+      - name: Disponibilizar arquivos gerados
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aprovaja-conteudo-gerado
+          path: output/
+          if-no-files-found: warn
+          retention-days: 7
