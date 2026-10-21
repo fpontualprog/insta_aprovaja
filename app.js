@@ -233,21 +233,37 @@ function integrationStatus(message, isError=false) {
   if (panel) panel.classList.toggle('is-connected', supabaseConnected && !isError);
 }
 async function initializeSupabaseConnection() {
+  integrationStatus('Inicializando o cliente Supabase…');
   try {
     if (!window.supabase?.createClient) throw new Error('A biblioteca Supabase não carregou. Atualize a página.');
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
     });
-    const response = await fetch(SUPABASE_URL + '/auth/v1/health', {
-      headers: { apikey: SUPABASE_PUBLISHABLE_KEY },
-      cache: 'no-store'
-    });
-    if (!response.ok) throw new Error('O Supabase respondeu HTTP ' + response.status + '.');
+    integrationStatus('Cliente carregado; verificando resposta do servidor…');
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    let response;
+    try {
+      response = await fetch(SUPABASE_URL + '/rest/v1/', {
+        method: 'GET',
+        headers: { apikey: SUPABASE_PUBLISHABLE_KEY },
+        cache: 'no-store',
+        signal: controller.signal
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
+    if (!response.ok && response.status !== 404) {
+      throw new Error('O servidor Supabase respondeu HTTP ' + response.status + '.');
+    }
     supabaseConnected = true;
-    integrationStatus('Conexão com o serviço confirmada. A autorização de IA e Instagram é verificada separadamente no servidor.');
+    integrationStatus('Servidor Supabase respondeu. Conexão automática ativa; a IA e a publicação ainda dependem das permissões de servidor.');
   } catch (error) {
     supabaseConnected = false;
-    integrationStatus(error?.message || 'Não foi possível conectar ao Supabase.', true);
+    const detail = error?.name === 'AbortError'
+      ? 'Tempo limite de 8 segundos excedido ao contatar o Supabase.'
+      : (error?.message || 'Não foi possível conectar ao Supabase. Verifique a rede e as configurações CORS.');
+    integrationStatus(detail, true);
   }
 }
 function imageDataToJpegBlob(dataUrl) {
