@@ -224,8 +224,12 @@ let publishBusy = false;
 function integrationStatus(message, isError=false) {
   const el = document.getElementById('instagramStatus');
   if (!el) return;
-  el.textContent = message;
+  const connected = Boolean(currentSession);
+  el.dataset.connection = isError ? 'error' : (connected ? 'connected' : 'disconnected');
+  el.textContent = (connected ? '● CONECTADO — ' : (isError ? '● ERRO DE CONEXÃO — ' : '○ DESCONECTADO — ')) + message;
   el.classList.toggle('integration-error', !!isError);
+  const panel = document.getElementById('instagramIntegration');
+  if (panel) panel.classList.toggle('is-connected', connected);
 }
 function updateAuthUI() {
   const form = document.getElementById('instagramLoginForm');
