@@ -136,3 +136,18 @@ main.wrap>#instagramIntegration h2{margin-top:0}
  .single-generator-panel form>*{grid-column:1/-1}
  .publication-calendar-panel #posts:not(.posts-empty){grid-template-columns:1fr}
 }
+
+/* Cronograma mensal de publicações */
+.monthly-schedule-panel{margin-bottom:18px}
+.schedule-month-label{display:inline-flex;align-items:center;white-space:nowrap;border-radius:20px;background:#edf4ff;color:#174ea6;padding:7px 11px;font-size:11px;font-weight:800;text-transform:capitalize}
+.schedule-table-wrap{width:100%;overflow-x:auto;margin-top:16px}
+.monthly-schedule-table{width:100%;border-collapse:collapse;font-size:12px;text-align:left}
+.monthly-schedule-table th{padding:11px 12px;background:#f4f7fc;color:#52627a;font-size:10px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+.monthly-schedule-table td{padding:12px;border-bottom:1px solid var(--line);vertical-align:top}
+.monthly-schedule-table tbody tr:last-child td{border-bottom:0}
+.monthly-schedule-table .schedule-title-cell{font-weight:700;min-width:220px;color:var(--navy)}
+.monthly-schedule-table .schedule-empty{text-align:center;color:var(--muted);padding:24px}
+.schedule-status{display:inline-block;border-radius:20px;padding:5px 8px;background:#fff3dc;color:#865200;font-size:10px;font-weight:800;white-space:nowrap}
+.schedule-status.Aprovada{background:#e4f6eb;color:#197044}
+.schedule-status.Publicada{background:#e5efff;color:#174ea6}
+@media(max-width:600px){.monthly-schedule-table{min-width:620px}.monthly-schedule-panel{padding:17px}.monthly-schedule-panel .panel-head{align-items:flex-start}}
