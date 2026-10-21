@@ -93,3 +93,16 @@
 #posts.posts-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
 #posts.posts-grid .post-card{min-width:0;margin-bottom:0}
 @media(max-width:650px){#posts.posts-grid{grid-template-columns:1fr}}
+
+
+/* Login e estado de conexão destacados no topo */
+#instagramIntegration{max-width:1180px;margin:18px auto 24px;border:1px solid #d7e0ef;box-shadow:0 8px 28px rgba(16,44,99,.08)}
+#instagramIntegration .instagram-login-form{display:grid;grid-template-columns:minmax(180px,1fr) minmax(180px,1fr) auto;align-items:end;gap:10px 14px}
+#instagramIntegration .instagram-login-form label{margin:0}
+#instagramIntegration .instagram-login-form input{margin-top:6px}
+#instagramIntegration .instagram-login-form .actions{margin:0;align-self:end}
+#instagramStatus{display:block;margin-top:14px;padding:11px 13px;border-radius:9px;background:#fff4d8;color:#79520a;font-weight:750}
+#instagramStatus[data-connection="connected"]{background:#e6f7ec;color:#17643a}
+#instagramStatus[data-connection="error"]{background:#fff0ef;color:#a12620}
+#instagramIntegration.is-connected{border-color:#6cbe8a}
+@media(max-width:720px){#instagramIntegration .instagram-login-form{grid-template-columns:1fr}#instagramIntegration .instagram-login-form .actions .btn{width:100%}}
