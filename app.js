@@ -71,7 +71,7 @@ async function htmlEditorialToImage(html,post){
   const width=1080;
   const height=Math.ceil(Math.max(doc.body.scrollHeight,doc.documentElement.scrollHeight));
   if(!height||height>1350)throw new Error("A arte HTML gerada tem "+height+" px de altura. Para preservar o design sem cortes, solicite à IA uma composição para Instagram de até 1080 × 1350 px e gere novamente.");
-  const canvas=await render(doc.body,{width,height,scale:1,backgroundColor:null,windowWidth:width,windowHeight:height,scrollX:0,scrollY:0,useCORS:false,allowTaint:false});
+  const canvas=await render(doc.documentElement,{width,height,scale:1,backgroundColor:null,windowWidth:width,windowHeight:height,scrollX:0,scrollY:0,useCORS:false,allowTaint:false});
   if(canvas.width!==width||canvas.height!==height)throw new Error("A renderização alterou as dimensões da arte. Gere novamente.");
   return canvas.toDataURL("image/png");
  }finally{frame.remove();}
