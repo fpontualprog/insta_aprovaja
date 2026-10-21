@@ -94,16 +94,18 @@ function modalitySvgArt(p){
    '<text x="86" y="880" font-family="Arial,sans-serif" font-size="22" font-weight="700" fill="#ff9418">'+escXml(wrap(explanation,65,2).join(' ').slice(0,125))+'</text>';
  }else if(kind==='Mapa mental'){
   const mm=p.mindMap&&Array.isArray(p.mindMap.branches)?p.mindMap:null;
-  const branches=(mm?mm.branches:points.slice(0,3).map((x,i)=>({title:['REGRA PRINCIPAL','APLICAÇÃO','PONTO DE PROVA'][i],description:x}))).slice(0,3);
-  while(branches.length<3)branches.push({title:'PONTO-CHAVE',description:'Confira a regra aplicável na fonte oficial.'});
+  const branches=(mm?mm.branches:points.slice(0,5).map((x,i)=>({title:['MODALIDADE 1','MODALIDADE 2','MODALIDADE 3','MODALIDADE 4','MODALIDADE 5'][i],description:x}))).slice(0,5);
+  while(branches.length<5)branches.push({title:'PONTO-CHAVE',description:'Confira a regra aplicável na fonte oficial.'});
   const center=String(mm?.central||title);
-  const wrapBranch=(value,max,n=3)=>{const words=String(value||'').trim().split(/\s+/);const lines=[];let line='';for(const w of words){const next=(line+' '+w).trim();if(next.length>max&&line){lines.push(line);line=w}else line=next}if(line)lines.push(line);if(lines.length>n){lines.length=n;lines[n-1]=lines[n-1].replace(/[.,;:]?$/,'…')}return lines};
-  const branchCard=(pos,br,i)=>{const titleLines=wrapBranch(br.title||'PONTO-CHAVE',20,2);const descLines=wrapBranch(br.description||'',25,3);const titleY=pos.y-pos.h/2+31;const descY=titleY+titleLines.length*22+10;return '<rect x="'+(pos.x-pos.w/2)+'" y="'+(pos.y-pos.h/2)+'" width="'+pos.w+'" height="'+pos.h+'" rx="18" fill="'+(i===1?'#fff0d6':'#f5f7fb')+'"/>'+titleLines.map((t,j)=>'<text x="'+pos.x+'" y="'+(titleY+j*22)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="17" font-weight="900" fill="#10254b">'+escXml(t)+'</text>').join('')+descLines.map((t,j)=>'<text x="'+pos.x+'" y="'+(descY+j*21)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="15" fill="#10254b">'+escXml(t)+'</text>').join('')};
-  body='<path d="M540 575 L540 515 M470 690 L300 750 M610 690 L780 750" fill="none" stroke="#ff9e1b" stroke-width="7"/>'+
-   branchCard({x:540,y:465,w:320,h:125},branches[0],0)+
-   branchCard({x:230,y:815,w:300,h:170},branches[1],1)+
-   branchCard({x:850,y:815,w:300,h:170},branches[2],2)+
-   '<circle cx="540" cy="665" r="82" fill="#ff9e1b" stroke="#071b43" stroke-width="5"/>'+wrapBranch(center,13,3).map((t,i)=>'<text x="540" y="'+(651+i*22)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="17" font-weight="900" fill="#071b43">'+escXml(t)+'</text>').join('');
+  const wrapBranch=(value,max,n=2)=>{const words=String(value||'').trim().split(/\s+/);const lines=[];let line='';for(const w of words){const next=(line+' '+w).trim();if(next.length>max&&line){lines.push(line);line=w}else line=next}if(line)lines.push(line);if(lines.length>n){lines.length=n;lines[n-1]=lines[n-1].replace(/[.,;:]?$/,'…')}return lines};
+  const branchCard=(pos,br,i)=>{const titleLines=wrapBranch(br.title||'PONTO-CHAVE',19,2);const descLines=wrapBranch(br.description||'',25,2);const titleY=pos.y-pos.h/2+25;const descY=titleY+titleLines.length*19+7;return '<rect x="'+(pos.x-pos.w/2)+'" y="'+(pos.y-pos.h/2)+'" width="'+pos.w+'" height="'+pos.h+'" rx="16" fill="'+(i%2?'#fff0d6':'#f5f7fb')+'"/>'+titleLines.map((t,j)=>'<text x="'+pos.x+'" y="'+(titleY+j*19)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="15" font-weight="900" fill="#10254b">'+escXml(t)+'</text>').join('')+descLines.map((t,j)=>'<text x="'+pos.x+'" y="'+(descY+j*19)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" fill="#10254b">'+escXml(t)+'</text>').join('')};
+  body='<path d="M540 550 L540 500 M458 650 L360 620 M622 650 L720 620 M485 725 L400 815 M595 725 L680 815" fill="none" stroke="#ff9e1b" stroke-width="6"/>'+
+   branchCard({x:540,y:465,w:300,h:95},branches[0],0)+
+   branchCard({x:220,y:625,w:280,h:130},branches[1],1)+
+   branchCard({x:860,y:625,w:280,h:130},branches[2],2)+
+   branchCard({x:340,y:845,w:280,h:120},branches[3],3)+
+   branchCard({x:740,y:845,w:280,h:120},branches[4],4)+
+   '<circle cx="540" cy="680" r="75" fill="#ff9e1b" stroke="#071b43" stroke-width="5"/>'+wrapBranch(center,13,3).map((t,i)=>'<text x="540" y="'+(666+i*21)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" font-weight="900" fill="#071b43">'+escXml(t)+'</text>').join('');
  }else{
   const headings=kind==='Dica de prova'?['ATENÇÃO À BANCA','REGRA ESSENCIAL','NA HORA DA PROVA']:kind==='Planejamento de estudos'?['DEFINA A META','ORGANIZE A ROTINA','PRATIQUE E REVISE','ACOMPANHE O PROGRESSO']:kind==='Divulgação da plataforma'?['BANCO DE QUESTÕES','AGENDA DE ESTUDOS','SIMULADOS E REVISÃO']:kind==='Motivação e disciplina'?['ESTABELEÇA UMA ROTINA','MANTENHA O FOCO','VALORIZE O PROGRESSO']:kind==='Concursos abertos'?['EDITAL E INSCRIÇÕES','CARGOS E VAGAS','PRAZOS E FONTE OFICIAL']:['PONTO ESSENCIAL','COMO APLICAR','REVISÃO'];
   const items=points.slice(0,Math.min(4,headings.length));
