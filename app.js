@@ -57,8 +57,6 @@ function svgArt(title,kind,body,page,total,format='Feed'){
 function generateArts(p){return [svgArt(p.title,p.kind,p.captionBody,1,1,p.format||'Feed')]}
 function makePost(topic,kind,date,time,format='Carrossel'){const p={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),title:topic.trim(),kind,format,date,time,brief:'Conteúdo educativo para candidatos a concursos públicos. Identidade visual azul-marinho, branco e laranja.',status:'Pendente'};p.captionBody=topicBody(p.title,kind);p.caption=makeCaption(p);p.images=generateArts(p);return p}
 function render(){const filter=$('filter').value;const monthFilter=$('monthFilter')?.value||localDate(new Date()).slice(0,7);const list=posts.filter(p=>(!p.date||p.date.slice(0,7)===monthFilter)&&(filter==='all'||filter==='Pendente'?(filter==='all'||p.status==='Pendente'||p.needsApproval):p.status===filter)).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));$('count').textContent=posts.length;$('pendingCount').textContent=posts.filter(p=>p.status==='Pendente'||p.needsApproval).length;$('approvedCount').textContent=posts.filter(p=>p.status==='Aprovada'&&!p.needsApproval).length;$('publishedCount').textContent=posts.filter(p=>p.status==='Publicada').length;const host=$('posts');if(!list.length){host.className='posts-empty';host.innerHTML='<div class="empty-icon">✦</div><strong>Agenda vazia</strong><p>Gere as pautas para montar o calendário mensal.</p>';return}host.className='';host.innerHTML=list.map(p=>{const needsApproval=!!p.needsApproval||p.status==='Pendente';return '<article class="post-card layout-'+esc((p.kind||'dica').toLowerCase().replace(/[^a-z0-9]+/g,'-'))+'"><div class="post-top"><div><h3>'+esc(p.title)+'</h3><div class="meta">'+esc(p.kind)+' · '+esc(p.format||'Carrossel')+'<br>'+esc(formatDate(p.date))+' às '+esc(p.time)+'</div></div><span class="status '+esc(p.status)+'">'+esc(needsApproval?'Aguardando aprovação':p.status==='Aprovada'?'Na fila de publicação':p.status)+'</span></div><p class="post-caption">'+esc(needsApproval?'Prévia da pauta. Aprove para gerar o texto, a legenda e as artes.':p.caption||'')+'</p>'+(p.images&&p.images.length?'<div class="post-images">'+p.images.map((src,i)=>'<a href="'+src+'" download="aprovaja-arte-'+(i+1)+'.svg" target="_blank" rel="noopener"><img src="'+src+'" alt="Arte '+(i+1)+' do carrossel"><span>Baixar arte '+(i+1)+'</span></a>').join('')+'</div>':'')+'<div class="post-actions">'+(needsApproval?'<button class="small-btn" data-action="edit" data-id="'+p.id+'">Alterar</button><button class="small-btn approve-btn" data-action="approve" data-id="'+p.id+'">Aprovar e gerar conteúdo</button><button class="small-btn" data-action="reject" data-id="'+p.id+'">Reprovar</button>':'<button class="small-btn" data-action="copy" data-id="'+p.id+'">Copiar legenda</button>')+(p.status==='Aprovada'&&!needsApproval?'<button class="small-btn publish-btn" data-publish-id="'+p.id+'">Publicar agora</button><button class="small-btn" data-action="published" data-id="'+p.id+'">Marcar publicada</button>':'')+'<button class="small-btn" data-action="delete" data-id="'+p.id+'">Excluir</button></div></article>'}).join('')}function setDefaultDate(){const d=new Date();d.setDate(d.getDate()+((2-d.getDay()+7)%7||7));$('date').value=localDate(d);$('bulkStart').value=localDate(d)}
-$('postForm').addEventListener('submit',e=>{e.preventDefault();const title=$('title').value.trim();if(!title||!$('date').value){toast('Informe título e data.');return}const p=makePost(title,$('kind').value,$('date').value,$('time').value,$('format').value);if(pendingAIContent&&pendingAIContent.topic===title){p.title=pendingAIContent.title||title;p.captionBody=pendingAIContent.captionBody;p.caption=makeCaption(p);p.images=generateArts(p);pendingAIContent=null;}posts.push(p);if(!save()){posts.pop();return}e.target.reset();setDefaultDate();$('generatedPreview').innerHTML='<p class="hint">Artes geradas e anexadas à publicação na fila.</p>';toast('Conteúdo e artes gerados automaticamente.')});
-$('suggestBtn').addEventListener('click',()=>{const ideas={'Questão comentada':['Questão de Direito Constitucional','Questão CEBRASPE: certo ou errado?'],'Dica de prova':['Princípios da Administração Pública','Controle de constitucionalidade'],'Mapa mental':['Poderes administrativos','Organização político-administrativa'],'Planejamento de estudos':['Como organizar a semana de estudos'],'Divulgação da plataforma':['Como organizar sua preparação'],'Motivação e disciplina':['Constância nos estudos'],'Concursos abertos':['Concursos abertos no Nordeste']};const kind=$('kind').value;const title=(ideas[kind]||ideas['Dica de prova'])[0];$('title').value=title;const preview=makePost(title,kind,$('date').value||localDate(new Date()),$('time').value,$('format').value);const host=$('generatedPreview');host.innerHTML='<p class="hint"><strong>Prévia gerada: '+esc(kind)+'.</strong> Edite o título no campo acima e clique em “Criar publicação” para salvá-la na agenda.</p><div class="image-preview">'+preview.images.map((src,i)=>'<div class="image-thumb"><img src="'+src+'" alt="Prévia da arte '+(i+1)+'"><span>Arte '+(i+1)+'/'+preview.images.length+'</span></div>').join('')+'</div><p class="hint">'+esc(preview.captionBody)+'</p>';host.scrollIntoView({behavior:'smooth',block:'nearest'});toast('Prévia visual gerada e exibida abaixo do formulário. Ainda não foi salva na agenda.');});
 const RANDOM_EDITORIAL_KINDS=['Dica de prova','Questão comentada','Mapa mental','Planejamento de estudos','Divulgação da plataforma','Motivação e disciplina'];
 function randomItem(items){return items[Math.floor(Math.random()*items.length)]}
 
@@ -369,17 +367,18 @@ function mindMapSvgData(map){
  const svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'"><rect width="100%" height="100%" fill="#f4f7fc"/>'+nodes+'<circle cx="'+cx+'" cy="'+cy+'" r="112" fill="#071b43" stroke="#ff9418" stroke-width="8"/><text x="'+cx+'" y="'+(cy-8)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="27" font-weight="800" fill="#ffffff">'+esc(String(map?.central||'MAPA MENTAL').slice(0,24))+'</text><text x="'+cx+'" y="'+(cy+32)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" fill="#ffb347">APROVAJÁ</text></svg>';
  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
 }
-document.getElementById('generateAI')?.addEventListener('click', async ()=>{
+$('postForm')?.addEventListener('submit', async e=>{
+ e.preventDefault();
  const topic=$('title').value.trim();
- if(!topic){toast('Informe o tema.');$('title').focus();return;}
- if(!currentSession?.access_token || !supabaseClient){toast('Entre com a conta administradora antes de gerar conteúdo com IA.');integrationStatus('Entre com a conta administradora para usar o DeepSeek.',true);return;}
- const button=$('generateAI');
- const host=$('generatedPreview');
  const kind=$('kind').value;
+ const brief=$('brief').value.trim();
+ const date=$('date').value;
+ if(!topic||!brief||!date){toast('Preencha Matéria, Síntese do Conteúdo e Data de publicação.');return;}
+ if(!currentSession?.access_token||!supabaseClient){toast('Entre com a conta administradora para gerar conteúdo com IA.');integrationStatus('Entre com a conta administradora para usar o DeepSeek.',true);return;}
+ const button=$('generateAI'),host=$('generatedPreview');
  const discipline=$('aiDiscipline')?.value.trim()||'Concursos públicos';
- const brief=$('brief')?.value.trim()||'';
- button.disabled=true;button.textContent='Gerando com DeepSeek…';
- host.innerHTML='<p class="hint">Consultando o DeepSeek com segurança…</p>';
+ button.disabled=true;button.textContent='Gerando com IA…';
+ host.innerHTML='<p class="hint">Consultando o DeepSeek com segurança. Aguarde…</p>';
  try{
    const {data:sessionData,error:sessionError}=await supabaseClient.auth.getSession();
    if(sessionError)throw sessionError;
@@ -391,20 +390,30 @@ document.getElementById('generateAI')?.addEventListener('click', async ()=>{
      body:JSON.stringify({topic,kind,discipline,brief})
    });
    const data=await response.json().catch(()=>({}));
-   if(!response.ok)throw new Error(data.error||'Falha na geração (HTTP '+response.status+').');
+   if(!response.ok)throw new Error(data.error||'Falha na geração com IA (HTTP '+response.status+').');
    const ai=data.content||{};
    const body=String(ai.captionBody||'').trim();
-   if(!body)throw new Error('A resposta da IA veio sem conteúdo. Tente novamente.');
-   pendingAIContent={topic,title:String(ai.title||topic),captionBody:body,hashtags:Array.isArray(ai.hashtags)?ai.hashtags:[],imageText:String(ai.imageText||'')};
-   const date=$('date').value||localDate(new Date());
-   const p=makePost(topic,kind,date,$('time').value,'Feed');
-   p.title=pendingAIContent.title;p.captionBody=body;p.aiHashtags=pendingAIContent.hashtags;p.imageText=pendingAIContent.imageText;p.caption=makeCaption(p);p.images=generateArts(p);
+   if(!body)throw new Error('A IA retornou uma resposta sem síntese. Tente novamente.');
+   const p=makePost(topic,kind,date,$('time').value||'12:15','Feed');
+   p.title=String(ai.title||topic);
+   p.captionBody=body;
+   p.aiHashtags=Array.isArray(ai.hashtags)?ai.hashtags:[];
+   p.imageText=String(ai.imageText||'');
+   p.brief=brief;
+   p.caption=makeCaption(p);
+   p.images=generateArts(p);
+   p.status='Pendente';
+   p.needsApproval=false;
+   posts.push(p);
+   if(!save()){posts.pop();throw new Error('Não foi possível salvar a publicação no navegador.');}
    const warning=ai.reviewNote?'<p class="hint"><strong>Revisão editorial:</strong> '+esc(ai.reviewNote)+'</p>':'';
-   host.innerHTML='<p class="hint"><strong>Conteúdo gerado pelo DeepSeek</strong> — revise antes de salvar ou publicar.</p><div class="image-preview">'+p.images.map(src=>'<div class="image-thumb"><img src="'+src+'" alt="Prévia da arte AprovaJá"><span>Arte para o feed</span></div>').join('')+'</div><p><strong>Legenda pronta:</strong></p><p class="hint" style="white-space:pre-wrap">'+esc(p.caption)+'</p>'+warning+'<div class="actions"><button type="button" class="btn secondary" id="copyPreviewCaption">Copiar legenda</button></div>';
+   host.innerHTML='<p class="hint"><strong>Conteúdo gerado pela IA (DeepSeek)</strong> e salvo na agenda. Revise antes de aprovar e publicar.</p><div class="image-preview">'+p.images.map(src=>'<div class="image-thumb"><img src="'+src+'" alt="Prévia da arte AprovaJá"><span>Arte para o feed</span></div>').join('')+'</div><p><strong>Legenda pronta:</strong></p><p class="hint" style="white-space:pre-wrap">'+esc(p.caption)+'</p>'+warning+'<div class="actions"><button type="button" class="btn secondary" id="copyPreviewCaption">Copiar legenda</button></div>';
    $('copyPreviewCaption')?.addEventListener('click',()=>{if(navigator.clipboard?.writeText)navigator.clipboard.writeText(p.caption).then(()=>toast('Legenda copiada.')).catch(()=>toast('Não foi possível copiar automaticamente.'));else toast('Selecione e copie a legenda acima.');});
-   host.scrollIntoView({behavior:'smooth',block:'nearest'});
-   toast('DeepSeek gerou o conteúdo. Clique em “Gerar publicação” para salvar.');
- }catch(e){
-   pendingAIContent=null;host.innerHTML='<p class="hint integration-error">'+esc(e.message||'Não foi possível gerar o conteúdo.')+'</p>';toast(e.message||'Falha na geração com DeepSeek.');
- }finally{button.disabled=false;button.textContent='Gerar conteúdo com DeepSeek';}
+   $('monthFilter').value=date.slice(0,7);
+   $('posts').scrollIntoView({behavior:'smooth',block:'start'});
+   toast('A IA gerou o conteúdo e a publicação foi salva na agenda.');
+ }catch(error){
+   host.innerHTML='<p class="hint integration-error">'+esc(error?.message||'Não foi possível gerar conteúdo com IA.')+'</p>';
+   toast(error?.message||'Falha na geração com IA.');
+ }finally{button.disabled=false;button.textContent='Gerar Conteúdo Com IA';}
 });
