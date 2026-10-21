@@ -18,6 +18,36 @@ $('postForm').addEventListener('submit',e=>{e.preventDefault();const title=$('ti
 $('suggestBtn').addEventListener('click',()=>{const ideas={'Questão comentada':['Questão de Direito Constitucional','Questão CEBRASPE: certo ou errado?'],'Dica de prova':['Princípios da Administração Pública','Controle de constitucionalidade'],'Mapa mental':['Poderes administrativos','Organização político-administrativa'],'Planejamento de estudos':['Como organizar a semana de estudos'],'Divulgação da plataforma':['Como organizar sua preparação'],'Motivação e disciplina':['Constância nos estudos'],'Concursos abertos':['Concursos abertos no Nordeste']};$('title').value=(ideas[$('kind').value]||ideas['Dica de prova'])[0];toast('Tema sugerido. Você pode editar antes de gerar.')});
 const RANDOM_EDITORIAL_KINDS=['Dica de prova','Questão comentada','Mapa mental','Planejamento de estudos','Divulgação da plataforma','Motivação e disciplina'];
 function randomItem(items){return items[Math.floor(Math.random()*items.length)]}
+
+const pasteTopicsBtn=document.getElementById('pasteTopicsBtn');
+const clearTopicsBtn=document.getElementById('clearTopicsBtn');
+if(pasteTopicsBtn){
+ pasteTopicsBtn.addEventListener('click',async()=>{
+  const box=document.getElementById('bulkTopics');
+  const status=document.getElementById('pasteStatus');
+  try{
+   if(!navigator.clipboard||!navigator.clipboard.readText) throw new Error('clipboard indisponível');
+   const clip=await navigator.clipboard.readText();
+   if(!clip.trim()){status.textContent='A área de transferência está vazia. Copie os temas primeiro e tente novamente.';return;}
+   box.value=box.value.trim()?box.value.trimEnd()+'\n'+clip.trim():clip.trim();
+   box.focus();
+   status.textContent='Texto colado no campo. Confira os temas e clique em “Gerar todas as pautas”.';
+   toast('Temas importados da área de transferência.');
+  }catch(err){
+   status.textContent='O navegador bloqueou o acesso à área de transferência. Clique no campo, use Ctrl + V ou clique com o botão direito e escolha Colar. Se continuar, permita o acesso à área de transferência nas permissões do site.';
+   box.focus();
+  }
+ });
+}
+if(clearTopicsBtn){
+ clearTopicsBtn.addEventListener('click',()=>{
+  document.getElementById('bulkTopics').value='';
+  document.getElementById('bulkTopics').focus();
+  const status=document.getElementById('pasteStatus');
+  if(status)status.textContent='Campo de temas limpo.';
+ });
+}
+
 $('generateBatch').addEventListener('click',()=>{
  const selectedKind=$('bulkKind').value;
  const topics=$('bulkTopics').value.split(/\n|;/).map(x=>x.trim()).filter(Boolean);
