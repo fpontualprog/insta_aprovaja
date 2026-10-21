@@ -12,6 +12,26 @@
 <section class="stats"><article><span>Na fila</span><strong id="pendingCount">0</strong></article><article><span>Aprovadas</span><strong id="approvedCount">0</strong></article><article><span>Publicadas</span><strong id="publishedCount">0</strong></article></section>
 
 <section class="panel bulk-panel"><p class="eyebrow">PAUTA EM LOTE</p><h2>Planeje vários temas de uma vez</h2><p class="hint">Digite ou cole os temas, um por linha. Ao gerar as pautas, o sistema monta a agenda conforme o calendário editorial. Você aprova ou reprova cada publicação individualmente.</p><label for="bulkTopics">Temas das publicações</label><textarea id="bulkTopics" rows="5" tabindex="0" autocomplete="off" spellcheck="false" style="position:relative;z-index:20;pointer-events:auto;user-select:text;-webkit-user-select:text;background:#fff;color:#18243b;min-height:150px" placeholder="Controle de constitucionalidade\nPrincípios da Administração Pública\nQuestão CEBRASPE sobre AFO\nConcursos abertos no Nordeste"></textarea><div class="actions" style="margin-top:8px"><button type="button" class="btn secondary" id="pasteTopicsBtn">Colar temas da área de transferência</button><button type="button" class="btn secondary" id="clearTopicsBtn">Limpar temas</button></div><p id="pasteStatus" class="hint" aria-live="polite">Use o botão para importar o texto copiado, caso Ctrl + V não funcione.</p><div class="form-row"><div><label for="bulkKind">Categoria padrão</label><select id="bulkKind"><option value="Aleatória">Aleatória — sortear formato para cada tema</option><option>Dica de prova</option><option>Questão comentada</option><option>Mapa mental</option><option>Planejamento de estudos</option><option>Divulgação da plataforma</option><option>Motivação e disciplina</option><option>Concursos abertos</option></select></div><div><label for="bulkStart">Começar em</label><input id="bulkStart" type="date"></div></div><div class="actions"><button type="button" class="btn primary" id="generateBatch">Gerar todas as pautas</button><button type="button" class="btn secondary" id="generateContests">Sortear 5 concursos da API</button></div><p id="contestStatus" class="hint" aria-live="polite">A API usa o arquivo de concursos elegíveis publicado pelo repositório AprovaJá.</p><p class="hint">Para notícias de concursos, os dados oficiais e os links precisam ser verificados antes da publicação. A geração automática de notícias atualizadas será uma integração separada.</p></section>
+
+<section class="panel instagram-panel" id="instagramIntegration">
+  <p class="eyebrow">PUBLICAÇÃO SEGURA</p>
+  <h2>Conectar Instagram</h2>
+  <p class="hint">Entre com o usuário administrador já cadastrado no Supabase Auth. A publicação só ocorre após você clicar no botão de uma publicação aprovada. A senha é enviada diretamente ao Supabase Auth e não é armazenada por este painel.</p>
+  <form id="instagramLoginForm" class="instagram-login-form">
+    <label for="instagramEmail">E-mail do administrador</label>
+    <input id="instagramEmail" type="email" autocomplete="username" required placeholder="E-mail cadastrado no Supabase Auth">
+    <label for="instagramPassword">Senha do Supabase Auth</label>
+    <input id="instagramPassword" type="password" autocomplete="current-password" required placeholder="Sua senha do Supabase">
+    <div class="actions"><button class="btn primary" id="instagramLoginButton" type="submit">Entrar com segurança</button></div>
+  </form>
+  <div id="instagramSignedIn" hidden>
+    <p class="hint">Sessão ativa: <strong id="instagramSignedEmail"></strong></p>
+    <button class="btn secondary" id="instagramLogoutButton" type="button">Sair</button>
+  </div>
+  <p id="instagramStatus" class="hint" role="status" aria-live="polite">Preparando a conexão…</p>
+  <p class="hint">Nesta primeira etapa, a publicação real aceita somente o formato “Imagem única”. O suporte a carrosséis será integrado separadamente. O acesso público ao painel não concede permissão para publicar.</p>
+</section>
+
 <div class="columns">
 <section class="panel"><div class="panel-head"><div><p class="eyebrow">ESTÚDIO EDITORIAL</p><h2>Nova publicação</h2></div><span class="mini-logo">AJ</span></div>
 <form id="postForm">
@@ -27,6 +47,6 @@
 <section class="panel"><div class="panel-head"><div><p class="eyebrow">CALENDÁRIO DO MÊS</p><h2>Novas Publicações</h2></div><div class="queue-filters"><input id="monthFilter" type="month" aria-label="Mês das publicações"><select id="filter" aria-label="Filtrar publicações"><option value="all">Todas</option><option value="Pendente">Pendentes</option><option value="Aprovada">Aprovadas</option><option value="Publicada">Publicadas</option></select></div></div><p class="hint">Aqui aparece a lista de pautas do mês selecionado. Analise cada item: aprove para gerar o conteúdo ou reprove para removê-lo da lista.</p><div id="posts" class="posts-empty"><div class="empty-icon">✦</div><strong>Seu calendário começa aqui</strong><p>Informe os temas e clique em “Gerar todas as pautas”.</p></div></section>
 </div>
 <section class="panel guide"><p class="eyebrow">LINHA EDITORIAL</p><h2>Uma rotina simples, quatro vezes por semana</h2><div class="schedule"><article><span>TER · 12h15</span><strong>Questão comentada</strong><p>Ensine algo prático e estimule salvamentos.</p></article><article><span>QUI · 19h30</span><strong>Dica ou mapa mental</strong><p>Transforme um tema difícil em revisão visual.</p></article><article><span>DOM · 18h30</span><strong>Planejamento + plataforma</strong><p>Ajude a organizar a semana e apresente a AprovaJá.</p></article><article><span>SÁB · 10h00</span><strong>Concursos abertos</strong><p>Divulgue oportunidades confirmadas, prazos e o link para a página do AprovaJá.</p></article></div><p class="hint">Horários iniciais para teste, não garantia de maior alcance. Ajuste com os Insights da conta.</p></section>
-<footer>Insta AprovaJá · Protótipo gratuito · Não conectado ao Instagram</footer>
-</main><div id="toast" role="status" aria-live="polite"></div><script src="app.js"></script>
+<footer>Insta AprovaJá · Painel editorial gratuito · Publicação protegida por Supabase Auth</footer>
+</main><div id="toast" role="status" aria-live="polite"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="app.js"></script>
 </body></html>
