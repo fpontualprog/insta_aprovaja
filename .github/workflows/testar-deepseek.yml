@@ -1,0 +1,111 @@
+name: Testar API DeepSeek
+
+on:
+  workflow_dispatch:
+    inputs:
+      tema:
+        description: "Tema da postagem para Instagram"
+        required: true
+        type: string
+      disciplina:
+        description: "Disciplina"
+        required: true
+        default: "Direito Constitucional"
+        type: string
+      tipo:
+        description: "Tipo de postagem"
+        required: true
+        type: choice
+        options:
+          - Resumo de conteúdo
+          - Questão de revisão
+          - Divulgação da plataforma
+
+permissions:
+  contents: read
+
+jobs:
+  gerar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verificar chave configurada
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: |
+          if [ -z "$DEEPSEEK_API_KEY" ]; then
+            echo "::error::Cadastre DEEPSEEK_API_KEY em Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+      - name: Gerar postagem com DeepSeek
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          TEMA: ${{ inputs.tema }}
+          DISCIPLINA: ${{ inputs.disciplina }}
+          TIPO: ${{ inputs.tipo }}
+        run: |
+          python - <<'PY'
+          import json, os, urllib.request, urllib.error
+          tema = os.environ["TEMA"].strip()
+          disciplina = os.environ["DISCIPLINA"].strip()
+          tipo = os.environ["TIPO"].strip()
+          prompt = f"""Crie uma postagem simples e pronta para revisão no Instagram da plataforma AprovaJá, voltada a concursos públicos brasileiros.
+          Tema: {tema}
+          Disciplina: {disciplina}
+          Tipo: {tipo}
+          Escreva em português brasileiro, de forma curta, clara e didática. Não escreva um capítulo de livro.
+          Entregue exatamente nesta estrutura:
+          TÍTULO DA ARTE: título de até 8 palavras.
+          RESUMO PARA A IMAGEM: 2 a 4 tópicos muito curtos, corretos e fáceis de memorizar.
+          LEGENDA: texto breve explicando o assunto.
+          CHAMADA: convide a pessoa a estudar na plataforma AprovaJá em https://aprovajaconcurso.netlify.app.
+          HASHTAGS: inclua hashtags relevantes para concursos.
+          Se for questão de revisão, crie uma questão original curta com gabarito e comentário. Nunca diga que é questão oficial de banca.
+          Não invente artigos de lei. Se não tiver certeza de um número, não o cite.
+          """
+          body = {
+              "model": "deepseek-flash",
+              "messages": [
+                  {"role": "system", "content": "Você é redator educacional da AprovaJá. Priorize precisão, concisão e utilidade para revisão de concursos."},
+                  {"role": "user", "content": prompt}
+              ],
+              "stream": False,
+              "thinking": {"type": "disabled"},
+              "max_tokens": 700,
+              "temperature": 0.4
+          }
+          req = urllib.request.Request(
+              "https://api.deepseek.com/chat/completions",
+              data=json.dumps(body).encode("utf-8"),
+              headers={
+                  "Content-Type": "application/json",
+                  "Authorization": "Bearer " + os.environ["DEEPSEEK_API_KEY"]
+              },
+              method="POST"
+          )
+          try:
+              with urllib.request.urlopen(req, timeout=120) as response:
+                  result = json.loads(response.read().decode("utf-8"))
+          except urllib.error.HTTPError as e:
+              detail = e.read().decode("utf-8", errors="replace")
+              raise SystemExit(f"DeepSeek retornou HTTP {e.code}: {detail[:1200]}")
+          content = result.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+          if not content:
+              raise SystemExit("A API respondeu, mas não retornou conteúdo.")
+          os.makedirs("output", exist_ok=True)
+          with open("output/postagem_instagram.txt", "w", encoding="utf-8") as f:
+              f.write(f"Tema: {tema}\nDisciplina: {disciplina}\nModelo: {result.get('model', 'deepseek-flash')}\n\n{content}\n")
+          usage = result.get("usage", {})
+          with open("output/uso_api.json", "w", encoding="utf-8") as f:
+              json.dump({"model": result.get("model"), "usage": usage}, f, ensure_ascii=False, indent=2)
+          print("Postagem gerada com sucesso.")
+          print("Uso informado pela API:", json.dumps(usage, ensure_ascii=False))
+          PY
+
+      - name: Disponibilizar postagem para baixar
+        uses: actions/upload-artifact@v4
+        with:
+          name: aprovaja-teste-deepseek
+          path: output/
+          retention-days: 7
