@@ -25,19 +25,7 @@
 
 <section class="panel story-studio-panel">
 <div class="panel-head"><div><p class="eyebrow">ESTÚDIO EDITORIAL COM IA</p><h2>Gerar Stories com Vídeo</h2></div><span class="mini-logo">AJ</span></div>
-<p class="hint">Ferramenta independente para preparar Stories. Preencha os dados da publicação; o item será enviado à fila para aprovação.</p>
-<form id="storyForm">
-<label for="storyDate">Data da Publicação</label><input id="storyDate" type="date" required>
-<label for="storyTime">Horário</label><input id="storyTime" type="time" value="12:15" required>
-<label for="storyDiscipline">Disciplina</label><input id="storyDiscipline" maxlength="160" placeholder="Ex.: Direito Constitucional" required>
-<label for="storySubject">Assunto</label><input id="storySubject" maxlength="300" placeholder="Ex.: Direitos sociais na Constituição" required>
-<label for="storyInstructions">Instruções para publicação</label><textarea id="storyInstructions" rows="5" placeholder="Informe os pontos, o tom, a chamada e outras orientações para o Story." required></textarea>
-<div class="actions"><button class="btn primary" id="generateStoryVideo" type="submit">Gerar Stories com Vídeo</button></div>
-<p class="hint" id="storyFormStatus" aria-live="polite">O Story será registrado na fila como pendente de aprovação.</p>
-</form></section>
-<section class="panel story-studio-panel">
-<div class="panel-head"><div><p class="eyebrow">ESTÚDIO EDITORIAL COM IA</p><h2>Gerar Stories com Vídeo</h2></div><span class="mini-logo">AJ</span></div>
-<p class="hint">Formulário independente. A disciplina é texto livre e não depende do cadastro de disciplinas do AprovaJá.</p>
+<p class="hint">Formulário independente. A disciplina é texto livre e não depende do cadastro do AprovaJá.</p>
 <form id="storyForm">
 <label for="storyDate">Data da Publicação</label><input id="storyDate" type="date" required>
 <label for="storyTime">Horário</label><input id="storyTime" type="time" value="12:15" required>
@@ -45,7 +33,7 @@
 <label for="storySubject">Assunto</label><input id="storySubject" type="text" maxlength="300" placeholder="Digite o assunto do Story" required>
 <label for="storyInstructions">Instruções para publicação</label><textarea id="storyInstructions" rows="5" placeholder="Explique o conteúdo, o tom, os pontos que devem aparecer e a chamada desejada." required></textarea>
 <div class="actions"><button class="btn primary" id="generateStoryVideo" type="submit">Gerar Stories com Vídeo</button></div>
-<p class="hint" id="storyFormStatus" aria-live="polite">Após gerar, o Story deve entrar na fila aguardando aprovação.</p>
+<p class="hint" id="storyFormStatus" aria-live="polite">O vídeo será gerado antes de entrar na fila de aprovação.</p>
 </form></section>
 <section class="panel monthly-schedule-panel">
   <div class="panel-head"><div><p class="eyebrow">PROGRAMAÇÃO EDITORIAL</p><h2>Cronograma de publicações do mês</h2></div><span class="schedule-month-label" id="scheduleMonthLabel">Mês atual</span></div>
@@ -56,5 +44,5 @@
 <section class="panel guide"><p class="eyebrow">LINHA EDITORIAL</p><h2>Uma rotina simples, quatro vezes por semana</h2><div class="schedule"><article><span>TER · 12h15</span><strong>Questão comentada</strong><p>Ensine algo prático e estimule salvamentos.</p></article><article><span>QUI · 19h30</span><strong>Dica ou mapa mental</strong><p>Transforme um tema difícil em revisão visual.</p></article><article><span>DOM · 18h30</span><strong>Planejamento + plataforma</strong><p>Ajude a organizar a semana e apresente a AprovaJá.</p></article><article><span>SÁB · 10h00</span><strong>Concursos abertos</strong><p>Divulgue oportunidades confirmadas, prazos e o link para a página do AprovaJá.</p></article></div><p class="hint">Horários iniciais para teste, não garantia de maior alcance. Ajuste com os Insights da conta.</p></section>
 <section class="panel published-history-panel"><div class="panel-head"><div><p class="eyebrow">HISTÓRICO</p><h2>Publicações realizadas</h2></div></div><p class="hint">Registro das publicações marcadas como publicadas, com data, horário, tipo e código de identificação.</p><div id="publishedHistory"><p class="hint">Carregando histórico…</p></div></section>
 <footer>Insta AprovaJá · Painel editorial gratuito · Publicação protegida por Supabase Auth</footer>
-</main><div id="toast" role="status" aria-live="polite"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="app.js?v=42360743"></script>
+</main><div id="toast" role="status" aria-live="polite"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="app.js?v=storyfix1022"></script>
 </body></html>
