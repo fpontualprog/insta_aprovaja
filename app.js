@@ -525,7 +525,7 @@ $('postForm')?.addEventListener('submit', async e=>{
  e.preventDefault();
  const topic=$('title').value.trim();
  const kind=$('kind').value;
- if($('outputFormat')?.value==='video'||kind==='Vídeo para Stories'){
+ if($('outputFormat')?.value==='video'){
    const notice=$('videoWorkflowNotice');
    if(notice){notice.hidden=false;notice.scrollIntoView({behavior:'smooth',block:'center'});}
    const link=document.querySelector('#videoWorkflowActions a');
