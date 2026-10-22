@@ -214,11 +214,26 @@ def sync_drive():
     except HTTPException:
         raise
     except Exception as exc:
+        # gdown pode baixar vários arquivos e falhar depois ao interpretar uma subpasta.
+        # Preserve os arquivos já baixados e informe explicitamente que a sincronização é parcial.
         import traceback
         traceback.print_exc()
+        chunks = load_chunks()
+        names = sorted({c["source"].split(" (tabela")[0] for c in chunks})
+        if names:
+            return {
+                "status": "partial",
+                "downloaded_entries": None,
+                "files_read": len(names),
+                "chunks_indexed": len(chunks),
+                "directory": str(MATERIALS_DIR),
+                "files": names,
+                "error": f"{type(exc).__name__}: {exc}",
+                "note": "A sincronização foi parcial. Os arquivos já baixados foram preservados; não considere a biblioteca completa."
+            }
         raise HTTPException(
             status_code=502,
-            detail=f"Falha ao sincronizar o Drive ({type(exc).__name__}): {exc}. Confira se a pasta é acessível sem login e se o Google Drive não apresentou uma página de confirmação ou limite temporário."
+            detail=f"Falha ao sincronizar o Drive ({type(exc).__name__}): {exc}. Nenhum material legível foi encontrado."
         )
 
 @app.post("/generate")
