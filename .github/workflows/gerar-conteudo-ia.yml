@@ -79,12 +79,27 @@ jobs:
         run: |
           mkdir -p output
           nohup uvicorn app:app --app-dir python-ai --host 127.0.0.1 --port 8000 > /tmp/aprovaja-api.log 2>&1 &
+          API_PID=$!
+          ready=false
           for i in $(seq 1 40); do
             if curl -fsS http://127.0.0.1:8000/health >/dev/null; then
+              ready=true
+              break
+            fi
+            if ! kill -0 "$API_PID" 2>/dev/null; then
+              echo "ERRO: o processo Uvicorn encerrou antes de disponibilizar /health."
               break
             fi
             sleep 2
           done
+          if [ "$ready" != true ]; then
+            echo "::error::A API do AprovaJá não ficou disponível na porta 8000."
+            echo "===== LOG DO UVICORN ====="
+            cat /tmp/aprovaja-api.log || true
+            echo "===== LOG DO OLLAMA ====="
+            tail -n 100 /tmp/ollama.log || true
+            exit 1
+          fi
           curl -fsS http://127.0.0.1:8000/health
 
       - name: Sincronizar materiais públicos do Drive
