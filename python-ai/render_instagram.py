@@ -141,15 +141,31 @@ def main():
     images.append(cta)
     paths=[]
     for i, im in enumerate(images,1):
+        # Normaliza e valida cada arte antes de salvar: o Instagram recebe exatamente 1080x1350.
+        if im.mode != "RGB":
+            im = im.convert("RGB")
+        if im.size != (W, H):
+            im = im.resize((W, H), Image.Resampling.LANCZOS)
         p=OUT/f"slide_{i:02d}.png"
         im.save(p, "PNG", optimize=True)
+        with Image.open(p) as check:
+            if check.size != (1080, 1350):
+                raise RuntimeError(f"Dimensão inválida em {p.name}: {check.size}; esperado (1080, 1350).")
         paths.append(p)
     caption = f"{title}\n\nEstude com estratégia e revise os pontos principais. Salve esta publicação para consultar depois.\n\nSiga @aprovaja_seuconcurso para mais conteúdos gratuitos.\n\n#AprovaJá #ConcursosPúblicos #Estudos #DicasDeConcurso #Concurseiro"
     (OUT/"legenda_instagram.txt").write_text(caption,encoding="utf-8")
     with zipfile.ZipFile(OUT/"carrossel_instagram.zip","w",zipfile.ZIP_DEFLATED) as z:
         for p in paths: z.write(p,p.name)
         z.write(OUT/"legenda_instagram.txt","legenda_instagram.txt")
-    print(f"Carrossel criado: {len(paths)} PNGs em 1080x1350 + ZIP e legenda.")
+    # Verificação final do pacote para impedir artes fora do padrão.
+    invalid = []
+    for p in paths:
+        with Image.open(p) as check:
+            if check.size != (1080, 1350):
+                invalid.append(f"{p.name}: {check.size}")
+    if invalid:
+        raise RuntimeError("Artes fora do padrão 1080x1350: " + "; ".join(invalid))
+    print(f"Carrossel validado: {len(paths)} PNGs, todos exatamente em 1080x1350 + ZIP e legenda.")
 
 if __name__ == "__main__":
     main()
