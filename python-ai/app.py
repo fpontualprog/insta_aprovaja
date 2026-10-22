@@ -25,7 +25,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["https://fpontualprog.github.i
 
 class GenerateRequest(BaseModel):
     topic: str = Field(min_length=3, max_length=300)
-    kind: Literal["resumo", "mapa_mental", "questoes", "flashcards", "carrossel"] = "resumo"
+    kind: Literal["resumo", "mapa_mental", "questoes", "flashcards", "carrossel", "video"] = "resumo"
     discipline: str = Field(default="Concursos públicos", max_length=120)
     quantity: int = Field(default=5, ge=1, le=20)
     exam_board: str = Field(default="CEBRASPE", max_length=80)
@@ -128,7 +128,8 @@ def make_prompt(req: GenerateRequest, sources: list[dict]) -> str:
         "mapa_mental": "Faça um mapa mental simples em texto: tema central e 4 a 6 ramos com palavras-chave. Nada de parágrafos longos. Inclua artigo de lei somente se puder confirmar com segurança.",
         "questoes": f"Crie EXATAMENTE {req.quantity} questões curtas no estilo da banca {req.exam_board}, sobre o tema indicado. Cada questão deve ter enunciado, alternativas quando fizer sentido, gabarito e comentário de no máximo 2 frases. Não diga que são questões oficiais; se adaptar questão fornecida, identifique como adaptada.",
         "flashcards": f"Crie EXATAMENTE {req.quantity} flashcards. Cada um deve ter uma pergunta direta e uma resposta curta, ideal para memorização.",
-        "carrossel": "Crie um carrossel de EXATAMENTE 7 slides: slide 1 capa; slides 2 a 6 com um conceito ou regra por slide; slide 7 chamada para salvar e seguir. Cada slide deve ter título curto e no máximo 3 tópicos breves."
+        "carrossel": "Crie um carrossel de EXATAMENTE 7 slides: slide 1 capa; slides 2 a 6 com um conceito ou regra por slide; slide 7 chamada para salvar e seguir. Cada slide deve ter título curto e no máximo 3 tópicos breves.",
+        "video": "Escreva um roteiro curto para vídeo vertical de Instagram (Stories/Reels), em português brasileiro, com duração aproximada de 30 a 45 segundos. Comece com um gancho, explique 3 ideias curtas, inclua sugestões visuais por cena entre colchetes e termine com uma chamada para salvar e seguir o AprovaJá. O texto da narração deve ser natural, sem títulos técnicos longos."
     }[req.kind]
     return f\"\"\"Você cria conteúdo simples e correto para o Instagram da plataforma AprovaJá, voltada a concursos públicos brasileiros. Escreva em português brasileiro.
 
