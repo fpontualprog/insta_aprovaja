@@ -312,7 +312,7 @@ async function initializeSupabaseConnection() {
     const timeoutId = setTimeout(() => controller.abort(), 8000);
     let response;
     try {
-      response = await fetch(SUPABASE_URL + '/auth/v1/health', {
+      response = await fetch(SUPABASE_URL + '/rest/v1/', {
         method: 'GET',
         headers: { apikey: SUPABASE_PUBLISHABLE_KEY },
         cache: 'no-store',
@@ -326,7 +326,7 @@ async function initializeSupabaseConnection() {
     integrationStatus('Conexão com o Supabase estabelecida.');
   } catch (error) {
     supabaseConnected = false;
-    integrationStatus(error?.message || 'Não foi possível conectar ao Supabase.', true);
+    integrationStatus(error?.name === 'AbortError' ? 'Tempo limite ao conectar ao Supabase (8 segundos).' : (error?.message || 'Não foi possível conectar ao Supabase.'), true);
   }
 }
 function imageDataToJpegBlob(dataUrl) {
