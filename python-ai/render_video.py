@@ -20,10 +20,10 @@ def narration_text() -> str:
     raw = (OUT / "conteudo.md").read_text(encoding="utf-8")
     lines = []
     for line in raw.splitlines():
-        line = re.sub(r"^#+\\s*", "", line)
-        line = re.sub(r"^\\*.*?\\*\\*:?\\s*", "", line)
-        line = re.sub(r"^[-*•]\\s*", "", line)
-        line = re.sub(r"\\*{1,2}", "", line).strip()
+        line = re.sub(r"^#+\s*", "", line)
+        line = re.sub(r"^\*.*?\*\*:?\s*", "", line)
+        line = re.sub(r"^[-*•]\s*", "", line)
+        line = re.sub(r"\*{1,2}", "", line).strip()
         if not line or line.lower().startswith(("fontes recuperadas", "nenhuma fonte local")):
             continue
         if line.startswith(">"):
@@ -76,7 +76,7 @@ def main() -> None:
 
     concat_file = OUT / "story_clips.txt"
     concat_file.write_text(
-        "".join(f"file '{p.resolve().as_posix()}'\\n" for p in clips),
+        "".join(f"file '{p.resolve().as_posix()}'\n" for p in clips),
         encoding="utf-8"
     )
     silent = OUT / "story_silent.mp4"
