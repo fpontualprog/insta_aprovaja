@@ -112,47 +112,14 @@ jobs:
           echo "===== LOG DETALHADO DA API (Drive) ====="
           tail -n 120 /tmp/aprovaja-api.log || true
 
-      - name: Gerar conteúdo
+      - name: Diagnóstico automatizado e geração do conteúdo
         env:
           TEMA: ${{ inputs.tema }}
           DISCIPLINA: ${{ inputs.disciplina }}
           FORMATO: ${{ inputs.formato }}
           QUANTIDADE: ${{ inputs.quantidade }}
           BANCA: ${{ inputs.banca }}
-        run: |
-          python - <<'PY'
-          import json, os, requests
-          payload = {
-              "topic": os.environ["TEMA"],
-              "discipline": os.environ["DISCIPLINA"],
-              "kind": os.environ["FORMATO"],
-              "quantity": max(1, min(10, int(os.environ["QUANTIDADE"]))),
-              "exam_board": os.environ["BANCA"],
-          }
-          response = requests.post("http://127.0.0.1:8000/generate", json=payload, timeout=660)
-          response.raise_for_status()
-          data = response.json()
-          with open("output/conteudo.md", "w", encoding="utf-8") as f:
-              f.write("# " + data["topic"] + "\n\n")
-              f.write("**Disciplina:** " + payload["discipline"] + "  \n")
-              f.write("**Formato:** " + data["kind"] + "  \n")
-              f.write("**Modelo local:** " + data["model"] + "\n\n")
-              if data.get("warning"):
-                  f.write("> **Atenção:** " + data["warning"] + "\n\n")
-              f.write(data["content"] + "\n\n")
-              f.write("## Fontes recuperadas pelo sistema\n")
-              if data.get("sources"):
-                  for s in data["sources"]:
-                      suffix = f", página/slide {s['page']}" if s.get("page") else ""
-                      f.write(f"- {s['source']}{suffix}\n")
-              else:
-                  f.write("- Nenhuma fonte local relevante foi recuperada para este tema.\n")
-          with open("output/metadata.json", "w", encoding="utf-8") as f:
-              json.dump({"request": payload, "model": data.get("model"), "sources": data.get("sources", []), "warnings": data.get("warnings", []), "retrieval": data.get("retrieval", {})}, f, ensure_ascii=False, indent=2)
-          print("Conteúdo gerado em output/conteudo.md")
-          if data.get("warnings"):
-              print("ALERTAS DE QUALIDADE:", data["warnings"])
-          PY
+        run: python python-ai/diagnostico.py
 
       - name: Montar artes do Instagram
         run: python python-ai/render_instagram.py
