@@ -85,14 +85,25 @@ jobs:
         shell: bash
         run: |
           mkdir -p output
-          nohup uvicorn app:app --app-dir python-ai --host 127.0.0.1 --port 8000 > /tmp/aprovaja-api.log 2>&1 &
+          python -m py_compile python-ai/app.py
+          nohup python -m uvicorn app:app --app-dir python-ai --host 127.0.0.1 --port 8000 > /tmp/aprovaja-api.log 2>&1 &
+          API_PID=$!
           for i in $(seq 1 40); do
             if curl -fsS http://127.0.0.1:8000/health >/dev/null; then
-              break
+              echo "API iniciada com sucesso."
+              curl -fsS http://127.0.0.1:8000/health
+              exit 0
+            fi
+            if ! kill -0 "$API_PID" 2>/dev/null; then
+              echo "O processo da API encerrou antes de ficar disponível."
+              cat /tmp/aprovaja-api.log
+              exit 1
             fi
             sleep 2
           done
-          curl -fsS http://127.0.0.1:8000/health
+          echo "A API não respondeu dentro do tempo limite. Log de inicialização:"
+          cat /tmp/aprovaja-api.log
+          exit 1
 
       - name: Sincronizar materiais públicos do Drive
         continue-on-error: true
