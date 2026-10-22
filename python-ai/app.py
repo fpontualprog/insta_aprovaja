@@ -154,8 +154,7 @@ ESTILO OBRIGATÓRIO
 MATERIAIS RECUPERADOS (use apenas se forem pertinentes):
 {snippets}
 
-Agora produza o conteúdo curto, claro e útil para revisão de concurso."""\"\"\"
-def validate_content(req: GenerateRequest, content: str) -> list[str]:
+Agora produza o conteúdo curto, claro e útil para revisão de concurso."""\ndef validate_content(req: GenerateRequest, content: str) -> list[str]:
     warnings = []
     if len(content.strip()) < 180:
         warnings.append("Resposta muito curta; revisar antes de usar.")
