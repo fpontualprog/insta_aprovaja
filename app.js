@@ -66,11 +66,18 @@ async function htmlEditorialToImage(html,post){
   if(!doc.querySelector("meta[name='viewport']")){
    const viewport=doc.createElement("meta");viewport.name="viewport";viewport.content="width=1080,initial-scale=1";doc.head.appendChild(viewport);
   }
-  doc.documentElement.style.width="1080px";
-  doc.body.style.width="1080px";
+  // Reserva uma área fixa para o rodapé e limita o conteúdo principal à área segura.
+  // Assim, conteúdo editorial comprido não aumenta a altura final além de 1350 px.
+  doc.documentElement.style.cssText += ";width:1080px;height:1350px;max-height:1350px;overflow:hidden;margin:0;padding:0;";
+  doc.body.style.cssText += ";width:1080px;height:1350px;max-height:1350px;overflow:hidden;position:relative;box-sizing:border-box;margin:0;padding:0;";
+  const contentArea=doc.createElement("div");
+  contentArea.setAttribute("data-aprovaja-content-area","true");
+  contentArea.style.cssText="box-sizing:border-box;width:1080px;height:1208px;max-height:1208px;overflow:hidden;position:relative;";
+  while(doc.body.firstChild) contentArea.appendChild(doc.body.firstChild);
+  doc.body.appendChild(contentArea);
   const brandFooter=doc.createElement("div");
   brandFooter.setAttribute("data-aprovaja-brand-footer","true");
-  brandFooter.style.cssText="box-sizing:border-box;width:1080px;min-height:142px;padding:16px 34px;background:#05070b;color:#fff;display:flex;align-items:center;justify-content:center;gap:22px;font-family:Arial,sans-serif;text-align:left;";
+  brandFooter.style.cssText="box-sizing:border-box;position:absolute;left:0;bottom:0;width:1080px;height:142px;min-height:142px;max-height:142px;padding:16px 34px;background:#05070b;color:#fff;display:flex;align-items:center;justify-content:center;gap:22px;font-family:Arial,sans-serif;text-align:left;";
   const logoImage=doc.createElement("img");
   logoImage.src=APROVAJA_LOGO_DATA_URL;
   logoImage.alt="Logo oficial AprovaJá";
@@ -89,10 +96,9 @@ async function htmlEditorialToImage(html,post){
   await new Promise(resolve=>{if(logoImage.complete)resolve();else{logoImage.onload=resolve;logoImage.onerror=resolve;}});
   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
   const width=1080;
-  const height=Math.ceil(Math.max(doc.body.scrollHeight,doc.documentElement.scrollHeight));
-  if(!height||height>1350)throw new Error("A arte com o rodapé oficial da AprovaJá excedeu 1080 × 1350 px. Gere novamente com conteúdo principal mais compacto, deixando espaço para a marca no final.");
+  const height=1350;
   const canvas=await render(doc.documentElement,{width,height,scale:1,backgroundColor:null,windowWidth:width,windowHeight:height,scrollX:0,scrollY:0,useCORS:false,allowTaint:false});
-  if(canvas.width!==width||canvas.height!==height)throw new Error("A renderização alterou as dimensões da arte. Gere novamente.");
+  if(canvas.width!==1080||canvas.height!==1350)throw new Error("A renderização não respeitou o formato final de 1080 × 1350 px.");
   return canvas.toDataURL("image/png");
  }finally{frame.remove();}
 }
