@@ -130,7 +130,7 @@ def make_prompt(req: GenerateRequest, sources: list[dict]) -> str:
         "flashcards": f"Crie EXATAMENTE {req.quantity} flashcards. Cada um deve ter uma pergunta direta e uma resposta curta, ideal para memorização.",
         "carrossel": "Crie um carrossel de EXATAMENTE 7 slides: slide 1 capa; slides 2 a 6 com um conceito ou regra por slide; slide 7 chamada para salvar e seguir. Cada slide deve ter título curto e no máximo 3 tópicos breves."
     }[req.kind]
-    return f\"\"\"Você cria conteúdo simples e correto para o Instagram da plataforma AprovaJá, voltada a concursos públicos brasileiros. Escreva em português brasileiro.
+    return f"""Você cria conteúdo simples e correto para o Instagram da plataforma AprovaJá, voltada a concursos públicos brasileiros. Escreva em português brasileiro.
 
 PARÂMETROS
 - Disciplina: {req.discipline}
@@ -154,7 +154,7 @@ ESTILO OBRIGATÓRIO
 MATERIAIS RECUPERADOS (use apenas se forem pertinentes):
 {snippets}
 
-Agora produza o conteúdo curto, claro e útil para revisão de concurso.\"\"\"
+Agora produza o conteúdo curto, claro e útil para revisão de concurso."""\"\"\"
 def validate_content(req: GenerateRequest, content: str) -> list[str]:
     warnings = []
     if len(content.strip()) < 180:
