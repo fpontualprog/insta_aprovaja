@@ -17,25 +17,59 @@ def run(args: list[str]) -> None:
 
 
 def narration_text() -> str:
+    """Prepara texto para TTS preservando acentos, pontuação e pausas naturais."""
+    import unicodedata
+
     raw = (OUT / "conteudo.md").read_text(encoding="utf-8")
-    lines = []
-    for line in raw.splitlines():
-        line = re.sub(r"^#+\s*", "", line)
-        line = re.sub(r"^\*.*?\*\*:?\s*", "", line)
-        line = re.sub(r"^[-*•]\s*", "", line)
-        line = re.sub(r"\*{1,2}", "", line).strip()
-        if not line or line.lower().startswith(("fontes recuperadas", "nenhuma fonte local")):
+    raw = unicodedata.normalize("NFC", raw)
+    spoken_lines: list[str] = []
+    skip_sources = False
+
+    for original in raw.splitlines():
+        line = original.strip()
+        if not line:
+            # Mantém uma pausa entre parágrafos sem criar uma frase artificial.
+            if spoken_lines and spoken_lines[-1] != "":
+                spoken_lines.append("")
+            continue
+
+        # Metadados e referências não devem ser lidos em voz alta.
+        if re.match(r"^##?\\s*Fontes recuperadas", line, flags=re.IGNORECASE):
+            skip_sources = True
+            continue
+        if skip_sources:
+            continue
+        if re.match(r"^[-•]\\s*Nenhuma fonte local", line, flags=re.IGNORECASE):
             continue
         if line.startswith(">"):
             line = line.lstrip("> ").strip()
-        if line:
-            lines.append(line)
-    text = " ".join(lines)
+
+        # Remove apenas marcação Markdown; não remove acentos nem sinais de pontuação.
+        line = re.sub(r"^#{1,6}\\s*", "", line)
+        line = re.sub(r"!?\\[([^\\]]+)\\]\\([^)]*\\)", r"\\1", line)
+        line = re.sub(r"\\*\\*(.*?)\\*\\*", r"\\1", line)
+        line = re.sub(r"(?<!\\*)\\*(?!\\*)(.*?)\\*(?!\\*)", r"\\1", line)
+        line = re.sub(r"^\\s*[-•]\\s+", "", line)
+        line = re.sub(r"^\\s*\\d+[.)]\\s+", "", line)
+        line = re.sub(r"[ \\t]+", " ", line).strip()
+        if not line:
+            continue
+
+        # Pausa natural após títulos sem pontuação; preserva a pontuação existente.
+        if line and line[-1] not in ".!?…:;":
+            line += "."
+        spoken_lines.append(line)
+
+    # Parágrafos separados ajudam o TTS a respeitar pausas entre ideias.
+    text = " ".join(part for part in spoken_lines if part)
+    text = re.sub(r"\\s+([,.;:!?])", r"\\1", text)
+    text = re.sub(r"([.!?…])(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ])", r"\\1 ", text)
     words = text.split()
     if len(words) > 180:
-        text = " ".join(words[:180])
+        text = " ".join(words[:180]).rstrip(" ,;:")
+        if text and text[-1] not in ".!?…":
+            text += "."
     return text or "AprovaJá. Prepare-se para concursos com estratégia. Estude, revise e avance rumo à sua aprovação."
-
 
 async def make_voice(text: str, path: Path) -> None:
     communicate = edge_tts.Communicate(text, VOICE, rate="-5%", volume="+0%")
