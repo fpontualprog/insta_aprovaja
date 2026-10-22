@@ -34,24 +34,24 @@ def narration_text() -> str:
             continue
 
         # Metadados e referências não devem ser lidos em voz alta.
-        if re.match(r"^##?\\s*Fontes recuperadas", line, flags=re.IGNORECASE):
+        if re.match(r"^##?\s*Fontes recuperadas", line, flags=re.IGNORECASE):
             skip_sources = True
             continue
         if skip_sources:
             continue
-        if re.match(r"^[-•]\\s*Nenhuma fonte local", line, flags=re.IGNORECASE):
+        if re.match(r"^[-•]\s*Nenhuma fonte local", line, flags=re.IGNORECASE):
             continue
         if line.startswith(">"):
             line = line.lstrip("> ").strip()
 
         # Remove apenas marcação Markdown; não remove acentos nem sinais de pontuação.
-        line = re.sub(r"^#{1,6}\\s*", "", line)
-        line = re.sub(r"!?\\[([^\\]]+)\\]\\([^)]*\\)", r"\\1", line)
-        line = re.sub(r"\\*\\*(.*?)\\*\\*", r"\\1", line)
-        line = re.sub(r"(?<!\\*)\\*(?!\\*)(.*?)\\*(?!\\*)", r"\\1", line)
-        line = re.sub(r"^\\s*[-•]\\s+", "", line)
-        line = re.sub(r"^\\s*\\d+[.)]\\s+", "", line)
-        line = re.sub(r"[ \\t]+", " ", line).strip()
+        line = re.sub(r"^#{1,6}\s*", "", line)
+        line = re.sub(r"!?\[([^\]]+)\]\([^)]*\)", r"\1", line)
+        line = re.sub(r"\*\*(.*?)\*\*", r"\1", line)
+        line = re.sub(r"(?<!\*)\*(?!\*)(.*?)\*(?!\*)", r"\1", line)
+        line = re.sub(r"^\s*[-•]\s+", "", line)
+        line = re.sub(r"^\s*\d+[.)]\s+", "", line)
+        line = re.sub(r"[ \t]+", " ", line).strip()
         if not line:
             continue
 
@@ -62,8 +62,8 @@ def narration_text() -> str:
 
     # Parágrafos separados ajudam o TTS a respeitar pausas entre ideias.
     text = " ".join(part for part in spoken_lines if part)
-    text = re.sub(r"\\s+([,.;:!?])", r"\\1", text)
-    text = re.sub(r"([.!?…])(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ])", r"\\1 ", text)
+    text = re.sub(r"\s+([,.;:!?])", r"\1", text)
+    text = re.sub(r"([.!?…])(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ])", r"\1 ", text)
     words = text.split()
     if len(words) > 180:
         text = " ".join(words[:180]).rstrip(" ,;:")
