@@ -216,12 +216,13 @@ document.getElementById('aiContentSelect')?.addEventListener('change', e=>{
  const option=e.target.selectedOptions?.[0];
  if(option?.dataset?.title) document.getElementById('title').value=option.dataset.title;
 });
-\n$('generateBatch').addEventListener('click',async()=>{
+$('generateBatch').addEventListener('click',async()=>{
  const topics=$('bulkTopics').value.split(/\n|;/).map(x=>x.trim()).filter(Boolean);
  if(!topics.length){toast('Insira os temas antes de gerar a agenda.');return}
  if(topics.length>10){toast('Para usar IA em lote, gere no máximo 10 temas por vez.');return}
  if(!supabaseConnected||!supabaseClient){toast('O painel ainda não está conectado ao Supabase.');integrationStatus('Aguarde a conexão com o Supabase antes de gerar conteúdo.',true);return;}
- const selectedDiscipline=editorialDisciplines.find(d=>d.id===$('bulkDiscipline')?.value);\n if(!selectedDiscipline){toast('Selecione a disciplina para este lote.');return;}
+ const selectedDiscipline=editorialDisciplines.find(d=>d.id===$('bulkDiscipline')?.value);
+ if(!selectedDiscipline){toast('Selecione a disciplina para este lote.');return;}
  const startValue=$('bulkStart').value||localDate(new Date());
  $('monthFilter').value=startValue.slice(0,7);
  const startDate=new Date(startValue+'T12:00:00');
