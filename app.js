@@ -312,7 +312,7 @@ async function initializeSupabaseConnection() {
     const timeoutId = setTimeout(() => controller.abort(), 8000);
     let response;
     try {
-      response = await fetch(SUPABASE_URL + '/rest/v1/', {
+      response = await fetch(SUPABASE_URL + '/auth/v1/health', {
         method: 'GET',
         headers: { apikey: SUPABASE_PUBLISHABLE_KEY },
         cache: 'no-store',
