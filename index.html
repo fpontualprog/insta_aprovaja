@@ -35,22 +35,17 @@
 <div class="actions"><button class="btn primary" id="generateStoryVideo" type="submit">Gerar Stories com Vídeo</button></div>
 <p class="hint" id="storyFormStatus" aria-live="polite">O Story será registrado na fila como pendente de aprovação.</p>
 </form></section>
-<section class="panel single-generator-panel"><div class="panel-head"><div><p class="eyebrow">ESTÚDIO EDITORIAL COM IA</p><h2>Gerar nova publicação</h2></div><span class="mini-logo">AJ</span></div>
-<form id="postForm">
-<label for="aiDisciplineSelect">Disciplina</label><select id="aiDisciplineSelect" required><option value="">Carregando disciplinas do AprovaJá…</option></select><label for="aiContentSelect">Conteúdo cadastrado (opcional)</label><select id="aiContentSelect"><option value="">Escolha uma disciplina primeiro</option></select><label for="title">Matéria / tema</label><input id="title" required maxlength="300" placeholder="Ex.: Direitos sociais na Constituição Federal de 1988">
-<label for="kind">Tipo de Publicação</label><select id="kind"><option value="Resumo de conteúdo">Resumo de conteúdo</option><option value="Questão de revisão">Questão de revisão</option><option value="Mapa mental">Mapa mental</option><option value="Divulgação da plataforma">Divulgação da plataforma</option></select>
-<label for="outputFormat">Formato de saída</label><select id="outputFormat"><option value="imagem">Imagem para feed</option><option value="video">Vídeo vertical com narração (Reels/Stories)</option></select>
-<div id="videoWorkflowNotice" class="hint" hidden>O vídeo é montado pelo fluxo de vídeo do AprovaJá. Ao continuar, será aberta a tela segura do GitHub Actions para informar o tema e iniciar a geração. Não é necessário compartilhar credenciais no painel.</div>
-<div class="actions" id="videoWorkflowActions" hidden><a class="btn secondary" href="https://github.com/fpontualprog/insta_aprovaja/actions/workflows/gerar-conteudo-ia.yml" target="_blank" rel="noopener">Abrir gerador de vídeos</a></div>
-<label for="brief">Síntese do Conteúdo</label><textarea id="brief" rows="4" placeholder="Informe os pontos que devem ser abordados pela IA..." required></textarea>
-<label for="date">Data de publicação</label><input id="date" type="date" required>
-<input id="time" type="hidden" value="12:15">
-<input id="aiDiscipline" type="hidden" value="">
-<input id="aiBoard" type="hidden" value="">
-<input id="format" type="hidden" value="Feed">
-<div class="generated-preview" id="generatedPreview" aria-live="polite"><p class="hint">O conteúdo será produzido por IA após o envio do formulário.</p></div>
-<div class="actions"><button class="btn primary" id="generateAI" type="submit">Gerar Conteúdo Com IA</button></div>
-<p class="hint">A geração exige sessão administrativa e consulta o DeepSeek pelo servidor. O conteúdo será incluído na agenda para revisão antes da publicação.</p>
+<section class="panel story-studio-panel">
+<div class="panel-head"><div><p class="eyebrow">ESTÚDIO EDITORIAL COM IA</p><h2>Gerar Stories com Vídeo</h2></div><span class="mini-logo">AJ</span></div>
+<p class="hint">Formulário independente. A disciplina é texto livre e não depende do cadastro de disciplinas do AprovaJá.</p>
+<form id="storyForm">
+<label for="storyDate">Data da Publicação</label><input id="storyDate" type="date" required>
+<label for="storyTime">Horário</label><input id="storyTime" type="time" value="12:15" required>
+<label for="storyDiscipline">Disciplina</label><input id="storyDiscipline" type="text" maxlength="160" placeholder="Digite livremente a disciplina" required>
+<label for="storySubject">Assunto</label><input id="storySubject" type="text" maxlength="300" placeholder="Digite o assunto do Story" required>
+<label for="storyInstructions">Instruções para publicação</label><textarea id="storyInstructions" rows="5" placeholder="Explique o conteúdo, o tom, os pontos que devem aparecer e a chamada desejada." required></textarea>
+<div class="actions"><button class="btn primary" id="generateStoryVideo" type="submit">Gerar Stories com Vídeo</button></div>
+<p class="hint" id="storyFormStatus" aria-live="polite">Após gerar, o Story deve entrar na fila aguardando aprovação.</p>
 </form></section>
 <section class="panel monthly-schedule-panel">
   <div class="panel-head"><div><p class="eyebrow">PROGRAMAÇÃO EDITORIAL</p><h2>Cronograma de publicações do mês</h2></div><span class="schedule-month-label" id="scheduleMonthLabel">Mês atual</span></div>
@@ -61,5 +56,5 @@
 <section class="panel guide"><p class="eyebrow">LINHA EDITORIAL</p><h2>Uma rotina simples, quatro vezes por semana</h2><div class="schedule"><article><span>TER · 12h15</span><strong>Questão comentada</strong><p>Ensine algo prático e estimule salvamentos.</p></article><article><span>QUI · 19h30</span><strong>Dica ou mapa mental</strong><p>Transforme um tema difícil em revisão visual.</p></article><article><span>DOM · 18h30</span><strong>Planejamento + plataforma</strong><p>Ajude a organizar a semana e apresente a AprovaJá.</p></article><article><span>SÁB · 10h00</span><strong>Concursos abertos</strong><p>Divulgue oportunidades confirmadas, prazos e o link para a página do AprovaJá.</p></article></div><p class="hint">Horários iniciais para teste, não garantia de maior alcance. Ajuste com os Insights da conta.</p></section>
 <section class="panel published-history-panel"><div class="panel-head"><div><p class="eyebrow">HISTÓRICO</p><h2>Publicações realizadas</h2></div></div><p class="hint">Registro das publicações marcadas como publicadas, com data, horário, tipo e código de identificação.</p><div id="publishedHistory"><p class="hint">Carregando histórico…</p></div></section>
 <footer>Insta AprovaJá · Painel editorial gratuito · Publicação protegida por Supabase Auth</footer>
-</main><div id="toast" role="status" aria-live="polite"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="app.js?v=be854930"></script>
+</main><div id="toast" role="status" aria-live="polite"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="app.js?v=42360743"></script>
 </body></html>
