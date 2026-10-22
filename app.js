@@ -307,12 +307,21 @@ async function initializeSupabaseConnection() {
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
     });
-    // A conexão é validada por uma chamada leve de saúde do Auth, sem exigir login.
-    const response = await fetch(SUPABASE_URL + '/auth/v1/health', {
-      headers: { apikey: SUPABASE_PUBLISHABLE_KEY },
-      cache: 'no-store'
-    });
-    if (!response.ok) throw new Error('O Supabase respondeu HTTP ' + response.status + '.');
+    // Valida a API REST pública sem exigir sessão administrativa e sem deixar a tela presa.
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    let response;
+    try {
+      response = await fetch(SUPABASE_URL + '/rest/v1/', {
+        method: 'GET',
+        headers: { apikey: SUPABASE_PUBLISHABLE_KEY },
+        cache: 'no-store',
+        signal: controller.signal
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
+    if (!response.ok) throw new Error('A API do Supabase respondeu HTTP ' + response.status + '.');
     supabaseConnected = true;
     integrationStatus('Conexão com o Supabase estabelecida.');
   } catch (error) {
