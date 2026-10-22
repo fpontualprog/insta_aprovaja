@@ -44,6 +44,12 @@ jobs:
       - name: Baixar repositório
         uses: actions/checkout@v4
 
+      - name: Instalar FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          ffmpeg -version
+
       - name: Preparar Python
         uses: actions/setup-python@v5
         with:
@@ -137,6 +143,9 @@ jobs:
 
       - name: Montar artes do Instagram
         run: python python-ai/render_instagram.py
+
+      - name: Gerar vídeo vertical para Stories com narração e trilha
+        run: python python-ai/render_video.py
 
       - name: Disponibilizar arquivos gerados
         if: always()
