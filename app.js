@@ -303,7 +303,7 @@ async function initializeSupabaseConnection() {
   try {
     if (!window.supabase?.createClient) throw new Error('A biblioteca Supabase não carregou. Atualize a página.');
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
     });
     // A conexão é validada por uma chamada leve de saúde do Auth, sem exigir login.
     const response = await fetch(SUPABASE_URL + '/auth/v1/health', {
@@ -453,18 +453,7 @@ async function publishApprovedImage(postId, button) {
 }
 document.addEventListener('DOMContentLoaded', async () => {
   await initializeSupabaseConnection();
-  const loginForm = document.getElementById('instagramLoginForm');
-  const logoutButton = document.getElementById('instagramLogoutButton');
-  if (loginForm) loginForm.addEventListener('submit', signInInstagramAdmin);
-  if (logoutButton) logoutButton.addEventListener('click', signOutInstagramAdmin);
-  if (supabaseClient) {
-    const { data, error } = await supabaseClient.auth.getSession();
-    if (!error) {
-      currentSession = data.session;
-      updateAuthUI();
-      if (currentSession) { integrationStatus('Sessão administrativa restaurada.'); await loadEditorialLibrary(); }
-    }
-  }
+  if (supabaseConnected) await loadEditorialLibrary();
 });
  
 // Listener delegado registrado imediatamente: também funciona para cards criados dinamicamente.
