@@ -404,13 +404,18 @@ async function publishApprovedImage(postId, button) {
   if (!currentSession) {
     integrationStatus('Entre com a conta administradora do Supabase antes de publicar.', true); return;
   }
-  if (!Array.isArray(post.images) || !post.images.length) {
-    integrationStatus('Esta publicação não contém artes para enviar.', true); return;
+  const isVideoStory = !!post.storyWorkflow && typeof post.videoUrl === 'string' && post.videoUrl.endsWith('.mp4');
+  if (isVideoStory) {
+    if (!post.videoUrl) { integrationStatus('O vídeo do Story ainda não está disponível.', true); return; }
+  } else {
+    if (!Array.isArray(post.images) || !post.images.length) {
+      integrationStatus('Esta publicação não contém artes para enviar.', true); return;
+    }
+    if (post.images.length > 10) {
+      integrationStatus('O Instagram permite até 10 imagens por carrossel. Reduza o número de artes.', true); return;
+    }
   }
-  if (post.images.length > 10) {
-    integrationStatus('O Instagram permite até 10 imagens por carrossel. Reduza o número de artes.', true); return;
-  }
-  if (!confirm('Publicar AGORA no Instagram?\n\n' + post.title + '\n' + post.images.length + (post.images.length === 1 ? ' imagem' : ' imagens') + '\n\nA data e o horário planejados não serão considerados.')) return;
+  if (!confirm('Publicar AGORA no Instagram?\\n\\n' + post.title + '\\n' + (isVideoStory ? 'Story em vídeo MP4' : post.images.length + (post.images.length === 1 ? ' imagem' : ' imagens')) + '\\n\\nA data e o horário planejados não serão considerados.')) return;
   publishBusy = true;
   button.disabled = true;
   const originalLabel = button.textContent;
@@ -421,19 +426,19 @@ async function publishApprovedImage(postId, button) {
     currentSession = refreshed.session;
     if (!currentSession?.access_token) throw new Error('A sessão expirou. Entre novamente.');
     const imageUrls = [];
-    for (let i = 0; i < post.images.length; i++) {
-      integrationStatus('Preparando imagem ' + (i + 1) + ' de ' + post.images.length + '…');
-      const jpegBlob = await imageDataToJpegBlob(post.images[i]);
-      const objectPath = 'publicacoes/' + Date.now() + '-' + (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)) + '-' + (i + 1) + '.jpg';
-      const { error: uploadError } = await supabaseClient.storage
-        .from('instagram-publicacoes')
-        .upload(objectPath, jpegBlob, { contentType: 'image/jpeg', upsert: false });
-      if (uploadError) throw new Error('Falha ao enviar a imagem ' + (i + 1) + ' ao Storage: ' + uploadError.message);
-      const { data: publicData } = supabaseClient.storage.from('instagram-publicacoes').getPublicUrl(objectPath);
-      if (!publicData?.publicUrl) throw new Error('Não foi possível obter a URL pública da imagem ' + (i + 1) + '.');
-      imageUrls.push(publicData.publicUrl);
+    if (!isVideoStory) {
+      for (let i = 0; i < post.images.length; i++) {
+        integrationStatus('Preparando imagem ' + (i + 1) + ' de ' + post.images.length + '…');
+        const jpegBlob = await imageDataToJpegBlob(post.images[i]);
+        const objectPath = 'publicacoes/' + Date.now() + '-' + (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)) + '-' + (i + 1) + '.jpg';
+        const { error: uploadError } = await supabaseClient.storage.from('instagram-publicacoes').upload(objectPath, jpegBlob, { contentType: 'image/jpeg', upsert: false });
+        if (uploadError) throw new Error('Falha ao enviar a imagem ' + (i + 1) + ' ao Storage: ' + uploadError.message);
+        const { data: publicData } = supabaseClient.storage.from('instagram-publicacoes').getPublicUrl(objectPath);
+        if (!publicData?.publicUrl) throw new Error('Não foi possível obter a URL pública da imagem ' + (i + 1) + '.');
+        imageUrls.push(publicData.publicUrl);
+      }
     }
-    integrationStatus('Enviando solicitação de publicação imediata ao Instagram…');
+    integrationStatus(isVideoStory ? 'Enviando Story em vídeo ao Instagram…' : 'Enviando solicitação de publicação imediata ao Instagram…');
     const response = await fetch(INSTAGRAM_PUBLISH_URL, {
       method: 'POST',
       headers: {
@@ -441,7 +446,7 @@ async function publishApprovedImage(postId, button) {
         'apikey': SUPABASE_PUBLISHABLE_KEY,
         'Authorization': 'Bearer ' + currentSession.access_token
       },
-      body: JSON.stringify({ image_urls: imageUrls, caption: post.caption || makeCaption(post) })
+      body: JSON.stringify(isVideoStory ? { video_url: post.videoUrl } : { image_urls: imageUrls, caption: post.caption || makeCaption(post) })
     });
     const result = await response.json().catch(() => ({}));
     if (!response.ok || !result.ok) {
@@ -452,7 +457,7 @@ async function publishApprovedImage(postId, button) {
     post.instagramMediaId = result.media_id;
     post.publishedAt = new Date().toISOString();
     if (save()) {
-      integrationStatus('Instagram confirmou a publicação imediata de ' + imageUrls.length + (imageUrls.length === 1 ? ' imagem' : ' imagens') + ' em @' + (result.instagram_username || 'aprovaja_seuconcurso') + '.');
+      integrationStatus('Instagram confirmou a publicação imediata de ' + (isVideoStory ? 'um Story em vídeo' : imageUrls.length + (imageUrls.length === 1 ? ' imagem' : ' imagens')) + ' em @' + (result.instagram_username || 'aprovaja_seuconcurso') + '.');
       toast('Instagram confirmou a publicação.');
     }
   } catch (error) {
