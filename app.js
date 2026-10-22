@@ -525,6 +525,14 @@ $('postForm')?.addEventListener('submit', async e=>{
  e.preventDefault();
  const topic=$('title').value.trim();
  const kind=$('kind').value;
+ if($('outputFormat')?.value==='video'){
+   const notice=$('videoWorkflowNotice');
+   if(notice){notice.hidden=false;notice.scrollIntoView({behavior:'smooth',block:'center'});}
+   const link=document.querySelector('#videoWorkflowActions a');
+   if(link)link.focus();
+   toast('Use “Abrir gerador de vídeos” para iniciar a montagem do vídeo vertical.');
+   return;
+ }
  const brief=$('brief').value.trim();
  const date=$('date').value;
  if(!topic||!brief||!date){toast('Preencha Matéria, Síntese do Conteúdo e Data de publicação.');return;}
@@ -575,6 +583,18 @@ $('postForm')?.addEventListener('submit', async e=>{
    host.innerHTML='<p class="hint integration-error">'+esc(error?.message||'Não foi possível gerar conteúdo com IA.')+'</p>';
    toast(error?.message||'Falha na geração com IA.');
  }finally{button.disabled=false;button.textContent='Gerar Conteúdo Com IA';}
+});
+
+
+const outputFormatSelect=document.getElementById('outputFormat');
+const videoNotice=document.getElementById('videoWorkflowNotice');
+const videoActions=document.getElementById('videoWorkflowActions');
+outputFormatSelect?.addEventListener('change',()=>{
+ const isVideo=outputFormatSelect.value==='video';
+ if(videoNotice)videoNotice.hidden=!isVideo;
+ if(videoActions)videoActions.hidden=!isVideo;
+ const button=document.getElementById('generateAI');
+ if(button)button.textContent=isVideo?'Preparar geração de vídeo':'Gerar Conteúdo Com IA';
 });
 
 function openArtworkPopup(src,title){
