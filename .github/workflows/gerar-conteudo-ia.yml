@@ -22,6 +22,7 @@ on:
           - questoes
           - flashcards
           - carrossel
+          - video
       quantidade:
         description: "Quantidade de questões ou flashcards (1 a 10)"
         required: true
@@ -43,6 +44,14 @@ jobs:
     steps:
       - name: Baixar repositório
         uses: actions/checkout@v7
+
+      - name: Instalar FFmpeg para montagem de vídeo
+        if: ${{ inputs.formato == 'video' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          ffmpeg -version
+          ffprobe -version
 
       - name: Preparar Python
         uses: actions/setup-python@v7
@@ -123,6 +132,14 @@ jobs:
 
       - name: Montar artes do Instagram
         run: python python-ai/render_instagram.py
+
+      - name: Montar vídeo vertical com narração e trilha
+        if: ${{ inputs.formato == 'video' }}
+        run: |
+          python -m py_compile python-ai/render_video.py
+          python python-ai/render_video.py
+          test -s output/aprovaja_story.mp4
+          ffprobe -v error -show_entries stream=codec_name,width,height -show_entries format=duration -of json output/aprovaja_story.mp4
 
       - name: Disponibilizar arquivos gerados
         if: always()
