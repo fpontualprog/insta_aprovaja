@@ -214,7 +214,12 @@ def sync_drive():
     except HTTPException:
         raise
     except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"Falha ao sincronizar o Drive: {exc}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=502,
+            detail=f"Falha ao sincronizar o Drive ({type(exc).__name__}): {exc}. Confira se a pasta é acessível sem login e se o Google Drive não apresentou uma página de confirmação ou limite temporário."
+        )
 
 @app.post("/generate")
 def generate(req: GenerateRequest):
