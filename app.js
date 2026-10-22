@@ -530,7 +530,8 @@ $('postForm')?.addEventListener('submit', async e=>{
  if(!topic||!brief||!date){toast('Preencha Matéria, Síntese do Conteúdo e Data de publicação.');return;}
  if(!currentSession?.access_token||!supabaseClient){toast('Entre com a conta administradora para gerar conteúdo com IA.');integrationStatus('Entre com a conta administradora para usar o DeepSeek.',true);return;}
  const button=$('generateAI'),host=$('generatedPreview');
- const discipline=$('aiDiscipline')?.value.trim()||'';\n if(!discipline){toast('Selecione uma disciplina.');return;}
+ const discipline=$('aiDiscipline')?.value.trim()||'';
+ if(!discipline){toast('Selecione uma disciplina.');return;}
  button.disabled=true;button.textContent='Gerando com IA…';
  host.innerHTML='<p class="hint">Consultando o DeepSeek com segurança. Aguarde…</p>';
  try{
