@@ -22,6 +22,7 @@ on:
           - questoes
           - flashcards
           - carrossel
+          - video
       quantidade:
         description: "Quantidade de questões ou flashcards (1 a 10)"
         required: true
@@ -144,7 +145,8 @@ jobs:
       - name: Montar artes do Instagram
         run: python python-ai/render_instagram.py
 
-      - name: Gerar vídeo vertical para Stories com narração e trilha
+      - name: Gerar vídeo vertical para Stories/Reels com narração e trilha
+        if: ${{ inputs.formato == 'video' }}
         run: python python-ai/render_video.py
 
       - name: Disponibilizar arquivos gerados
