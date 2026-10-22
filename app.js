@@ -134,7 +134,7 @@ function renderMonthlySchedule(){
  if(!rows.length){body.innerHTML='<tr><td colspan="5" class="schedule-empty">Nenhuma publicação programada para o período selecionado.</td></tr>';return;}
  body.innerHTML=rows.map(p=>'<tr><td>'+esc(formatDate(p.date))+'</td><td>'+esc(p.time||'—')+'</td><td class="schedule-title-cell">'+esc(p.title||'Sem título')+'</td><td>'+esc(p.kind||'—')+'</td><td><span class="schedule-status '+esc((p.status||'Pendente').replace(/[^a-zA-Z]/g,''))+'">'+esc(p.needsApproval?'Aguardando aprovação':p.status||'Pendente')+'</span></td></tr>').join('');
 }
-function render(){const filter=$('filter').value;const monthFilter=$('monthFilter')?.value||localDate(new Date()).slice(0,7);const list=posts.filter(p=>(!p.date||p.date.slice(0,7)===monthFilter)&&(filter==='all'||filter==='Pendente'?(filter==='all'||p.status==='Pendente'||p.needsApproval):p.status===filter)).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));$('count').textContent=posts.length;$('pendingCount').textContent=posts.filter(p=>p.status==='Pendente'||p.needsApproval).length;$('approvedCount').textContent=posts.filter(p=>p.status==='Aprovada'&&!p.needsApproval).length;$('publishedCount').textContent=posts.filter(p=>p.status==='Publicada').length;renderPublishedHistory();renderMonthlySchedule();const host=$('posts');if(!list.length){host.className='posts-empty';host.innerHTML='<div class="empty-icon">✦</div><strong>Agenda vazia</strong><p>Gere as pautas para montar o calendário mensal.</p>';return}host.className='';host.classList.toggle('posts-grid',filter==='Aprovada');host.innerHTML=list.map(p=>{const needsApproval=!!p.needsApproval||p.status==='Pendente';return '<article class="post-card layout-'+esc((p.kind||'dica').toLowerCase().replace(/[^a-z0-9]+/g,'-'))+'"><div class="post-top"><div><h3>'+esc(p.title)+'</h3><div class="meta">'+(p.status==='Aprovada'?'<strong>Data:</strong> ':'')+esc(formatDate(p.date))+(p.status==='Aprovada'?'<br><strong>Horário:</strong> ':' às ')+esc(p.time)+(p.status==='Aprovada'?'<br><strong>Tipo:</strong> ':' · ')+esc(p.kind)+' · '+esc(p.format||'Feed')+'</div></div><span class="status '+esc(p.status)+'">'+esc(needsApproval?'Aguardando aprovação':p.status==='Aprovada'?'Na fila de publicação':p.status)+'</span></div><p class="post-caption">'+esc(needsApproval?'Prévia da pauta. Aprove para gerar o texto, a legenda e as artes.':p.caption||'')+'</p>'+(p.images&&p.images.length?'<div class="post-images">'+p.images.map((src,i)=>'<a href="'+src+'" download="aprovaja-arte-'+(i+1)+'.png" target="_blank" rel="noopener"><img src="'+src+'" alt="Arte '+(i+1)+' do carrossel"><span>Baixar arte '+(i+1)+'</span></a>').join('')+'</div>':'')+'<div class="post-actions">'+(needsApproval?'<button class="small-btn" data-action="edit" data-id="'+p.id+'">Alterar</button><button class="small-btn approve-btn" data-action="approve" data-id="'+p.id+'">'+(p.storyWorkflow?'Aprovar Story':'Aprovar e gerar conteúdo')+'</button><button class="small-btn" data-action="reject" data-id="'+p.id+'">Reprovar</button>':'<button class="small-btn" data-action="copy" data-id="'+p.id+'">Copiar legenda</button>')+(p.status==='Aprovada'&&!needsApproval?'<button class="small-btn publish-btn" data-publish-id="'+p.id+'">Publicar agora</button><button class="small-btn" data-action="published" data-id="'+p.id+'">Marcar publicada</button>':'')+'<button class="small-btn" data-action="delete" data-id="'+p.id+'">Excluir</button></div></article>'}).join('')}function setDefaultDate(){const d=new Date();d.setDate(d.getDate()+((2-d.getDay()+7)%7||7));const dateField=$('date');if(dateField)dateField.value=localDate(d);const bulkStartField=$('bulkStart');if(bulkStartField)bulkStartField.value=localDate(d)};if($('storyDate'))$('storyDate').value=localDate(new Date())
+function render(){const filter=$('filter').value;const monthFilter=$('monthFilter')?.value||localDate(new Date()).slice(0,7);const list=posts.filter(p=>(!p.date||p.date.slice(0,7)===monthFilter)&&(filter==='all'||filter==='Pendente'?(filter==='all'||p.status==='Pendente'||p.needsApproval):p.status===filter)).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));$('count').textContent=posts.length;$('pendingCount').textContent=posts.filter(p=>p.status==='Pendente'||p.needsApproval).length;$('approvedCount').textContent=posts.filter(p=>p.status==='Aprovada'&&!p.needsApproval).length;$('publishedCount').textContent=posts.filter(p=>p.status==='Publicada').length;renderPublishedHistory();renderMonthlySchedule();const host=$('posts');if(!list.length){host.className='posts-empty';host.innerHTML='<div class="empty-icon">✦</div><strong>Agenda vazia</strong><p>Gere as pautas para montar o calendário mensal.</p>';return}host.className='';host.classList.toggle('posts-grid',filter==='Aprovada');host.innerHTML=list.map(p=>{const needsApproval=!!p.needsApproval||p.status==='Pendente';return '<article class="post-card layout-'+esc((p.kind||'dica').toLowerCase().replace(/[^a-z0-9]+/g,'-'))+'"><div class="post-top"><div><h3>'+esc(p.title)+'</h3><div class="meta">'+(p.status==='Aprovada'?'<strong>Data:</strong> ':'')+esc(formatDate(p.date))+(p.status==='Aprovada'?'<br><strong>Horário:</strong> ':' às ')+esc(p.time)+(p.status==='Aprovada'?'<br><strong>Tipo:</strong> ':' · ')+esc(p.kind)+' · '+esc(p.format||'Feed')+'</div></div><span class="status '+esc(p.status)+'">'+esc(needsApproval?'Aguardando aprovação':p.status==='Aprovada'?'Na fila de publicação':p.status)+'</span></div><p class="post-caption">'+esc(needsApproval?'Prévia da pauta. Aprove para gerar o texto, a legenda e as artes.':p.caption||'')+'</p>'+(p.images&&p.images.length?'<div class="post-images">'+p.images.map((src,i)=>'<a href="'+src+'" download="aprovaja-arte-'+(i+1)+'.png" target="_blank" rel="noopener"><img src="'+src+'" alt="Arte '+(i+1)+' do carrossel"><span>Baixar arte '+(i+1)+'</span></a>').join('')+'</div>':'')+(p.videoUrl?'<div class="post-video"><video controls playsinline preload="metadata" src="'+esc(p.videoUrl)+'" style="width:100%;max-width:360px;border-radius:12px"></video><p><a href="'+esc(p.videoUrl)+'" target="_blank" rel="noopener">Abrir MP4 do Story</a></p></div>':(p.status==='Gerando vídeo'?'<p class="hint">Vídeo em processamento no GitHub Actions…</p>':''))+'<div class="post-actions">'+(needsApproval?'<button class="small-btn" data-action="edit" data-id="'+p.id+'">Alterar</button><button class="small-btn approve-btn" data-action="approve" data-id="'+p.id+'">'+(p.storyWorkflow?'Aprovar Story':'Aprovar e gerar conteúdo')+'</button><button class="small-btn" data-action="reject" data-id="'+p.id+'">Reprovar</button>':'<button class="small-btn" data-action="copy" data-id="'+p.id+'">Copiar legenda</button>')+(p.status==='Aprovada'&&!needsApproval?'<button class="small-btn publish-btn" data-publish-id="'+p.id+'">Publicar agora</button><button class="small-btn" data-action="published" data-id="'+p.id+'">Marcar publicada</button>':'')+'<button class="small-btn" data-action="delete" data-id="'+p.id+'">Excluir</button></div></article>'}).join('')}function setDefaultDate(){const d=new Date();d.setDate(d.getDate()+((2-d.getDay()+7)%7||7));const dateField=$('date');if(dateField)dateField.value=localDate(d);const bulkStartField=$('bulkStart');if(bulkStartField)bulkStartField.value=localDate(d)};if($('storyDate'))$('storyDate').value=localDate(new Date())
 const RANDOM_EDITORIAL_KINDS=['Dica de prova','Questão comentada','Mapa mental','Planejamento de estudos','Divulgação da plataforma','Motivação e disciplina'];
 function randomItem(items){return items[Math.floor(Math.random()*items.length)]}
 
@@ -523,23 +523,80 @@ function localEducationalContent(topic, kind, brief) {
  return {title:t,captionBody:body,imageText:branches.slice(0,3).map(b=>b[0]).join(' • '),storyText:'Revise '+t+': identifique a regra, os limites e as exceções.',mindMap:{central,branches:branches.map(b=>({label:b[0],children:b[1]}))},flashcards,hashtags:['AprovaJa','ConcursosPublicos','EstudosParaConcursos','Revisao']};
 }
 
-$('storyForm')?.addEventListener('submit',e=>{
+async function waitForStoryVideo(storyId, storyDate, storyTime) {
+ const post = posts.find(item => item.id === storyId);
+ if (!post) return;
+ const videoUrl = SUPABASE_URL + '/storage/v1/object/public/instagram-publicacoes/stories/' + encodeURIComponent(storyId) + '.mp4';
+ const started = Date.now();
+ const maxWait = 5 * 60 * 60 * 1000;
+ while (Date.now() - started < maxWait) {
+  await new Promise(resolve => setTimeout(resolve, 30000));
+  try {
+   const response = await fetch(videoUrl + '?check=' + Date.now(), { method: 'HEAD', cache: 'no-store' });
+   if (response.ok) {
+    post.videoUrl = videoUrl;
+    post.status = 'Pendente';
+    post.needsApproval = true;
+    post.videoGenerationStatus = 'Pronto para aprovação';
+    save();
+    const status = $('storyFormStatus');
+    if (status) status.textContent = 'Vídeo gerado e armazenado. A pauta está na fila para você assistir e aprovar antes de publicar.';
+    toast('Story em vídeo pronto para revisão.');
+    return;
+   }
+  } catch (_) {}
+ }
+ const current = posts.find(item => item.id === storyId);
+ if (current && current.status === 'Gerando vídeo') {
+  current.videoGenerationStatus = 'Tempo de espera excedido; confira o GitHub Actions';
+  save();
+  const status = $('storyFormStatus');
+  if (status) status.textContent = 'A geração ainda não foi localizada no Storage. Confira a execução no GitHub Actions antes de tentar novamente.';
+ }
+}
+$('storyForm')?.addEventListener('submit',async e=>{
  e.preventDefault();
  const date=$('storyDate').value,time=$('storyTime').value,discipline=$('storyDiscipline').value.trim(),subject=$('storySubject').value.trim(),instructions=$('storyInstructions').value.trim();
  if(!date||!time||!discipline||!subject||!instructions){toast('Preencha todos os campos do Estúdio Editorial.');return;}
- const story={
-  id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),
-  title:subject,kind:'Stories com Vídeo',format:'Stories com Vídeo',date,time,
-  discipline,brief:instructions,captionBody:instructions,caption:'',
-  images:[],videoUrl:'',status:'Pendente',needsApproval:true,
-  createdAt:new Date().toISOString(),storyWorkflow:true
- };
- posts.push(story);
- if(!save()){posts.pop();return;}
- $('storyFormStatus').textContent='Story registrado na fila e aguardando aprovação. A geração do arquivo de vídeo ainda precisa ser concluída pelo fluxo de vídeo.';
- $('monthFilter').value=date.slice(0,7);
- $('posts').scrollIntoView({behavior:'smooth',block:'start'});
- toast('Story adicionado à fila de aprovação.');
+ if(!supabaseClient||!currentSession?.access_token){toast('Entre com a conta administradora antes de gerar Stories.');integrationStatus('A geração de Stories exige uma sessão administrativa válida.',true);return;}
+ const button=$('generateStoryVideo');
+ const storyId=crypto.randomUUID?crypto.randomUUID():String(Date.now());
+ button.disabled=true;
+ const original=button.textContent;
+ button.textContent='Solicitando geração…';
+ try {
+  const {data:sessionData,error:sessionError}=await supabaseClient.auth.getSession();
+  if(sessionError)throw sessionError;
+  const accessToken=sessionData?.session?.access_token;
+  if(!accessToken)throw new Error('A sessão expirou. Entre novamente.');
+  const response=await fetch(SUPABASE_URL+'/functions/v1/instagram-story-generate',{
+   method:'POST',
+   headers:{'Content-Type':'application/json','apikey':SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+accessToken},
+   body:JSON.stringify({story_id:storyId,topic:subject,discipline,date,time,instructions})
+  });
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok||!result.ok)throw new Error(result.error||('Falha ao iniciar a geração (HTTP '+response.status+').'));
+  const story={
+   id:storyId,title:subject,kind:'Stories com Vídeo',format:'Stories com Vídeo',date,time,
+   discipline,brief:instructions,captionBody:instructions,caption:'',
+   images:[],videoUrl:'',status:'Gerando vídeo',needsApproval:false,
+   createdAt:new Date().toISOString(),storyWorkflow:true,videoGenerationStatus:'Executando no GitHub Actions'
+  };
+  posts.push(story);
+  if(!save()){posts.pop();throw new Error('Não foi possível salvar a pauta no navegador.');}
+  $('storyFormStatus').textContent='Solicitação enviada ao GitHub Actions. O painel vai procurar o MP4 no Supabase e liberar a aprovação quando estiver pronto.';
+  $('monthFilter').value=date.slice(0,7);
+  $('posts').scrollIntoView({behavior:'smooth',block:'start'});
+  toast('Geração de Story iniciada no GitHub.');
+  waitForStoryVideo(storyId,date,time);
+ } catch(error) {
+  $('storyFormStatus').textContent='Não foi possível iniciar a geração: '+(error?.message||'erro inesperado');
+  integrationStatus('Falha ao iniciar a geração do Story.',true);
+  toast(error?.message||'Falha ao iniciar a geração.');
+ } finally {
+  button.disabled=false;
+  button.textContent=original;
+ }
 });
 
 $('postForm')?.addEventListener('submit', async e=>{
