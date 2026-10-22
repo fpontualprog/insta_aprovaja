@@ -171,11 +171,56 @@ function editorialForDate(d){switch(d.getDay()){case 2:return 'Questão comentad
 function nextEditorialDate(d){const x=new Date(d);while(!editorialForDate(x))x.setDate(x.getDate()+1);return x}
 function editorialForDate(d){switch(d.getDay()){case 2:return 'Questão comentada';case 4:return randomItem(['Dica de prova','Mapa mental']);case 6:return 'Concursos abertos';case 0:return randomItem(['Planejamento de estudos','Divulgação da plataforma']);default:return null}}
 function nextEditorialDate(d){const x=new Date(d);while(!editorialForDate(x))x.setDate(x.getDate()+1);return x}
-$('generateBatch').addEventListener('click',async()=>{
+
+// Carrega disciplinas e conteúdos reais da biblioteca do AprovaJá após autenticação.
+let editorialDisciplines = [];
+async function loadEditorialLibrary() {
+ if (!supabaseClient || !currentSession?.access_token) return;
+ const batch = document.getElementById('bulkDiscipline');
+ const single = document.getElementById('aiDisciplineSelect');
+ const contentSelect = document.getElementById('aiContentSelect');
+ try {
+  const {data: disciplines, error} = await supabaseClient.from('biblioteca_disciplinas').select('id,nome').order('nome');
+  if (error) throw error;
+  editorialDisciplines = disciplines || [];
+  const options = '<option value="">Selecione a disciplina</option>' + editorialDisciplines.map(d=>'<option value="'+esc(d.id)+'">'+esc(d.nome)+'</option>').join('');
+  if(batch) batch.innerHTML=options;
+  if(single) single.innerHTML=options;
+  if(contentSelect) contentSelect.innerHTML='<option value="">Selecione uma disciplina primeiro</option>';
+ } catch (error) {
+  const message = 'Não foi possível carregar a biblioteca: '+(error?.message||'erro de acesso');
+  if(batch) batch.innerHTML='<option value="">'+esc(message)+'</option>';
+  if(single) single.innerHTML='<option value="">'+esc(message)+'</option>';
+ }
+}
+async function loadEditorialTopics(disciplineId) {
+ const select = document.getElementById('aiContentSelect');
+ if(!select) return;
+ select.innerHTML='<option value="">Carregando conteúdos…</option>';
+ if(!disciplineId){select.innerHTML='<option value="">Selecione uma disciplina primeiro</option>';return;}
+ try {
+  const {data, error} = await supabaseClient.from('biblioteca_conteudos').select('id,nome').eq('disciplina_id',disciplineId).order('nome');
+  if(error) throw error;
+  select.innerHTML='<option value="">Escolha um conteúdo cadastrado (ou digite abaixo)</option>'+(data||[]).map(item=>'<option value="'+esc(item.id)+'" data-title="'+esc(item.nome)+'">'+esc(item.nome)+'</option>').join('');
+  if(!data?.length) select.innerHTML='<option value="">Nenhum conteúdo cadastrado; digite o tema abaixo</option>';
+ } catch(error) {
+  select.innerHTML='<option value="">Não foi possível carregar conteúdos; digite o tema abaixo</option>';
+ }
+}
+document.getElementById('aiDisciplineSelect')?.addEventListener('change', async e=>{
+ const chosen=editorialDisciplines.find(d=>d.id===e.target.value);
+ document.getElementById('aiDiscipline').value=chosen?.nome||'';
+ await loadEditorialTopics(e.target.value);
+});
+document.getElementById('aiContentSelect')?.addEventListener('change', e=>{
+ const option=e.target.selectedOptions?.[0];
+ if(option?.dataset?.title) document.getElementById('title').value=option.dataset.title;
+});
+\n$('generateBatch').addEventListener('click',async()=>{
  const topics=$('bulkTopics').value.split(/\n|;/).map(x=>x.trim()).filter(Boolean);
  if(!topics.length){toast('Insira os temas antes de gerar a agenda.');return}
  if(topics.length>10){toast('Para usar IA em lote, gere no máximo 10 temas por vez.');return}
- if(!supabaseConnected||!supabaseClient){toast('O painel ainda não está conectado ao Supabase.');integrationStatus('Aguarde a conexão com o Supabase antes de gerar conteúdo.',true);return;}
+ if(!supabaseConnected||!supabaseClient){toast('O painel ainda não está conectado ao Supabase.');integrationStatus('Aguarde a conexão com o Supabase antes de gerar conteúdo.',true);return;}\n const selectedDiscipline=editorialDisciplines.find(d=>d.id===$('bulkDiscipline')?.value);\n if(!selectedDiscipline){toast('Selecione a disciplina para este lote.');return;}
  const startValue=$('bulkStart').value||localDate(new Date());
  $('monthFilter').value=startValue.slice(0,7);
  const startDate=new Date(startValue+'T12:00:00');
@@ -205,14 +250,14 @@ $('generateBatch').addEventListener('click',async()=>{
    const response=await fetch(SUPABASE_URL+'/functions/v1/generate-instagram-content',{
     method:'POST',
     headers:{'Content-Type':'application/json','Authorization': token ? 'Bearer '+token : 'Bearer '+SUPABASE_PUBLISHABLE_KEY,'apikey':SUPABASE_PUBLISHABLE_KEY},
-    body:JSON.stringify({topic,kind,discipline:'Concursos públicos',brief:'Crie conteúdo educativo conciso e correto para Instagram sobre esta matéria. Tipo de publicação: '+kind+'.'})
+    body:JSON.stringify({topic,kind,discipline:selectedDiscipline.nome,brief:'Crie conteúdo educativo conciso e correto para Instagram sobre esta matéria. Tipo de publicação: '+kind+'.'})
    });
    const data=await response.json().catch(()=>({}));
    if(!response.ok)throw new Error('Falha de IA no tema "'+topic+'": '+(data.error||'HTTP '+response.status));
    const ai=data.content||{};
    if(!String(ai.captionBody||'').trim())throw new Error('A IA retornou conteúdo vazio para: '+topic);
    const p={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),title:String(ai.title||topic),kind,format:'Feed',date:localDate(d),time,brief:'Gerado com IA a partir da pauta: '+topic,status:'Pendente',needsApproval:false,captionBody:String(ai.captionBody).trim(),aiHashtags:Array.isArray(ai.hashtags)?ai.hashtags:[],imageText:String(ai.imageText||'')};
-   p.keyPoints=Array.isArray(ai.keyPoints)?ai.keyPoints:[];p.mindMap=ai.mindMap&&typeof ai.mindMap==='object'?ai.mindMap:null;p.discipline='Concursos públicos';p.imageText=String(ai.imageText||'');p.caption=makeCaption(p);if(!String(ai.html||'').trim())throw new Error('A IA não retornou HTML para a arte: '+topic);p.images=[await htmlEditorialToImage(ai.html,p)];p.generatedHtml=String(ai.html);newPosts.push(p);
+   p.keyPoints=Array.isArray(ai.keyPoints)?ai.keyPoints:[];p.mindMap=ai.mindMap&&typeof ai.mindMap==='object'?ai.mindMap:null;p.discipline=selectedDiscipline.nome;p.imageText=String(ai.imageText||'');p.caption=makeCaption(p);if(!String(ai.html||'').trim())throw new Error('A IA não retornou HTML para a arte: '+topic);p.images=[await htmlEditorialToImage(ai.html,p)];p.generatedHtml=String(ai.html);newPosts.push(p);
   }
   posts.push(...newPosts);
   if(!save()){posts.splice(-newPosts.length,newPosts.length);throw new Error('Não foi possível salvar as publicações no navegador.');}
@@ -417,7 +462,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!error) {
       currentSession = data.session;
       updateAuthUI();
-      if (currentSession) integrationStatus('Sessão administrativa restaurada.');
+      if (currentSession) { integrationStatus('Sessão administrativa restaurada.'); await loadEditorialLibrary(); }
     }
   }
 });
@@ -485,7 +530,7 @@ $('postForm')?.addEventListener('submit', async e=>{
  if(!topic||!brief||!date){toast('Preencha Matéria, Síntese do Conteúdo e Data de publicação.');return;}
  if(!currentSession?.access_token||!supabaseClient){toast('Entre com a conta administradora para gerar conteúdo com IA.');integrationStatus('Entre com a conta administradora para usar o DeepSeek.',true);return;}
  const button=$('generateAI'),host=$('generatedPreview');
- const discipline=$('aiDiscipline')?.value.trim()||'Concursos públicos';
+ const discipline=$('aiDiscipline')?.value.trim()||'';\n if(!discipline){toast('Selecione uma disciplina.');return;}
  button.disabled=true;button.textContent='Gerando com IA…';
  host.innerHTML='<p class="hint">Consultando o DeepSeek com segurança. Aguarde…</p>';
  try{
