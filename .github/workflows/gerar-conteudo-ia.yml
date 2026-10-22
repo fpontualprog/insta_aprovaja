@@ -85,7 +85,11 @@ jobs:
         shell: bash
         run: |
           mkdir -p output
-          python -m py_compile python-ai/app.py
+          python -m py_compile python-ai/app.py python-ai/render_instagram.py python-ai/render_video.py
+          command -v ffmpeg
+          command -v ffprobe
+          ffmpeg -hide_banner -encoders | grep -q libx264
+          echo "Sintaxe Python e ferramentas FFmpeg validadas."
           nohup python -m uvicorn app:app --app-dir python-ai --host 127.0.0.1 --port 8000 > /tmp/aprovaja-api.log 2>&1 &
           API_PID=$!
           for i in $(seq 1 40); do
