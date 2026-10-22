@@ -106,7 +106,11 @@ jobs:
         continue-on-error: true
         run: |
           curl --max-time 180 -sS -X POST http://127.0.0.1:8000/sync-drive -o output/sincronizacao.json || true
+          echo "===== RESPOSTA DA SINCRONIZAÇÃO ====="
           if [ -f output/sincronizacao.json ]; then cat output/sincronizacao.json; fi
+          echo
+          echo "===== LOG DETALHADO DA API (Drive) ====="
+          tail -n 120 /tmp/aprovaja-api.log || true
 
       - name: Gerar conteúdo
         env:
