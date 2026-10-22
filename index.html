@@ -10,22 +10,10 @@
 
 <main class="wrap">
 <section class="panel instagram-panel" id="instagramIntegration">
-  <p class="eyebrow">CONEXÃO SEGURA</p>
-  <h2>Entrar no painel</h2>
-  <p class="hint">A conexão com o Supabase é automática. Entre com a conta administrativa para habilitar a geração com IA e a publicação protegida.</p>
-  <form id="instagramLoginForm" class="instagram-login-form">
-    <label for="instagramEmail">E-mail do administrador</label>
-    <input id="instagramEmail" type="email" autocomplete="username" required placeholder="E-mail cadastrado no Supabase Auth">
-    <label for="instagramPassword">Senha do Supabase Auth</label>
-    <input id="instagramPassword" type="password" autocomplete="current-password" required placeholder="Sua senha do Supabase">
-    <div class="actions"><button class="btn primary" id="instagramLoginButton" type="submit">Entrar com segurança</button></div>
-  </form>
-  <div id="instagramSignedIn" hidden>
-    <p class="hint">Sessão ativa: <strong id="instagramSignedEmail"></strong></p>
-    <button class="btn secondary" id="instagramLogoutButton" type="button">Sair</button>
-  </div>
-  <p id="instagramStatus" class="hint" role="status" aria-live="polite">Conectando ao Supabase…</p>
-  <p class="hint">Use “Publicar agora” em qualquer publicação aprovada para ignorar a programação. Imagens únicas e carrosséis de até 10 artes serão enviados em uma ação manual. O acesso público ao painel não concede permissão para publicar.</p>
+  <p class="eyebrow">STATUS DO SISTEMA</p>
+  <h2>Conexão automática</h2>
+  <p class="hint">O painel conecta ao Supabase automaticamente. Não é necessário fazer login para verificar a conexão. A geração com IA e a publicação dependem das permissões configuradas no servidor.</p>
+  <p id="instagramStatus" class="hint" role="status" aria-live="polite">Verificando conexão com o Supabase…</p>
 </section>
 
 <section class="hero"><div><p class="eyebrow">APROVAJÁ CONCURSOS · @aprovaja_seuconcurso</p><h1>Seu conteúdo.<br><span>Sua estratégia.</span></h1><p>Informe um tema. O painel prepara uma imagem simples, uma legenda pronta, hashtags e divulgação da plataforma.</p></div><div class="hero-stat"><strong id="count">0</strong><span>publicações no painel</span></div></section>
