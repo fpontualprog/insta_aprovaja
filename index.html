@@ -12,7 +12,16 @@
 <section class="panel instagram-panel" id="instagramIntegration">
   <p class="eyebrow">STATUS DO SISTEMA</p>
   <h2>Conexão automática</h2>
-  <p class="hint">O painel conecta ao Supabase automaticamente. Não é necessário fazer login para verificar a conexão. A geração com IA e a publicação dependem das permissões configuradas no servidor.</p>
+  <p class="hint">A conexão é verificada automaticamente. Para gerar conteúdo com IA ou publicar, entre com a conta administradora autorizada no Supabase.</p>
+  <form id="instagramLoginForm" class="instagram-login-form">
+    <div class="login-field"><label for="instagramEmail">E-mail administrativo do Supabase</label><input id="instagramEmail" type="email" autocomplete="username" required placeholder="E-mail da conta administradora"></div>
+    <div class="login-field"><label for="instagramPassword">Senha</label><input id="instagramPassword" type="password" autocomplete="current-password" required placeholder="Senha do Supabase Auth"></div>
+    <div class="actions"><button id="instagramLoginButton" class="btn primary" type="submit">Entrar para publicar</button></div>
+  </form>
+  <div id="instagramSignedIn" hidden>
+    <p class="hint">Sessão autenticada: <strong id="instagramSignedEmail"></strong></p>
+    <div class="actions"><button id="instagramLogoutButton" class="btn secondary" type="button">Sair da conta</button></div>
+  </div>
   <p id="instagramStatus" class="hint" role="status" aria-live="polite">Verificando conexão com o Supabase…</p>
 </section>
 
