@@ -305,7 +305,16 @@ async function initializeSupabaseConnection() {
   try {
     if (!window.supabase?.createClient) throw new Error('A biblioteca Supabase não carregou. Atualize a página.');
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    });
+    // Recupera a sessão autenticada e mantém a interface sincronizada com o Supabase Auth.
+    const { data: initialAuth, error: initialAuthError } = await supabaseClient.auth.getSession();
+    if (initialAuthError) throw initialAuthError;
+    currentSession = initialAuth?.session || null;
+    updateAuthUI();
+    supabaseClient.auth.onAuthStateChange((_event, session) => {
+      currentSession = session || null;
+      updateAuthUI();
     });
     // Verifica a disponibilidade do serviço de autenticação; /rest/v1/ exige chave
     // secreta em algumas configurações e não é um endpoint adequado para teste público.
@@ -469,6 +478,8 @@ async function publishApprovedImage(postId, button) {
   }
 }
 document.addEventListener('DOMContentLoaded', async () => {
+  document.getElementById('instagramLoginForm')?.addEventListener('submit', signInInstagramAdmin);
+  document.getElementById('instagramLogoutButton')?.addEventListener('click', signOutInstagramAdmin);
   await initializeSupabaseConnection();
   if (supabaseConnected) await loadEditorialLibrary();
 });
