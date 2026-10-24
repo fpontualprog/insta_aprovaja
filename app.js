@@ -341,23 +341,15 @@ function integrationStatus(message, isError=false) {
   if (panel) panel.classList.toggle('is-connected', supabaseConnected && !isError);
 }
 async function initializeSupabaseConnection() {
+  // Primeiro testa a disponibilidade do projeto, sem depender de login ou da recuperação de sessão.
+  supabaseConnected = false;
+  integrationStatus('Testando a disponibilidade do Supabase…');
   try {
     if (!window.supabase?.createClient) throw new Error('A biblioteca Supabase não carregou. Atualize a página.');
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
     });
-    // Recupera a sessão autenticada e mantém a interface sincronizada com o Supabase Auth.
-    const { data: initialAuth, error: initialAuthError } = await supabaseClient.auth.getSession();
-    if (initialAuthError) throw initialAuthError;
-    currentSession = initialAuth?.session || null;
-    updateAuthUI();
-    supabaseClient.auth.onAuthStateChange((_event, session) => {
-      currentSession = session || null;
-      refreshInstagramHistory();
-      updateAuthUI();
-    });
-    // Verifica a disponibilidade do serviço de autenticação; /rest/v1/ exige chave
-    // secreta em algumas configurações e não é um endpoint adequado para teste público.
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 8000);
     let response;
@@ -371,9 +363,28 @@ async function initializeSupabaseConnection() {
     } finally {
       clearTimeout(timeoutId);
     }
-    if (!response.ok) throw new Error('A verificação de disponibilidade do Supabase respondeu HTTP ' + response.status + '.');
+    if (!response.ok) throw new Error('A verificação do Supabase respondeu HTTP ' + response.status + '.');
     supabaseConnected = true;
     integrationStatus('Conexão com o Supabase estabelecida.');
+
+    // A recuperação da sessão não pode deixar o status geral preso em "Verificando".
+    try {
+      const authResult = await Promise.race([
+        supabaseClient.auth.getSession(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Tempo limite ao recuperar a sessão administrativa.')), 5000))
+      ]);
+      if (authResult.error) throw authResult.error;
+      currentSession = authResult.data?.session || null;
+    } catch (sessionError) {
+      currentSession = null;
+      console.warn('Sessão do Supabase não recuperada; conexão do serviço continua disponível:', sessionError);
+    }
+    updateAuthUI();
+    supabaseClient.auth.onAuthStateChange((_event, session) => {
+      currentSession = session || null;
+      refreshInstagramHistory();
+      updateAuthUI();
+    });
   } catch (error) {
     supabaseConnected = false;
     integrationStatus(error?.name === 'AbortError' ? 'Tempo limite ao conectar ao Supabase (8 segundos).' : (error?.message || 'Não foi possível conectar ao Supabase.'), true);
