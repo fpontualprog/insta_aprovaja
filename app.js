@@ -352,7 +352,8 @@ async function initializeSupabaseConnection() {
     currentSession = initialAuth?.session || null;
     updateAuthUI();
     supabaseClient.auth.onAuthStateChange((_event, session) => {
-      currentSession = session || null;\n      refreshInstagramHistory();
+      currentSession = session || null;
+      refreshInstagramHistory();
       updateAuthUI();
     });
     // Verifica a disponibilidade do serviço de autenticação; /rest/v1/ exige chave
@@ -423,7 +424,8 @@ async function signInInstagramAdmin(event) {
   try {
     const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
     if (error) throw error;
-    currentSession = data.session;\n    refreshInstagramHistory();
+    currentSession = data.session;
+    refreshInstagramHistory();
     document.getElementById('instagramPassword').value = '';
     updateAuthUI();
     integrationStatus('Sessão iniciada. A função do servidor ainda verificará se esta conta é o administrador autorizado.');
