@@ -7,6 +7,16 @@ function toast(msg){const el=$('toast');el.textContent=msg;el.classList.add('sho
 function formatDate(v){if(!v)return 'Data não definida';const [y,m,d]=v.split('-');return d+'/'+m+'/'+y}
 function localDate(d){return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')}
 const PLATFORM_URL='https://aprovajaconcurso.netlify.app';
+function fitInstagramCaption(caption, limit=2200){
+  const text=String(caption||'').trim();
+  if(text.length<=limit) return {caption:text, truncated:false, originalLength:text.length};
+  const suffix='…';
+  const max=limit-suffix.length;
+  let cut=text.slice(0,max);
+  const lastSpace=cut.lastIndexOf(' ');
+  if(lastSpace>max*0.75) cut=cut.slice(0,lastSpace);
+  return {caption:cut.trimEnd()+suffix, truncated:true, originalLength:text.length};
+}
 function makeCaption(p){
  const tags=Array.isArray(p.aiHashtags)&&p.aiHashtags.length?p.aiHashtags.map(t=>String(t).startsWith('#')?String(t):'#'+String(t).replace(/\\s+/g,'')).join(' '):'#AprovaJá #ConcursosPúblicos #Concurseiro #DicasDeConcurso #EstudeGrátis';
  const promo='📚 Conheça o AprovaJá: uma plataforma gratuita para organizar sua preparação para concursos. Acesse: '+PLATFORM_URL;
@@ -474,6 +484,17 @@ async function publishApprovedImage(postId, button) {
     }
     if (post.images.length > 10) {
       integrationStatus('O Instagram permite até 10 imagens por carrossel. Reduza o número de artes.', true); return;
+    }
+  }
+  if (!isVideoStory) {
+    const fitted = fitInstagramCaption(post.caption || makeCaption(post));
+    if (fitted.truncated) {
+      post.caption = fitted.caption;
+      save();
+      integrationStatus('Legenda reduzida de ' + fitted.originalLength + ' para 2.200 caracteres, limite do Instagram.');
+      toast('A legenda excedia 2.200 caracteres e foi ajustada automaticamente.');
+    } else {
+      post.caption = fitted.caption;
     }
   }
   if (!confirm('Publicar AGORA no Instagram?\\n\\n' + post.title + '\\n' + (isVideoStory ? 'Story em vídeo MP4' : post.images.length + (post.images.length === 1 ? ' imagem' : ' imagens')) + '\\n\\nA data e o horário planejados não serão considerados.')) return;
