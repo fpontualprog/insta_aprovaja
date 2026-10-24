@@ -190,7 +190,6 @@ jobs:
           test -s output/aprovaja_story.mp4 || { echo "O renderizador não criou output/aprovaja_story.mp4."; exit 1; }
           curl --fail-with-body --silent --show-error \\
             -X POST "$SUPABASE_URL/storage/v1/object/instagram-publicacoes/stories/$STORY_ID.mp4" \\
-            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \\
             -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \\
             -H "Content-Type: video/mp4" \\
             -H "x-upsert: true" \\
