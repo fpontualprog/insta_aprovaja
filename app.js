@@ -521,7 +521,8 @@ async function publishApprovedImage(postId, button) {
 document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('instagramLoginForm')?.addEventListener('submit', signInInstagramAdmin);
   document.getElementById('instagramLogoutButton')?.addEventListener('click', signOutInstagramAdmin);
-  await initializeSupabaseConnection();\n  await refreshInstagramHistory();
+  await initializeSupabaseConnection();
+  await refreshInstagramHistory();
   if (supabaseConnected) await loadEditorialLibrary();
 });
  
