@@ -104,20 +104,59 @@ async function htmlEditorialToImage(html,post){
 }
 
 function makePost(topic,kind,date,time,format='Carrossel'){const p={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),title:topic.trim(),kind,format,date,time,brief:'Conteúdo educativo para candidatos a concursos públicos. Identidade visual azul-marinho, branco e laranja.',status:'Pendente'};p.captionBody=topicBody(p.title,kind);p.caption=makeCaption(p);p.images=[];return p}
+let instagramRemotePublications = [];
+let instagramHistoryMessage = 'Entre com a conta administradora para carregar o histórico do Instagram.';
+async function refreshInstagramHistory(){
+ const host=$('publishedHistory');
+ if(!host)return;
+ if(!supabaseClient||!currentSession?.access_token){
+  renderPublishedHistory();
+  return;
+ }
+ host.innerHTML='<p class="hint">Consultando publicações da conta do Instagram…</p>';
+ try{
+  const {data:sessionData,error:sessionError}=await supabaseClient.auth.getSession();
+  if(sessionError)throw sessionError;
+  const token=sessionData?.session?.access_token;
+  if(!token)throw new Error('Sessão expirada. Entre novamente.');
+  const response=await fetch(SUPABASE_URL+'/functions/v1/instagram-media-list',{
+   method:'GET',
+   headers:{'apikey':SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+token}
+  });
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok||!result.ok)throw new Error(result.error||('HTTP '+response.status));
+  instagramRemotePublications=Array.isArray(result.publications)?result.publications:[];
+  instagramHistoryMessage='';
+  renderPublishedHistory();
+ }catch(error){
+  instagramHistoryMessage='Não foi possível consultar o Instagram: '+(error?.message||'erro inesperado')+'.';
+  renderPublishedHistory();
+ }
+}
 function renderPublishedHistory(){
  const host=$('publishedHistory');
  if(!host)return;
  const published=posts.filter(p=>p.status==='Publicada').sort((a,b)=>(b.publishedAt||((b.date||'')+'T'+(b.time||'00:00'))).localeCompare(a.publishedAt||((a.date||'')+'T'+(a.time||'00:00'))));
- const rows=published.map(p=>{
+ const localRows=published.map(p=>{
   const actual=p.publishedAt?new Date(p.publishedAt):null;
   const date=actual&&!Number.isNaN(actual.getTime())?formatDate(localDate(actual)):formatDate(p.date);
   const time=actual&&!Number.isNaN(actual.getTime())?[String(actual.getHours()).padStart(2,'0'),String(actual.getMinutes()).padStart(2,'0')].join(':'):(p.time||'—');
   const code=p.instagramMediaId||p.id||'—';
-  return '<tr><td>'+esc(date)+'</td><td>'+esc(time)+'</td><td>'+esc(p.kind||'Não informado')+'</td><td><code title="'+esc(code)+'">'+esc(code)+'</code></td></tr>';
+  return '<tr><td>'+esc(date)+'</td><td>'+esc(time)+'</td><td>'+esc(p.kind||'Publicação do painel')+'</td><td><code title="'+esc(code)+'">'+esc(code)+'</code></td><td><span class="history-source">Painel</span></td></tr>';
  }).join('');
- host.innerHTML='<div class="table-wrap"><table class="published-table"><thead><tr><th>Data</th><th>Horário</th><th>Tipo</th><th>Código</th></tr></thead><tbody>'+(rows||'<tr><td colspan="4">Nenhuma publicação marcada como publicada neste navegador.</td></tr>')+'</tbody></table></div><p class="hint history-note">'+(published.length?'Total: '+published.length+' publicação(ões).':'O histórico atual é local ao navegador. Publicações feitas em outro computador ou em outra versão do site não aparecem aqui automaticamente.')+'</p>';
+ const remoteRows=instagramRemotePublications.map(p=>{
+  const d=p.timestamp?new Date(p.timestamp):null;
+  const date=d&&!Number.isNaN(d.getTime())?formatDate(localDate(d)):'—';
+  const time=d&&!Number.isNaN(d.getTime())?[String(d.getHours()).padStart(2,'0'),String(d.getMinutes()).padStart(2,'0')].join(':'):'—';
+  const type=String(p.media_type||'').replace(/_/g,' ');
+  const link=p.permalink?'<a href="'+esc(p.permalink)+'" target="_blank" rel="noopener noreferrer">Abrir no Instagram</a>':'Instagram';
+  return '<tr><td>'+esc(date)+'</td><td>'+esc(time)+'</td><td>'+esc(type||'Instagram')+'</td><td><code title="'+esc(p.id||'')+'">'+esc(p.id||'—')+'</code></td><td>'+link+'</td></tr>';
+ }).join('');
+ const rows=remoteRows+localRows;
+ const note=instagramHistoryMessage?'<p class="hint history-note">'+esc(instagramHistoryMessage)+'</p>':'<p class="hint history-note">Instagram: '+instagramRemotePublications.length+' publicação(ões) retornada(s) pela API. O histórico do Instagram mostra até 50 itens recentes; o registro local do painel aparece junto.</p>';
+ host.innerHTML='<div class="table-wrap"><table class="published-table"><thead><tr><th>Data</th><th>Horário</th><th>Tipo</th><th>Código</th><th>Origem</th></tr></thead><tbody>'+(rows||'<tr><td colspan="5">Nenhuma publicação encontrada. Entre com a conta administrativa para consultar o Instagram.</td></tr>')+'</tbody></table></div>'+note+'<div class="actions"><button type="button" class="btn secondary" id="refreshInstagramHistory">Atualizar histórico</button></div>';
+ $('refreshInstagramHistory')?.addEventListener('click',refreshInstagramHistory);
 }
-
 function renderMonthlySchedule(){
  const month=$('monthFilter')?.value||localDate(new Date()).slice(0,7);
  const today=localDate(new Date());
@@ -313,7 +352,7 @@ async function initializeSupabaseConnection() {
     currentSession = initialAuth?.session || null;
     updateAuthUI();
     supabaseClient.auth.onAuthStateChange((_event, session) => {
-      currentSession = session || null;
+      currentSession = session || null;\n      refreshInstagramHistory();
       updateAuthUI();
     });
     // Verifica a disponibilidade do serviço de autenticação; /rest/v1/ exige chave
@@ -384,7 +423,7 @@ async function signInInstagramAdmin(event) {
   try {
     const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
     if (error) throw error;
-    currentSession = data.session;
+    currentSession = data.session;\n    refreshInstagramHistory();
     document.getElementById('instagramPassword').value = '';
     updateAuthUI();
     integrationStatus('Sessão iniciada. A função do servidor ainda verificará se esta conta é o administrador autorizado.');
@@ -480,7 +519,7 @@ async function publishApprovedImage(postId, button) {
 document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('instagramLoginForm')?.addEventListener('submit', signInInstagramAdmin);
   document.getElementById('instagramLogoutButton')?.addEventListener('click', signOutInstagramAdmin);
-  await initializeSupabaseConnection();
+  await initializeSupabaseConnection();\n  await refreshInstagramHistory();
   if (supabaseConnected) await loadEditorialLibrary();
 });
  
