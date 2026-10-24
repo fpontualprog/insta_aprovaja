@@ -188,11 +188,11 @@ jobs:
           test -n "$SUPABASE_URL" || { echo "Falta configurar o segredo SUPABASE_URL no GitHub."; exit 1; }
           test -n "$SUPABASE_SERVICE_ROLE_KEY" || { echo "Falta configurar o segredo SUPABASE_SERVICE_ROLE_KEY no GitHub."; exit 1; }
           test -s output/aprovaja_story.mp4 || { echo "O renderizador não criou output/aprovaja_story.mp4."; exit 1; }
-          curl --fail-with-body --silent --show-error \\
-            -X POST "$SUPABASE_URL/storage/v1/object/instagram-publicacoes/stories/$STORY_ID.mp4" \\
-            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \\
-            -H "Content-Type: video/mp4" \\
-            -H "x-upsert: true" \\
+          curl --fail-with-body --silent --show-error \
+            -X POST "$SUPABASE_URL/storage/v1/object/instagram-publicacoes/stories/$STORY_ID.mp4" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Content-Type: video/mp4" \
+            -H "x-upsert: true" \
             --data-binary @output/aprovaja_story.mp4
           echo "Vídeo enviado ao Supabase Storage para a pauta $STORY_ID."
 
