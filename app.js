@@ -502,7 +502,9 @@ function updateAuthUI() {
   const signed = document.getElementById('instagramSignedIn');
   const signedEmail = document.getElementById('instagramSignedEmail');
   const loginButton = document.getElementById('instagramLoginButton');
-  if (form) form.hidden = !!currentSession;
+  // Mantém o formulário sempre visível para permitir trocar/revalidar a conta administrativa.
+  // A sessão ativa é exibida separadamente, sem bloquear novos dados de login.
+  if (form) form.hidden = false;
   if (signed) signed.hidden = !currentSession;
   if (signedEmail) signedEmail.textContent = currentSession?.user?.email || '';
   if (loginButton) loginButton.disabled = false;
