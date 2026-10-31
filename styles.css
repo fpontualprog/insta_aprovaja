@@ -160,3 +160,8 @@ main.wrap>#instagramIntegration h2{margin-top:0}
 .table-toggle-btn:focus-visible{outline:3px solid #1769d233;outline-offset:2px}
 #monthlyScheduleContent[hidden],#publishedHistory[hidden]{display:none!important}
 @media(max-width:600px){.monthly-schedule-panel .table-panel-actions{width:100%;justify-content:space-between}.monthly-schedule-panel .panel-head,.published-history-panel .panel-head{align-items:flex-start;flex-wrap:wrap}}
+
+/* Histórico: botão de expandir/recolher alinhado ao título */
+.published-history-panel .panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.published-history-panel #publishedHistory[hidden]{display:none!important}
+@media(max-width:600px){.published-history-panel .panel-head{align-items:flex-start}}
