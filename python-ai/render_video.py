@@ -32,7 +32,7 @@ def clean_narration_line(line: str) -> str:
     line = re.sub(r"^#{1,6}\s*", "", line)
     line = re.sub(r"^>+\s*", "", line)
     line = re.sub(r"^[-*•]\s+", "", line)
-    line = re.sub(r"\[([^\]]+)\]\([^)]*\)", r"\1", line)
+    line = re.sub(r"\[(.+?)\]\([^)]*\)", r"\1", line)
     line = re.sub(r"[*_`]", "", line)
 
     # Símbolos comparativos são verbalizados somente quando conectam expressões.
