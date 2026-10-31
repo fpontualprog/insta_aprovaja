@@ -68,7 +68,40 @@
   <div class="table-wrap"><table class="published-table contest-monitor-table"><thead><tr><th>Detectado em</th><th>Órgão / Cargo</th><th>Vagas</th><th>Remuneração</th><th>Inscrições até</th><th>Status</th><th>Instagram / Ocorrência</th></tr></thead><tbody id="contestMonitorRows"><tr><td colspan="7">Aguardando autenticação administrativa…</td></tr></tbody></table></div>
 </section>
 <section class="panel published-history-panel"><div class="panel-head"><div><p class="eyebrow">HISTÓRICO</p><h2>Publicações realizadas</h2></div></div><p class="hint">Registro das publicações marcadas como publicadas, com data, horário, tipo e código de identificação.</p><div id="publishedHistory"><p class="hint">Carregando histórico…</p></div></section>
+
+<section class="panel growth-metrics-panel" id="growthMetrics">
+  <div class="panel-head"><div><p class="eyebrow">CRESCIMENTO · INSIGHTS</p><h2>Desempenho das publicações</h2></div><span class="schedule-month-label" id="growthMetricsCount">0</span></div>
+  <p class="hint">Registre os números exibidos no Instagram Insights após 24 horas e, se possível, novamente após 7 dias. Nesta versão, os dados ficam salvos apenas neste navegador; não há sincronização automática com a Meta.</p>
+  <div class="growth-metric-cards">
+    <article><span>Alcance acumulado</span><strong id="growthReachTotal">0</strong></article>
+    <article><span>Alcance de não seguidores</span><strong id="growthNonFollowers">—</strong></article>
+    <article><span>Compartilhamentos + salvamentos</span><strong id="growthSharesSaves">0</strong></article>
+    <article><span>Visitas ao perfil</span><strong id="growthProfileVisits">0</strong></article>
+    <article><span>Novos seguidores</span><strong id="growthFollowers">0</strong></article>
+    <article><span>Cliques no link</span><strong id="growthLinkClicks">0</strong></article>
+  </div>
+  <h3 class="growth-form-title">Registrar resultado de uma publicação</h3>
+  <form id="growthMetricsForm">
+    <div class="growth-form-grid">
+      <div><label for="growthMetricDate">Data</label><input id="growthMetricDate" type="date" required></div>
+      <div class="growth-title-field"><label for="growthMetricTitle">Título ou identificação da publicação</label><input id="growthMetricTitle" maxlength="180" required placeholder="Ex.: Questão CEBRASPE — Administração Pública"></div>
+      <div><label for="growthMetricFormat">Formato</label><select id="growthMetricFormat"><option>Reel</option><option>Imagem única</option><option>Carrossel</option><option>Story</option></select></div>
+      <div><label for="growthMetricReach">Alcance</label><input id="growthMetricReach" type="number" min="0" step="1" value="0"></div>
+      <div><label for="growthMetricNonFollowers">Alcance de não seguidores</label><input id="growthMetricNonFollowers" type="number" min="0" step="1" value="0"></div>
+      <div><label for="growthMetricViews">Visualizações</label><input id="growthMetricViews" type="number" min="0" step="1" value="0"></div>
+      <div><label for="growthMetricShares">Compartilhamentos</label><input id="growthMetricShares" type="number" min="0" step="1" value="0"></div>
+      <div><label for="growthMetricSaves">Salvamentos</label><input id="growthMetricSaves" type="number" min="0" step="1" value="0"></div>
+      <div><label for="growthMetricComments">Comentários</label><input id="growthMetricComments" type="number" min="0" step="1" value="0"></div>
+      <div><label for="growthMetricProfileVisits">Visitas ao perfil</label><input id="growthMetricProfileVisits" type="number" min="0" step="1" value="0"></div>
+      <div><label for="growthMetricFollowers">Novos seguidores</label><input id="growthMetricFollowers" type="number" min="0" step="1" value="0"></div>
+      <div><label for="growthMetricLinkClicks">Cliques no link</label><input id="growthMetricLinkClicks" type="number" min="0" step="1" value="0"></div>
+    </div>
+    <div class="actions"><button class="btn primary" type="submit">Salvar resultado</button><button class="btn secondary" id="growthMetricsExport" type="button">Exportar CSV</button><button class="btn secondary" id="growthMetricsClear" type="button">Apagar registros locais</button></div>
+    <p class="hint" id="growthMetricsStatus" role="status" aria-live="polite">Os dados serão armazenados neste navegador.</p>
+  </form>
+  <div class="schedule-table-wrap"><table class="monthly-schedule-table growth-metrics-table"><thead><tr><th>Data</th><th>Publicação</th><th>Formato</th><th>Alcance</th><th>Não seguidores</th><th>Visualizações</th><th>Compart.</th><th>Salvamentos</th></tr></thead><tbody id="growthMetricsRows"><tr><td colspan="8">Nenhum resultado registrado.</td></tr></tbody></table></div>
+</section>
 <footer>Insta AprovaJá · Painel editorial gratuito · Publicação protegida por Supabase Auth</footer>
 </main><div id="toast" role="status" aria-live="polite"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="app.js?v=20261031-session-publish-fix"></script><script src="contest-monitor.js?v=1"></script>
 <script src="agenda-top10-concursos.js?v=20261031-one-slide-per-uf"></script>
-</body></html>
+<script src="growth-metrics.js?v=1"></script>\n</body></html>
