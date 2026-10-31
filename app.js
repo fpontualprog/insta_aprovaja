@@ -462,6 +462,40 @@ function imageDataToJpegBlob(dataUrl) {
     img.src = dataUrl;
   });
 }
+async function refreshInstagramStories() {
+  if (!supabaseClient || !currentSession?.access_token) return;
+  try {
+    const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+    if (sessionError) throw sessionError;
+    const token = sessionData?.session?.access_token;
+    if (!token) return;
+    const response = await fetch(SUPABASE_URL + '/rest/v1/instagram_stories?select=id,titulo,disciplina,tema,agendado_para,status,video_url,instagram_media_id,erro,criado_em,publicado_em&order=criado_em.desc&limit=50', {
+      headers: { 'apikey': SUPABASE_PUBLISHABLE_KEY, 'Authorization': 'Bearer ' + token }, cache: 'no-store'
+    });
+    if (!response.ok) throw new Error('HTTP ' + response.status + ' ao consultar Stories.');
+    const rows = await response.json();
+    (Array.isArray(rows) ? rows : []).forEach(row => {
+      const existing = posts.find(item => item.id === row.id);
+      const scheduled = row.agendado_para ? new Date(row.agendado_para) : null;
+      const date = scheduled && !Number.isNaN(scheduled.getTime()) ? localDate(scheduled) : (existing?.date || localDate(new Date()));
+      const time = scheduled && !Number.isNaN(scheduled.getTime()) ? [String(scheduled.getHours()).padStart(2,'0'), String(scheduled.getMinutes()).padStart(2,'0')].join(':') : (existing?.time || '—');
+      const dbStatus = row.status;
+      const mappedStatus = dbStatus === 'pronto' ? (existing?.status === 'Aprovada' ? 'Aprovada' : 'Pendente')
+        : dbStatus === 'publicado' ? 'Publicada' : dbStatus === 'publicando' ? 'Publicando'
+        : dbStatus === 'erro' ? 'Erro' : 'Gerando vídeo';
+      const story = { ...(existing || {}), id: row.id, title: row.titulo || row.tema || 'Story AprovaJá',
+        kind: 'Stories com Vídeo', format: 'Stories com Vídeo', date, time, discipline: row.disciplina || '',
+        images: [], videoUrl: row.video_url || existing?.videoUrl || '', status: mappedStatus,
+        needsApproval: dbStatus === 'pronto' ? (existing?.status === 'Aprovada' ? false : true) : false,
+        storyWorkflow: true, storyDb: true, videoGenerationStatus: dbStatus === 'pronto' ? 'Pronto para aprovação' : dbStatus,
+        instagramMediaId: row.instagram_media_id || existing?.instagramMediaId || null,
+        publishedAt: row.publicado_em || existing?.publishedAt || null, storyError: row.erro || null };
+      const index = posts.findIndex(item => item.id === row.id);
+      if (index >= 0) posts[index] = story; else posts.push(story);
+    });
+    save();
+  } catch (error) { console.warn('Não foi possível atualizar a lista de Stories do Supabase:', error); }
+}
 function updateAuthUI() {
   const form = document.getElementById('instagramLoginForm');
   const signed = document.getElementById('instagramSignedIn');
@@ -577,6 +611,14 @@ async function publishApprovedImage(postId, button, options = {}) {
     post.status = 'Publicada';
     post.instagramMediaId = result.media_id;
     post.publishedAt = new Date().toISOString();
+    if (post.storyDb && currentSession?.access_token) {
+      const dbUpdate = await fetch(SUPABASE_URL + '/rest/v1/instagram_stories?id=eq.' + encodeURIComponent(post.id), {
+        method: 'PATCH',
+        headers: { 'apikey': SUPABASE_PUBLISHABLE_KEY, 'Authorization': 'Bearer ' + currentSession.access_token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ status: 'publicado', instagram_media_id: result.media_id, publicado_em: post.publishedAt, atualizado_em: post.publishedAt, erro: null })
+      });
+      if (!dbUpdate.ok) console.warn('Instagram publicou, mas o status do Story não foi atualizado no banco:', dbUpdate.status);
+    }
     if (save()) {
       integrationStatus('Instagram confirmou a publicação imediata de ' + (isVideoStory ? 'um Story em vídeo' : imageUrls.length + (imageUrls.length === 1 ? ' imagem' : ' imagens')) + ' em @' + (result.instagram_username || 'aprovaja_seuconcurso') + '.');
       toast('Instagram confirmou a publicação.');
