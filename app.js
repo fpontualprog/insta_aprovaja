@@ -540,6 +540,16 @@ function openArtworkPopup(src,title){
  modal.classList.add('open');
 }
 document.addEventListener('click',e=>{
+ const toggle=e.target.closest('.table-toggle-btn[data-collapse-target]');
+ if(!toggle)return;
+ const target=document.getElementById(toggle.dataset.collapseTarget);
+ if(!target)return;
+ const willCollapse=toggle.getAttribute('aria-expanded')==='true';
+ target.hidden=willCollapse;
+ toggle.setAttribute('aria-expanded',String(!willCollapse));
+ toggle.textContent=willCollapse?'Expandir tabela':'Recolher tabela';
+});
+document.addEventListener('click',e=>{
  const img=e.target.closest('.post-images img, .image-preview img, .generated-grid img');
  if(!img)return;
  e.preventDefault();
