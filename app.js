@@ -545,7 +545,7 @@ async function publishApprovedImage(postId, button, options = {}) {
   if (!post || post.status !== 'Aprovada' || post.needsApproval) {
     integrationStatus('Aprove a publicação antes de enviá-la.', true); return;
   }
-  const isVideoStory = !!post.storyWorkflow && typeof post.videoUrl === 'string' && post.videoUrl.endsWith('.mp4');
+  const isVideoStory = !!post.storyWorkflow && typeof post.videoUrl === 'string' && post.videoUrl.trim().length > 0;
   if (isVideoStory) {
     if (!post.videoUrl) { integrationStatus('O vídeo do Story ainda não está disponível.', true); return; }
   } else {
@@ -645,12 +645,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
  
 // Listener delegado registrado imediatamente: também funciona para cards criados dinamicamente.
-document.getElementById('posts')?.addEventListener('click', event => {
-  const button = event.target.closest('button[data-publish-id]');
+document.addEventListener('click', event => {
+  const button = event.target.closest?.('button[data-publish-id]');
   if (!button) return;
   event.preventDefault();
+  event.stopPropagation();
   publishApprovedImage(button.dataset.publishId, button);
-});
+}, true);
 
 
 
