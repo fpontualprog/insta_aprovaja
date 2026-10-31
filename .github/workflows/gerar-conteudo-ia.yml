@@ -179,7 +179,7 @@ jobs:
       - name: Enviar vídeo final ao Supabase Storage
         if: ${{ inputs.formato == 'video' && inputs.story_id != '' }}
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_URL: https://nukddukqilhsdklocout.supabase.co
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           STORY_ID: ${{ inputs.story_id }}
         shell: bash
