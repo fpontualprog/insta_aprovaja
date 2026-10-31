@@ -261,23 +261,21 @@ function nextEditorialDate(d){const x=new Date(d);while(!editorialForDate(x))x.s
 // Carrega disciplinas e conteúdos reais da biblioteca do AprovaJá após autenticação.
 let editorialDisciplines = [];
 function updateBulkDisciplineCount(){
- const select=document.getElementById('bulkDiscipline');
+ const list=document.getElementById('bulkDisciplineChecks');
  const status=document.getElementById('bulkDisciplineCount');
- if(!select||!status)return;
- const count=Array.from(select.selectedOptions||[]).length;
- status.textContent=count+' disciplina(s) selecionada(s). Os temas serão distribuídos entre elas na ordem escolhida.';
+ if(!list||!status)return;
+ const count=list.querySelectorAll('input[name="bulkDiscipline"]:checked').length;
+ status.textContent=count+' disciplina(s) selecionada(s). Os temas serão distribuídos entre elas na ordem da lista.';
 }
 document.getElementById('bulkSelectAllDisciplines')?.addEventListener('click',()=>{
- const select=document.getElementById('bulkDiscipline');
- if(select)Array.from(select.options).forEach(option=>option.selected=true);
+ document.querySelectorAll('#bulkDisciplineChecks input[name="bulkDiscipline"]').forEach(input=>input.checked=true);
  updateBulkDisciplineCount();
 });
 document.getElementById('bulkClearDisciplines')?.addEventListener('click',()=>{
- const select=document.getElementById('bulkDiscipline');
- if(select)Array.from(select.options).forEach(option=>option.selected=false);
+ document.querySelectorAll('#bulkDisciplineChecks input[name="bulkDiscipline"]').forEach(input=>input.checked=false);
  updateBulkDisciplineCount();
 });
-document.getElementById('bulkDiscipline')?.addEventListener('change',updateBulkDisciplineCount);
+document.getElementById('bulkDisciplineChecks')?.addEventListener('change',updateBulkDisciplineCount);
 async function loadEditorialLibrary() {
  if (!supabaseClient || !currentSession?.access_token) return;
  const batch = document.getElementById('bulkDiscipline');
@@ -287,11 +285,8 @@ async function loadEditorialLibrary() {
   const {data: disciplines, error} = await supabaseClient.from('biblioteca_disciplinas').select('id,nome').order('nome');
   if (error) throw error;
   editorialDisciplines = disciplines || [];
-  const options = editorialDisciplines.map(d=>'<option value="'+esc(d.id)+'">'+esc(d.nome)+'</option>').join('');
   if(batch) {
-   batch.multiple = true;
-   batch.size = Math.min(8, Math.max(4, editorialDisciplines.length));
-   batch.innerHTML=options;
+   batch.innerHTML=editorialDisciplines.map(d=>'<label class="bulk-discipline-option"><input type="checkbox" name="bulkDiscipline" value="'+esc(d.id)+'"><span>'+esc(d.nome)+'</span></label>').join('');
    updateBulkDisciplineCount();
   }
   if(single) single.innerHTML=options;
@@ -330,7 +325,7 @@ $('generateBatch').addEventListener('click',async()=>{
  if(!topics.length){toast('Insira os temas antes de gerar a agenda.');return}
  if(topics.length>10){toast('Para usar IA em lote, gere no máximo 10 temas por vez.');return}
  if(!supabaseConnected||!supabaseClient){toast('O painel ainda não está conectado ao Supabase.');integrationStatus('Aguarde a conexão com o Supabase antes de gerar conteúdo.',true);return;}
- const selectedIds=Array.from($('bulkDiscipline')?.selectedOptions||[]).map(option=>option.value);
+ const selectedIds=Array.from(document.querySelectorAll('#bulkDisciplineChecks input[name="bulkDiscipline"]:checked')).map(input=>input.value);
  const selectedDisciplines=editorialDisciplines.filter(d=>selectedIds.includes(String(d.id)));
  if(!selectedDisciplines.length){toast('Selecione pelo menos uma disciplina para este lote.');return;}
  const startValue=$('bulkStart').value||localDate(new Date());
