@@ -72,6 +72,23 @@
 <section class="panel growth-metrics-panel" id="growthMetrics">
   <div class="panel-head"><div><p class="eyebrow">CRESCIMENTO · INSIGHTS</p><h2>Desempenho das publicações</h2></div><span class="schedule-month-label" id="growthMetricsCount">0</span></div>
   <p class="hint">Registre os números exibidos no Instagram Insights após 24 horas e, se possível, novamente após 7 dias. Nesta versão, os dados ficam salvos apenas neste navegador; não há sincronização automática com a Meta.</p>
+  <div class="growth-goal-block" id="growthGoalTracker">
+    <div class="growth-goal-heading"><div><p class="eyebrow">META DE AQUISIÇÃO</p><h3>100 novos seguidores por semana</h3><p class="hint">Linha de base: 278 seguidores em 31/10/2026. Registre a contagem atual semanalmente para acompanhar o crescimento real.</p></div><span class="growth-goal-target">+100 / semana</span></div>
+    <div class="growth-goal-cards">
+      <article><span>Base inicial</span><strong id="growthGoalBaseline">278</strong></article>
+      <article><span>Seguidores atuais</span><strong id="growthGoalCurrent">278</strong></article>
+      <article><span>Crescimento acumulado</span><strong id="growthGoalGain">0</strong></article>
+      <article><span>Ritmo médio semanal</span><strong id="growthGoalPace">—</strong></article>
+    </div>
+    <div class="growth-goal-progress"><div class="growth-goal-progress-label"><strong id="growthGoalStatus">Aguardando primeiro acompanhamento</strong><span id="growthGoalPercent">0%</span></div><div class="growth-goal-track"><span id="growthGoalBar"></span></div><p class="hint" id="growthGoalNext">Primeiro marco: 378 seguidores até 07/11/2026.</p></div>
+    <form id="growthGoalForm">
+      <div><label for="growthGoalDate">Data da medição</label><input id="growthGoalDate" type="date" required></div>
+      <div><label for="growthGoalFollowers">Total de seguidores no Instagram</label><input id="growthGoalFollowers" type="number" min="0" step="1" required placeholder="Informe o total atual"></div>
+      <div class="actions"><button class="btn primary" type="submit">Registrar medição semanal</button></div>
+    </form>
+    <div class="schedule-table-wrap"><table class="monthly-schedule-table growth-goal-table"><thead><tr><th>Data</th><th>Seguidores</th><th>Variação desde a medição anterior</th><th>Ritmo semanal</th></tr></thead><tbody id="growthGoalRows"><tr><td colspan="4">Linha de base registrada: 278 seguidores em 31/10/2026.</td></tr></tbody></table></div>
+    <p class="hint" id="growthGoalMessage" role="status" aria-live="polite">Os registros ficam salvos neste navegador e podem ser exportados junto com os demais dados futuramente.</p>
+  </div>
   <div class="growth-metric-cards">
     <article><span>Alcance acumulado</span><strong id="growthReachTotal">0</strong></article>
     <article><span>Alcance de não seguidores</span><strong id="growthNonFollowers">—</strong></article>
