@@ -183,3 +183,19 @@ main.wrap>#instagramIntegration h2{margin-top:0}
 .top10-filter-action .btn{white-space:nowrap}
 .top10-filter [hidden]{display:none!important}
 @media(max-width:760px){.top10-filter{grid-template-columns:1fr}.top10-filter-action .btn{width:100%}}
+\n
+/* Registro de métricas para o ciclo de crescimento */
+.growth-metrics-panel{border-color:#d5dfef}
+.growth-metric-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:16px 0 22px}
+.growth-metric-cards article{background:#f5f8fd;border:1px solid var(--line);border-radius:11px;padding:13px 15px;display:flex;flex-direction:column;gap:5px;min-width:0}
+.growth-metric-cards span{font-size:11px;color:var(--muted)}
+.growth-metric-cards strong{font:800 23px Manrope;color:var(--navy);overflow-wrap:anywhere}
+.growth-form-title{font-size:16px;color:var(--navy);margin:18px 0 12px}
+.growth-form-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.growth-form-grid>div{min-width:0}
+.growth-form-grid .growth-title-field{grid-column:span 2}
+.growth-form-grid label{margin:0 0 6px}
+.growth-form-grid input,.growth-form-grid select{width:100%;box-sizing:border-box}
+.growth-metrics-table{min-width:850px}
+.growth-empty{text-align:center;color:var(--muted);padding:22px!important}
+@media(max-width:680px){.growth-metric-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.growth-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.growth-form-grid .growth-title-field{grid-column:span 2}}
