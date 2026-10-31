@@ -89,7 +89,7 @@ Não comparar formatos apenas por visualizações. Priorizar alcance de não seg
 - A coleta automática exige conta profissional elegível, permissões e endpoints autorizados da Meta, além de armazenamento seguro no servidor.
 - O plano não autoriza publicação automática sem aprovação humana nem compra de seguidores ou engajamento artificial.
 
-## 9. Critério de sucesso do primeiro ciclo
+## 9. Meta de crescimento de seguidores\n- Linha de base definida em 278 seguidores em 31/10/2026.\n- Meta principal: conquistar 100 novos seguidores por semana, sem compra de seguidores ou engajamento artificial.\n- Primeiro marco: 378 seguidores até 07/11/2026.\n- Referências de acompanhamento: mínimo aceitável de 50 novos seguidores por semana; meta principal de 100; desempenho extraordinário de 150.\n- Registrar semanalmente a contagem total de seguidores e comparar com a medição anterior. O ritmo equivalente semanal deve ser calculado conforme o intervalo real entre medições.\n- A meta é um objetivo operacional, não uma previsão ou garantia de resultado.\n\n## 10. Critério de sucesso do primeiro ciclo
 Ao final dos 30 dias, avaliar:
 - evolução do alcance de não seguidores;
 - aumento de compartilhamentos e salvamentos por publicação;
