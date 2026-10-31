@@ -125,11 +125,19 @@ async function collectInstagramInsights(){
  button.disabled=true;
  status.textContent='Verificando a sessão administrativa e consultando Insights…';
  try{
-  const {data,error}=await supabaseClient.auth.getSession();
+  // Reutiliza a sessão persistida pelo login automático. Se o access token
+  // ainda não estiver disponível, tenta renovar com o refresh token já salvo,
+  // sem solicitar credenciais ou encerrar a sessão do administrador.
+  let {data,error}=await supabaseClient.auth.getSession();
   if(error)throw error;
-  const activeSession=data?.session||null;
+  let activeSession=data?.session||currentSession||null;
+  if(!activeSession?.access_token){
+   const refreshed=await supabaseClient.auth.refreshSession();
+   if(refreshed.error)throw refreshed.error;
+   activeSession=refreshed.data?.session||null;
+  }
   const token=activeSession?.access_token;
-  if(!token)throw new Error('O Supabase não encontrou uma sessão ativa neste navegador. Entre novamente no painel administrativo.');
+  if(!token)throw new Error('Não foi possível recuperar automaticamente a sessão administrativa salva no navegador.');
   currentSession=activeSession;
   updateAuthUI();
   const response=await fetch(SUPABASE_URL+'/functions/v1/instagram-insights-collect',{
