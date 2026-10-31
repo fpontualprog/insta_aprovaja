@@ -94,6 +94,7 @@ jobs:
           cache-dependency-path: python-ai/requirements.txt
 
       - name: Instalar Ollama
+        if: ${{ inputs.formato != 'video' }}
         shell: bash
         run: |
           curl -fsSL https://ollama.com/install.sh | sh
@@ -113,6 +114,7 @@ jobs:
           pip install -r python-ai/requirements.txt
 
       - name: Iniciar serviço de conteúdo
+        if: ${{ inputs.formato != 'video' }}
         env:
           OLLAMA_MODEL: qwen2.5:3b
           GOOGLE_DRIVE_FOLDER_URL: https://drive.google.com/drive/folders/1EUof9_ZX-FiLA1GTi8le5AQpccKH08je?usp=sharing
@@ -145,12 +147,14 @@ jobs:
           exit 1
 
       - name: Sincronizar materiais públicos do Drive
+        if: ${{ inputs.formato != 'video' }}
         continue-on-error: true
         run: |
           curl --max-time 180 -sS -X POST http://127.0.0.1:8000/sync-drive -o output/sincronizacao.json || true
           if [ -f output/sincronizacao.json ]; then cat output/sincronizacao.json; fi
 
       - name: Gerar conteúdo
+        if: ${{ inputs.formato != 'video' }}
         env:
           TEMA: ${{ inputs.tema }}
           DISCIPLINA: ${{ inputs.disciplina }}
@@ -192,8 +196,56 @@ jobs:
               print("ALERTAS DE QUALIDADE:", data["warnings"])
           PY
 
+      - name: Gerar pacote didático, slides HTML e roteiro com DeepSeek
+        if: ${{ inputs.formato == 'video' }}
+        env:
+          SUPABASE_URL: https://nukddukqilhsdklocout.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          STORY_TOPIC: ${{ inputs.tema }}
+          STORY_DISCIPLINE: ${{ inputs.disciplina }}
+          EXAM_BOARD: ${{ inputs.banca }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, requests
+          key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+          if not key:
+              raise SystemExit("SUPABASE_SERVICE_ROLE_KEY não configurada no GitHub.")
+          payload = {
+              "topic": os.environ["STORY_TOPIC"],
+              "discipline": os.environ["STORY_DISCIPLINE"],
+              "exam_board": os.environ.get("EXAM_BOARD", "CEBRASPE"),
+              "slides": 7,
+          }
+          url = os.environ["SUPABASE_URL"] + "/functions/v1/generate-story-content"
+          response = requests.post(url, headers={"Authorization": "Bearer " + key, "apikey": key, "Content-Type": "application/json"}, json=payload, timeout=160)
+          try:
+              data = response.json()
+          except Exception:
+              raise SystemExit("A função DeepSeek não retornou JSON: " + response.text[:500])
+          if not response.ok or not data.get("ok"):
+              raise SystemExit("Falha na geração DeepSeek: " + str(data.get("error", "HTTP " + str(response.status_code))))
+          os.makedirs("output", exist_ok=True)
+          with open("output/story_assets.json", "w", encoding="utf-8") as f:
+              json.dump(data, f, ensure_ascii=False, indent=2)
+          print("Pacote gerado pelo provedor:", data.get("provider"), "modelo:", data.get("model"))
+          print("Slides HTML:", len(data.get("slides_html", [])), "| cenas:", len(data.get("roteiro", [])))
+          print("Conteúdo didático HTML, roteiro e texto de locução recebidos.")
+          PY
+
       - name: Montar artes do Instagram
+        if: ${{ inputs.formato != 'video' }}
         run: python python-ai/render_instagram.py
+
+      - name: Instalar Playwright e Chromium para renderizar HTML
+        if: ${{ inputs.formato == 'video' }}
+        run: |
+          pip install playwright==1.51.0
+          python -m playwright install --with-deps chromium
+
+      - name: Renderizar slides HTML do DeepSeek
+        if: ${{ inputs.formato == 'video' }}
+        run: python python-ai/render_story_html.py
 
       - name: Gerar vídeo vertical para Stories/Reels com narração e trilha
         if: ${{ inputs.formato == 'video' }}
