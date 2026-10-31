@@ -219,3 +219,14 @@ main.wrap>#instagramIntegration h2{margin-top:0}
 #growthGoalForm .actions{margin:0}
 .growth-goal-table{min-width:520px;margin-top:12px}
 @media(max-width:760px){.growth-goal-cards{grid-template-columns:repeat(2,minmax(0,1fr))}#growthGoalForm{grid-template-columns:1fr}.growth-goal-heading{flex-direction:column}.growth-goal-target{align-self:flex-start}}
+
+/* Controles para recolher e expandir tabelas do painel */
+.table-collapse-toggle{
+  display:inline-flex;align-items:center;gap:7px;margin:8px 0 10px;
+  padding:8px 12px;border:1px solid #d5dfef;border-radius:8px;
+  background:#f5f8fd;color:#173765;font:700 12px Manrope,Arial,sans-serif;
+  cursor:pointer;transition:background .15s,border-color .15s;
+}
+.table-collapse-toggle:hover{background:#eaf1fb;border-color:#aebfda}
+.table-collapse-toggle:focus-visible{outline:3px solid #f3a33b;outline-offset:2px}
+.schedule-table-wrap[hidden],.table-wrap[hidden]{display:none!important}
