@@ -10,7 +10,7 @@
   body.querySelectorAll(".top10-recurring-agenda").forEach(x=>x.remove());
   records.filter(r=>String(r.agendado_para||"").slice(0,7)===month).forEach(r=>{
    const d=new Date(r.agendado_para),tr=document.createElement("tr");tr.className="top10-recurring-agenda";
-   tr.innerHTML='<td>'+d.toLocaleDateString("pt-BR",{timeZone:"America/Recife"})+'</td><td>09:00</td><td><strong>'+esc(r.titulo)+'</strong><br><small>Top 10 por remuneração — inscrições vigentes</small></td><td>Instagram · Feed</td><td>'+esc(statusLabel[r.status]||r.status)+'</td>';
+   tr.innerHTML='<td>'+d.toLocaleDateString("pt-BR",{timeZone:"America/Recife"})+'</td><td>09:00</td><td><strong>'+esc(r.titulo)+'</strong><br><small>Relação completa de concursos detectados por Estado</small></td><td>Instagram · Feed</td><td>'+esc(statusLabel[r.status]||r.status)+'</td>';
    body.appendChild(tr);
   });
  }
@@ -18,7 +18,7 @@
   if(typeof supabaseClient==="undefined"||!supabaseClient)return;
   const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;
   try{const {data,error}=await supabaseClient.functions.invoke("instagram-top10-agenda",{method:"GET"});if(error)throw error;if(data?.ok){records=data.agenda||[];render()}}
-  catch(e){console.error("Agenda Top 10:",e);const el=document.getElementById("contestMonitorStatus");if(el)el.textContent="Agenda Top 10: "+(e.message||"falha ao consultar Supabase")}
+  catch(e){console.error("Agenda de concursos por Estado:",e);const el=document.getElementById("contestMonitorStatus");if(el)el.textContent="Agenda de concursos por Estado: "+(e.message||"falha ao consultar Supabase")}
  }
  function moneyValue(v){
   if(typeof v==="number")return v;
