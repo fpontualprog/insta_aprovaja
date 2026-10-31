@@ -53,6 +53,16 @@
 <section class="panel" id="storiesPanel" style="margin-top:24px">
  <div class="panel-head"><div><p class="eyebrow">VÍDEOS VERTICAIS</p><h2>Stories gerados</h2></div><button type="button" class="btn secondary" id="refreshStories">Atualizar</button></div>
  <p class="hint">Os vídeos concluídos pelo GitHub Actions aparecem aqui automaticamente. Confira a prévia antes de publicar.</p>
+ <form id="storyGenerateForm" class="story-generate-form" style="display:grid;gap:10px;margin:16px 0;padding:16px;border:1px solid #dbe2ee;border-radius:12px">
+  <h3 style="margin:0">Gerar novo Story</h3>
+  <label for="storyTopic">Tema</label><input id="storyTopic" required maxlength="300" placeholder="Ex.: Atos administrativos">
+  <label for="storyDiscipline">Disciplina</label><input id="storyDiscipline" required maxlength="120" value="Direito Administrativo">
+  <label for="storyBoard">Banca (opcional)</label><select id="storyBoard"><option value="">Não especificada</option><option value="CEBRASPE">CEBRASPE</option><option value="FGV">FGV</option><option value="FCC">FCC</option><option value="IBFC">IBFC</option><option value="Instituto AOCP">Instituto AOCP</option><option value="VUNESP">VUNESP</option><option value="IBAM">IBAM</option><option value="Consulplan">Consulplan</option><option value="Quadrix">Quadrix</option><option value="Outra">Outra banca</option></select>
+  <div id="storyOtherBoardWrap" hidden><label for="storyOtherBoard">Informe a banca</label><input id="storyOtherBoard" maxlength="100" placeholder="Nome da banca"></div>
+  <div class="form-row"><div><label for="storyDate">Data planejada</label><input id="storyDate" type="date" required></div><div><label for="storyTime">Horário</label><input id="storyTime" type="time" value="18:00" required></div></div>
+  <button type="submit" class="btn primary" id="storyGenerateButton">Gerar vídeo para Stories</button>
+  <p class="hint">A banca não é obrigatória. O vídeo só poderá ser publicado depois da sua conferência e aprovação.</p>
+ </form>
  <div id="storiesList" aria-live="polite"><p class="hint">Entre como administrador para consultar os Stories.</p></div>
 </section>
 <section class="panel monthly-schedule-panel">
