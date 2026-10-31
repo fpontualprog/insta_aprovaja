@@ -472,9 +472,6 @@ async function publishApprovedImage(postId, button, options = {}) {
   if (!post || post.status !== 'Aprovada' || post.needsApproval) {
     integrationStatus('Aprove a publicação antes de enviá-la.', true); return;
   }
-  if (!currentSession) {
-    integrationStatus('Entre com a conta administradora do Supabase antes de publicar.', true); return;
-  }
   const isVideoStory = !!post.storyWorkflow && typeof post.videoUrl === 'string' && post.videoUrl.endsWith('.mp4');
   if (isVideoStory) {
     if (!post.videoUrl) { integrationStatus('O vídeo do Story ainda não está disponível.', true); return; }
