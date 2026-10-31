@@ -46,43 +46,13 @@ def clean_narration_line(line: str) -> str:
 
 
 def narration_text() -> str:
-    raw = (OUT / "conteudo.md").read_text(encoding="utf-8")
-    paragraphs: list[str] = []
-    current: list[str] = []
-
-    for raw_line in raw.splitlines():
-        line = clean_narration_line(raw_line)
-        if line:
-            current.append(line)
-        elif current:
-            paragraphs.append(" ".join(current))
-            current = []
-
-    if current:
-        paragraphs.append(" ".join(current))
-
-    # Mantém a pontuação original e as pausas entre parágrafos.
-    text = ". ".join(p.rstrip(" .;:") for p in paragraphs if p.strip())
-    text = re.sub(r"\s+([,.;:!?])", r"\1", text)
-    text = re.sub(r"([.!?])(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ])", r"\1 ", text)
-    text = re.sub(r"\s{2,}", " ", text).strip()
-
-    # Limita por frase inteira: nunca interrompe a locução no meio de uma ideia.
-    sentences = re.split(r"(?<=[.!?])\s+", text)
-    selected: list[str] = []
-    count = 0
-    for sentence in sentences:
-        words = sentence.split()
-        if not words:
-            continue
-        if count + len(words) > 180:
-            break
-        selected.append(sentence)
-        count += len(words)
-    text = " ".join(selected).strip()
-
-    if not text:
-        raise ValueError("O conteúdo não possui texto didático válido para narração.")
+    # A locução deve ser EXATAMENTE a fala produzida pelo DeepSeek no roteiro.
+    script = OUT / "roteiro_narracao.txt"
+    if not script.exists():
+        raise SystemExit("Roteiro de narração do DeepSeek ausente. Não será usada a apostila como locução.")
+    text = script.read_text(encoding="utf-8")
+    if not text.strip():
+        raise SystemExit("O roteiro de narração está vazio.")
     return text
 
 
