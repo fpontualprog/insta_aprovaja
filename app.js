@@ -19,14 +19,14 @@ function fitInstagramCaption(caption, limit=2200){
 }
 function normalizeInstagramHashtags(values){
  const clean=(Array.isArray(values)?values:[]).map(value=>{
-  const tag=String(value||'').trim().replace(/^#+/,'').replace(/[^\\p{L}\\p{N}_]/gu,'');
+  const tag=String(value||'').trim().replace(/^#+/,'').replace(/[^\p{L}\p{N}_]/gu,'');
   return tag?'#'+tag:null;
  }).filter(Boolean);
  return [...new Map(clean.map(tag=>[tag.toLocaleLowerCase('pt-BR'),tag])).values()].slice(0,5);
 }
 function recentInstagramHashtags(){
  const recent=posts.filter(p=>['Publicada','Aprovada'].includes(p.status)).sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,12);
- const tags=recent.flatMap(p=>[...(Array.isArray(p.aiHashtags)?p.aiHashtags:[]),...(String(p.caption||'').match(/#[\\p{L}\\p{N}_]+/gu)||[])]);
+ const tags=recent.flatMap(p=>[...(Array.isArray(p.aiHashtags)?p.aiHashtags:[]),...(String(p.caption||'').match(/#[\p{L}\p{N}_]+/gu)||[])]);
  return [...new Set(tags.map(t=>String(t).replace(/^#/,'').toLocaleLowerCase('pt-BR')))].slice(0,35);
 }
 function makeCaption(p){
