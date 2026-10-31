@@ -1,7 +1,52 @@
 
 const KEY='insta-aprovaja-posts-v1';const $=id=>document.getElementById(id);let posts=load();let pendingAIContent=null;
 function load(){try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch{return []}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(posts));render();return true}catch(e){toast('O armazenamento do navegador está cheio. Exclua publicações antigas e tente novamente.');return false}}
+function save(){
+ try{localStorage.setItem(KEY,JSON.stringify(posts));render();return true}
+ catch(e){
+  // O HTML gerado já foi convertido em imagem final. Remover somente essa cópia intermediária
+  // mantém pautas, legendas, imagens, status e histórico das publicações.
+  const compact=posts.map(post=>{if(Array.isArray(post.images)&&post.images.length&&post.generatedHtml) {const copy={...post};delete copy.generatedHtml;return copy;}return post;});
+  try{localStorage.setItem(KEY,JSON.stringify(compact));posts=compact;render();toast('Armazenamento otimizado: arquivos intermediários removidos; publicações preservadas.');return true}
+  catch(retryError){toast('O armazenamento continua cheio. As publicações foram preservadas; libere espaço no navegador e tente novamente.');return false}
+ }
+}
+async function optimizeStoredPostAssets(){
+ try{
+  const raw=localStorage.getItem(KEY);if(!raw)return;
+  const stored=JSON.parse(raw);if(!Array.isArray(stored))return;
+  let changed=false;
+  const optimized=[];
+  for(const post of stored){
+   const copy={...post};
+   if(Array.isArray(copy.images)){
+    const images=[];
+    for(const src of copy.images){
+     if(typeof src==='string'&&src.startsWith('data:image/png')){
+      try{
+       const compressed=await new Promise((resolve,reject)=>{
+        const img=new Image();img.onload=()=>{try{const canvas=document.createElement('canvas');canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0);resolve(canvas.toDataURL('image/jpeg',0.82));}catch(err){reject(err)}};img.onerror=reject;img.src=src;
+       });
+       if(compressed.length<src.length){images.push(compressed);changed=true}else images.push(src);
+      }catch{images.push(src)}
+     }else images.push(src);
+    }
+    copy.images=images;
+    // A imagem final é o arquivo usado para prévia e publicação; o HTML intermediário
+    // não é necessário depois da renderização e pode ser regenerado pela IA.
+    if(images.length&&copy.generatedHtml){delete copy.generatedHtml;changed=true;}
+   }
+   optimized.push(copy);
+  }
+  if(changed){
+   try{localStorage.setItem(KEY,JSON.stringify(optimized));posts=optimized;render();toast('Limpeza automática concluída. Pautas, legendas e artes foram preservadas.');}
+   catch{toast('A limpeza automática não conseguiu salvar todas as otimizações. Nenhuma publicação foi apagada.');}
+  }
+ }catch(error){console.warn('Otimização de armazenamento ignorada:',error)}
+}
+async function reportStorageUsage(){
+ try{if(!navigator.storage?.estimate)return;const info=await navigator.storage.estimate();if(info.quota&&info.usage/info.quota>0.85)toast('O armazenamento do navegador está próximo do limite. A otimização automática foi executada.');}catch{}
+}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function toast(msg){const el=$('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2800)}
 function formatDate(v){if(!v)return 'Data não definida';const [y,m,d]=v.split('-');return d+'/'+m+'/'+y}
@@ -109,7 +154,7 @@ async function htmlEditorialToImage(html,post){
   const height=1350;
   const canvas=await render(doc.documentElement,{width,height,scale:1,backgroundColor:null,windowWidth:width,windowHeight:height,scrollX:0,scrollY:0,useCORS:false,allowTaint:false});
   if(canvas.width!==1080||canvas.height!==1350)throw new Error("A renderização não respeitou o formato final de 1080 × 1350 px.");
-  return canvas.toDataURL("image/png");
+  return canvas.toDataURL("image/jpeg",0.82);
  }finally{frame.remove();}
 }
 
@@ -330,6 +375,8 @@ function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random
 const contestGeneratorButton=$('generateContests');
 if(contestGeneratorButton)contestGeneratorButton.addEventListener('click',()=>{const status=$('contestStatus');if(status)status.textContent='A geração de artes para concursos será reativada quando este fluxo usar HTML gerado pelo DeepSeek. Nenhuma arte predefinida será criada.';toast('Este fluxo ainda precisa ser integrado ao HTML do DeepSeek.');});
 $('filter').addEventListener('change',render);$('monthFilter').addEventListener('change',render);setDefaultDate();$('monthFilter').value=localDate(new Date()).slice(0,7);render();
+// Otimiza imagens antigas e remove somente HTML intermediário já convertido em arte final.
+void optimizeStoredPostAssets();void reportStorageUsage();
 
 
 // --- Integração segura com Supabase Auth, Storage e Instagram ---
