@@ -572,8 +572,8 @@ async function loadGeneratedStories(showMessage=false) {
   host.innerHTML=data.map(s=>{
    const statusLabels={gerando:'Gerando',pronto:'Pronto para revisar',publicando:'Publicando',publicado:'Publicado',erro:'Erro na geração'};
    const video=s.video_url?'<video controls playsinline preload="metadata" style="display:block;width:min(100%,360px);max-height:640px;background:#080d18;border-radius:12px;margin:12px 0" src="'+esc(s.video_url)+'"></video>':'';
-   const actions=s.status==='pronto'&&s.video_url?'<div class="actions"><button type="button" class="btn secondary" data-story-view="'+esc(s.id)+'">Ver vídeo</button><button type="button" class="btn primary" data-story-publish="'+esc(s.id)+'">Publicar Story</button></div>':'';
-   return '<article class="story-card" style="border:1px solid #dbe2ee;border-radius:12px;padding:16px;margin:12px 0"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><strong>'+esc(s.titulo||s.tema)+'</strong><span class="pill">'+esc(statusLabels[s.status]||s.status)+'</span></div><p class="hint">'+esc(s.disciplina||'')+' · '+esc(s.tema||'')+'</p>'+video+(s.erro?'<p class="integration-error">'+esc(s.erro)+'</p>':'')+actions+(s.status==='publicado'?'<p class="hint">Publicado em '+esc(s.publicado_em||'')+'</p>':'')+'</article>';
+    const actions=(s.status==='pronto'&&s.video_url?'<button type="button" class="btn secondary" data-story-view="'+esc(s.id)+'">Ver vídeo</button><button type="button" class="btn primary" data-story-publish="'+esc(s.id)+'">Publicar Story</button>':'')+'<button type="button" class="btn secondary" data-story-delete="'+esc(s.id)+'" style="border-color:#dc2626;color:#b91c1c">Excluir</button>';
+   return '<article class="story-card" style="border:1px solid #dbe2ee;border-radius:12px;padding:16px;margin:12px 0"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><strong>'+esc(s.titulo||s.tema)+'</strong><span class="pill">'+esc(statusLabels[s.status]||s.status)+'</span></div><p class="hint">'+esc(s.disciplina||'')+' · '+esc(s.tema||'')+'</p>'+video+(s.erro?'<p class="integration-error">'+esc(s.erro)+'</p>':'')'<div class="actions">'+actions+'</div>'+(s.status==='publicado'?'<p class="hint">Publicado em '+esc(s.publicado_em||'')+'</p>':'')+'</article>';
   }).join('');
  } catch(error) {host.innerHTML='<p class="hint integration-error">Não foi possível carregar os Stories: '+esc(error.message||error)+'</p>';}
 }
@@ -636,13 +636,31 @@ document.getElementById('storyGenerateForm')?.addEventListener('submit',async ev
 });
 
 document.getElementById('refreshStories')?.addEventListener('click',()=>loadGeneratedStories(true));
+async function deleteGeneratedStory(id,button){
+  if(!currentSession||!supabaseClient){toast('Entre novamente como administrador.');return;}
+  if(!confirm('Excluir este Story do painel e apagar o vídeo armazenado? Se já foi publicado, ele continuará no Instagram.'))return;
+  const {data:sessionData,error:sessionError}=await supabaseClient.auth.getSession();
+  const accessToken=sessionData?.session?.access_token;
+  if(sessionError||!accessToken){toast('Sua sessão expirou. Entre novamente como administrador.');return;}
+  button.disabled=true;button.textContent='Excluindo…';
+  try{
+   const response=await fetch(SUPABASE_URL+'/functions/v1/instagram-story-delete',{
+    method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+accessToken},body:JSON.stringify({story_id:id})
+   });
+   const result=await response.json().catch(()=>({}));
+   if(!response.ok||!result.ok)throw new Error(result.error||'Falha ao excluir Story (HTTP '+response.status+').');
+   toast('Story excluído do painel e vídeo removido do armazenamento.');
+   await loadGeneratedStories();
+  }catch(error){toast('Não foi possível excluir: '+(error.message||error));button.disabled=false;button.textContent='Excluir';}
+}
 document.getElementById('storiesList')?.addEventListener('click',event=>{
+ const del=event.target.closest('[data-story-delete]');
+ if(del){deleteGeneratedStory(del.dataset.storyDelete,del);return;}
  const publish=event.target.closest('[data-story-publish]');
  if(publish){publishGeneratedStory(publish.dataset.storyPublish,publish);return;}
  const view=event.target.closest('[data-story-view]');
  if(view){const card=view.closest('.story-card');card?.querySelector('video')?.scrollIntoView({behavior:'smooth',block:'center'});}
 });
-
 // Atualização automática da lista sem misturar Stories com a agenda de posts.
 document.addEventListener('DOMContentLoaded',()=>{
  const start=()=>{if(currentSession){loadGeneratedStories();if(!storiesRefreshTimer)storiesRefreshTimer=window.setInterval(()=>loadGeneratedStories(),12000);}};
