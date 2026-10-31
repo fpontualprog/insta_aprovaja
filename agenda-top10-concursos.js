@@ -1,38 +1,38 @@
-/* Pauta recorrente APROVAJÁ — Top 10 concursos */
+/* Agenda persistente de publicações Top 10 — Supabase */
 (function(){
-  const pad=n=>String(n).padStart(2,"0");
-  const iso=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
-  function rowsForMonth(month){
-    const [y,m]=month.split("-").map(Number);
-    const start=new Date(y,m-1,1,12), end=new Date(y,m,0,12);
-    const anchor=new Date(2026,10,3,12); // primeira publicação futura: 03/11/2026
-    const rows=[];
-    for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){
-      const day=Math.floor((Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())-Date.UTC(anchor.getFullYear(),anchor.getMonth(),anchor.getDate()))/86400000);
-      if(day>=0&&day%3===0) rows.push({date:iso(d),time:"09:00"});
-    }
-    return rows;
+ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+ let records=[];
+ const statusLabel={aguardando_validacao:"Aguardando validação",pronto:"Pronto para gerar arte",publicando:"Publicando",publicado:"Publicado",sem_concursos_validos:"Sem concursos válidos",falha:"Falha"};
+ function render(){
+  if(typeof window.renderMonthlySchedule!=="function")return;
+  const body=document.getElementById("monthlyScheduleRows");if(!body)return;
+  const month=document.getElementById("monthFilter")?.value||new Date().toISOString().slice(0,7);
+  const original=body.querySelectorAll(".top10-recurring-agenda");original.forEach(x=>x.remove());
+  const items=records.filter(r=>String(r.agendado_para||"").slice(0,7)===month);
+  for(const r of items){
+   const d=new Date(r.agendado_para);
+   const tr=document.createElement("tr");tr.className="top10-recurring-agenda";
+   tr.innerHTML='<td>'+d.toLocaleDateString("pt-BR",{timeZone:"America/Recife"})+'</td><td>09:00</td><td><strong>'+esc(r.titulo)+'</strong><br><small>Seleção dos 10 maiores salários, com inscrições vigentes e fonte oficial</small></td><td>Instagram · Feed</td><td>'+esc(statusLabel[r.status]||r.status)+'</td>';
+   body.appendChild(tr);
   }
-  function install(){
-    if(typeof window.renderMonthlySchedule!=="function"||window.__top10AgendaInstalled)return false;
-    const original=window.renderMonthlySchedule;
-    window.renderMonthlySchedule=function(){
-      original();
-      const month=document.getElementById("monthFilter")?.value||iso(new Date()).slice(0,7);
-      const body=document.getElementById("monthlyScheduleRows");
-      if(!body)return;
-      const scheduled=rowsForMonth(month);
-      if(!scheduled.length)return;
-      const tr=scheduled.map(x=>'<tr class="top10-recurring-agenda"><td>'+x.date.split("-").reverse().join("/")+'</td><td>'+x.time+'</td><td class="schedule-title-cell"><strong>Top 10 concursos com inscrições abertas — maiores remunerações</strong><br><small>Selecionar até 10 oportunidades válidas da listagem existente; ordenar por remuneração.</small></td><td>Instagram · Feed</td><td><span class="schedule-status Pendente">Recorrente · validação/publicação pendentes</span></td></tr>').join("");
-      body.insertAdjacentHTML("beforeend",tr);
-    };
-    window.__top10AgendaInstalled=true;
-    window.renderMonthlySchedule();
-    document.getElementById("monthFilter")?.addEventListener("change",()=>window.renderMonthlySchedule());
-    return true;
-  }
-  if(!install()){
-    document.addEventListener("DOMContentLoaded",install,{once:true});
-    let n=0;const retry=setInterval(()=>{if(install()||++n>40)clearInterval(retry)},250);
-  }
+ }
+ async function refresh(){
+  if(typeof supabaseClient==="undefined"||!supabaseClient)return;
+  const {data:{session}}=await supabaseClient.auth.getSession();
+  if(!session)return;
+  try{
+   const {data,error}=await supabaseClient.functions.invoke("instagram-top10-agenda",{method:"GET"});
+   if(error)throw error;
+   if(data?.ok){records=data.agenda||[];render()}
+  }catch(e){console.error("Agenda Top 10:",e);const el=document.getElementById("contestMonitorStatus");if(el)el.textContent="Agenda Top 10: "+(e.message||"falha ao consultar Supabase")}
+ }
+ document.addEventListener("DOMContentLoaded",()=>{
+  document.getElementById("monthFilter")?.addEventListener("change",render);
+  const wait=()=>{if(typeof supabaseClient==="undefined"||!supabaseClient){setTimeout(wait,200);return}
+   supabaseClient.auth.onAuthStateChange((event,session)=>{if(session)refresh();else{records=[];render()}});
+   refresh();
+  };wait();
+ });
+ window.addEventListener("supabase-admin-session-ready",refresh);
+ window.refreshTop10Agenda=refresh;
 })();
