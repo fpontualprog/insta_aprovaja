@@ -50,6 +50,7 @@
   try{
    const {data:sessionData,error:sessionError}=await supabaseClient.auth.getSession();if(sessionError)throw sessionError;
    const token=sessionData?.session?.access_token;if(!token)throw new Error("Entre novamente com a conta administradora.");
+   currentSession=sessionData.session;
    const scope=document.getElementById("top10Scope")?.value||"nacional";
    const ufs=scope==="regional"?Array.from(document.getElementById("top10Uf")?.selectedOptions||[]).map(o=>o.value):[];
    if(scope==="regional"&&!ufs.length)throw new Error("Selecione ao menos uma UF no filtro regional.");
