@@ -29,9 +29,9 @@ on:
         default: "5"
         type: string
       banca:
-        description: "Banca de concurso"
-        required: true
-        default: "CEBRASPE"
+        description: "Banca de concurso (opcional)"
+        required: false
+        default: ""
         type: string
       story_id:
         description: "Identificador da pauta do Story (uso interno)"
@@ -214,7 +214,7 @@ jobs:
           payload = {
               "topic": os.environ["STORY_TOPIC"],
               "discipline": os.environ["STORY_DISCIPLINE"],
-              "exam_board": os.environ.get("EXAM_BOARD", "CEBRASPE"),
+              "exam_board": os.environ.get("EXAM_BOARD", "").strip(),
               "slides": 7,
           }
           url = os.environ["SUPABASE_URL"] + "/functions/v1/generate-story-content"
