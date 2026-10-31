@@ -30,19 +30,22 @@
   if(!v)return "—";const m=String(v).match(/^(\d{4})-(\d{2})-(\d{2})/);
   return m?m[3]+"/"+m[2]+"/"+m[1]:String(v);
  }
- function concursosHtml(list,uf,pageNo,pageTotal){
+ function concursosHtml(list,uf){
+  const count=list.length;
+  const compact=count>8;
+  const rowFont=count>16?13:count>12?15:count>8?17:21;
+  const rowPad=count>16?6:count>12?9:count>8?12:18;
+  const orgFont=Math.max(12,rowFont-2);
+  const smallFont=Math.max(10,orgFont-3);
+  const titleFont=count>12?52:62;
+  const subtitleFont=count>12?19:25;
   const rows=list.map(c=>'<tr><td class="org"><strong>'+esc(c.orgao||"Órgão não informado")+'</strong>'+(c.cargo?'<small>'+esc(c.cargo)+'</small>':'')+'</td><td>'+esc(c.vagas||"—")+'</td><td class="salary">'+esc(moneyLabel(c.remuneracao))+'</td><td class="deadline">'+esc(dateLabel(c.inscricoes_fim))+'</td></tr>').join("");
-  return '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><style>*{box-sizing:border-box}html,body{margin:0;width:1080px;height:1350px;font-family:Arial,sans-serif;background:#071a35;color:#fff}.canvas{width:1080px;height:1350px;padding:58px 58px 36px;background:linear-gradient(145deg,#06152d,#0c2b50)}.eyebrow{color:#ff9d24;font-size:23px;font-weight:800;letter-spacing:3px;text-transform:uppercase}.title{font-size:62px;line-height:1.02;font-weight:900;margin:22px 0 12px}.accent{color:#ff9d24}.subtitle{font-size:25px;color:#dce7f5;margin-bottom:34px}table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;color:#10213a;border-radius:18px;overflow:hidden}th{background:#f28c1b;color:#081a33;text-align:left;font-size:21px;padding:18px 14px;font-weight:900}td{padding:18px 14px;border-bottom:1px solid #e5eaf0;font-size:21px;font-weight:700;vertical-align:middle}tr:last-child td{border-bottom:0}.org{width:47%}.org small{display:block;font-size:16px;font-weight:500;color:#52647a;margin-top:5px}.salary{white-space:nowrap;color:#0b315c;font-weight:900}.deadline{white-space:nowrap}.note{font-size:18px;color:#d3deed;margin-top:24px}</style></head><body><main class="canvas"><div class="eyebrow">APROVAJÁ CONCURSOS</div><div class="title">CONCURSOS <span class="accent">'+esc(uf)+'</span></div><div class="subtitle">Todos os concursos detectados nesta UF · Página '+pageNo+' de '+pageTotal+'</div><table><thead><tr><th>Órgão / Cargo</th><th>Vagas</th><th>Remuneração</th><th>Inscrições até</th></tr></thead><tbody>'+rows+'</tbody></table><div class="note">Relação extraída da tabela de detecção do APROVAJÁ. Consulte o edital oficial.</div></main></body></html>';
+  return '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><style>*{box-sizing:border-box}html,body{margin:0;width:1080px;height:1350px;font-family:Arial,sans-serif;background:#071a35;color:#fff}.canvas{width:1080px;height:1350px;padding:48px 48px 30px;background:linear-gradient(145deg,#06152d,#0c2b50)}.eyebrow{color:#ff9d24;font-size:23px;font-weight:800;letter-spacing:3px;text-transform:uppercase}.title{font-size:'+titleFont+'px;line-height:1.02;font-weight:900;margin:18px 0 10px}.accent{color:#ff9d24}.subtitle{font-size:'+subtitleFont+'px;color:#dce7f5;margin-bottom:24px}table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;color:#10213a;border-radius:18px;overflow:hidden}th{background:#f28c1b;color:#081a33;text-align:left;font-size:'+Math.max(13,rowFont)+'px;padding:'+rowPad+'px 10px;font-weight:900}td{padding:'+rowPad+'px 10px;border-bottom:1px solid #e5eaf0;font-size:'+rowFont+'px;font-weight:700;vertical-align:middle}tr:last-child td{border-bottom:0}.org{width:47%}.org small{display:block;font-size:'+smallFont+'px;font-weight:500;color:#52647a;margin-top:3px}.salary{white-space:nowrap;color:#0b315c;font-weight:900}.deadline{white-space:nowrap}.note{font-size:16px;color:#d3deed;margin-top:18px}</style></head><body><main class="canvas"><div class="eyebrow">APROVAJÁ CONCURSOS</div><div class="title">CONCURSOS <span class="accent">'+esc(uf)+'</span></div><div class="subtitle">'+count+' concurso(s) detectado(s) nesta UF · Todos os registros</div><table><thead><tr><th>Órgão / Cargo</th><th>Vagas</th><th>Remuneração</th><th>Inscrições até</th></tr></thead><tbody>'+rows+'</tbody></table><div class="note">Relação extraída da tabela de detecção do APROVAJÁ. Consulte o edital oficial.</div></main></body></html>';
  }
  function concursosPages(list){
   const groups=new Map();
   list.forEach(c=>{const uf=String(c.uf||"Nacional").trim().toUpperCase();if(!groups.has(uf))groups.set(uf,[]);groups.get(uf).push(c);});
-  const pages=[];
-  for(const [uf,items] of groups){
-   const chunks=[];for(let i=0;i<items.length;i+=8)chunks.push(items.slice(i,i+8));
-   chunks.forEach((chunk,i)=>pages.push({uf,html:concursosHtml(chunk,uf,i+1,chunks.length)}));
-  }
-  return pages;
+  return Array.from(groups,([uf,items])=>({uf,html:concursosHtml(items,uf),count:items.length}));
  }
  async function generateAndPublish(button){
   if(button.disabled)return;
@@ -65,6 +68,7 @@
    const post={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),title:"Concursos detectados por Estado",kind:"Concursos abertos",format:"Carrossel",date:new Date().toISOString().slice(0,10),time:"09:00",brief:"Relação completa de concursos detectados — "+stateNames.join(", "),status:"Aprovada",needsApproval:false,captionBody:"Confira a relação de todos os concursos detectados "+(scope==="regional"?"para "+stateNames.join(", "):"na base do APROVAJÁ")+". A listagem é apresentada por Estado, sem ranking ou classificação por remuneração. Consulte sempre o edital oficial.\n\nPrepare-se com o APROVAJÁ Concursos! Acesse a plataforma: https://aprovajaconcurso.netlify.app/\n\nSiga @aprovaja_seuconcurso",aiHashtags:["#AprovaJá","#ConcursosPúblicos","#ConcursosAbertos","#Oportunidades"],concursosDetectados:contests};
    post.caption=typeof makeCaption==="function"?makeCaption(post):post.captionBody;
    const pages=concursosPages(contests),imageUrls=[];
+   if(pages.length>10)throw new Error("Foram selecionados "+pages.length+" estados. O Instagram aceita até 10 imagens por carrossel. Selecione no máximo 10 UFs por publicação.");
    for(let i=0;i<pages.length;i++){
     button.textContent="Gerando arte "+(i+1)+"/"+pages.length+"…";
     const renderedImage=await htmlEditorialToImage(pages[i].html,post);
