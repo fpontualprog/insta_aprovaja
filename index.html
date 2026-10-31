@@ -40,6 +40,8 @@
 <label for="storyDate">Data da Publicação</label><input id="storyDate" type="date" required>
 <label for="storyTime">Horário</label><input id="storyTime" type="time" value="12:15" required>
 <label for="storyDiscipline">Disciplina</label><input id="storyDiscipline" type="text" maxlength="160" placeholder="Digite livremente a disciplina" required>
+<label for="storyBoard">Banca (opcional)</label><select id="storyBoard"><option value="">Não especificada</option><option value="CEBRASPE">CEBRASPE</option><option value="FGV">FGV</option><option value="FCC">FCC</option><option value="IBFC">IBFC</option><option value="Instituto AOCP">Instituto AOCP</option><option value="VUNESP">VUNESP</option><option value="IBAM">IBAM</option><option value="Consulplan">Consulplan</option><option value="Quadrix">Quadrix</option><option value="Outra">Outra</option></select>
+<div id="storyOtherBoardWrap" hidden><label for="storyOtherBoard">Informe a banca</label><input id="storyOtherBoard" type="text" maxlength="100" placeholder="Digite o nome da banca"></div>
 <label for="storySubject">Assunto</label><input id="storySubject" type="text" maxlength="300" placeholder="Digite o assunto do Story" required>
 <label for="storyInstructions">Instruções para publicação</label><textarea id="storyInstructions" rows="5" placeholder="Explique o conteúdo, o tom, os pontos que devem aparecer e a chamada desejada." required></textarea>
 <div class="actions"><button class="btn primary" id="generateStoryVideo" type="submit">Gerar Stories com Vídeo</button></div>
