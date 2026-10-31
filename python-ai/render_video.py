@@ -81,6 +81,11 @@ def main() -> None:
         check=True, capture_output=True, text=True
     )
     duration = max(8.0, float(result.stdout.strip()))
+    if not 60.0 <= duration <= 120.0:
+        raise SystemExit(
+            f"Duração fora do padrão APROVAJÁ: {duration:.1f}s. "
+            "O vídeo precisa ter entre 60 e 120 segundos. Ajuste o roteiro e gere novamente."
+        )
     per_slide = duration / len(slides)
     clips: list[Path] = []
 
