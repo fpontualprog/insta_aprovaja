@@ -633,6 +633,8 @@ async function publishApprovedImage(postId, button, options = {}) {
     button.textContent = originalLabel;
   }
 }
+setInterval(() => { if (currentSession) refreshInstagramStories(); }, 12000);
+
 document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('instagramLoginForm')?.addEventListener('submit', signInInstagramAdmin);
   document.getElementById('instagramLogoutButton')?.addEventListener('click', signOutInstagramAdmin);
