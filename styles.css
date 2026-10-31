@@ -151,3 +151,12 @@ main.wrap>#instagramIntegration h2{margin-top:0}
 .schedule-status.Aprovada{background:#e4f6eb;color:#197044}
 .schedule-status.Publicada{background:#e5efff;color:#174ea6}
 @media(max-width:600px){.monthly-schedule-table{min-width:620px}.monthly-schedule-panel{padding:17px}.monthly-schedule-panel .panel-head{align-items:flex-start}}
+
+
+/* Controles para expandir/recolher tabelas do painel */
+.table-panel-actions{display:flex;align-items:center;justify-content:flex-end;gap:9px;flex-wrap:wrap}
+.table-toggle-btn{appearance:none;border:1px solid #d8e0ec;background:#fff;color:#102c63;border-radius:8px;padding:8px 11px;font:700 11px 'DM Sans',sans-serif;cursor:pointer;white-space:nowrap;transition:background .15s,border-color .15s}
+.table-toggle-btn:hover{background:#f1f5fb;border-color:#1769d2}
+.table-toggle-btn:focus-visible{outline:3px solid #1769d233;outline-offset:2px}
+#monthlyScheduleContent[hidden],#publishedHistory[hidden]{display:none!important}
+@media(max-width:600px){.monthly-schedule-panel .table-panel-actions{width:100%;justify-content:space-between}.monthly-schedule-panel .panel-head,.published-history-panel .panel-head{align-items:flex-start;flex-wrap:wrap}}
