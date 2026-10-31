@@ -52,9 +52,17 @@
    button.textContent="Gerando arte…";
    const post={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),title:"Top 10 concursos com inscrições abertas",kind:"Concursos abertos",format:"Feed",date:new Date().toISOString().slice(0,10),time:"09:00",brief:scope==="regional"?"Top 10 regional por maior remuneração — "+ufs.join(", "):"Top 10 nacional por maior remuneração",status:"Aprovada",needsApproval:false,captionBody:"Confira 10 oportunidades de concursos com inscrições vigentes, organizadas pela maior remuneração. Os valores e prazos foram extraídos dos concursos cadastrados no AprovaJá. Consulte sempre o edital oficial.\n\nPrepare-se com o APROVAJÁ Concursos! Acesse a plataforma: https://aprovajaconcurso.netlify.app/\n\nSiga @aprovaja_seuconcurso",aiHashtags:["#AprovaJá","#ConcursosPúblicos","#ConcursosAbertos","#Concurseiro"],concursosTop10:contests};
    post.caption=typeof makeCaption==="function"?makeCaption(post):post.captionBody;
-   post.images=[await htmlEditorialToImage(top10Html(contests,scope,ufs),post)];
+   const renderedImage=await htmlEditorialToImage(top10Html(contests,scope,ufs),post);
+   const imageBlob=await imageDataToJpegBlob(renderedImage);
+   const objectPath='publicacoes/top10-'+Date.now()+'-'+(crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2))+'.jpg';
+   const {error:storageError}=await supabaseClient.storage.from('instagram-publicacoes').upload(objectPath,imageBlob,{contentType:'image/jpeg',upsert:false});
+   if(storageError)throw new Error('Falha ao salvar a arte no Storage: '+storageError.message);
+   const {data:publicData}=supabaseClient.storage.from('instagram-publicacoes').getPublicUrl(objectPath);
+   if(!publicData?.publicUrl)throw new Error('O Storage não retornou a URL pública da arte.');
+   post.images=[publicData.publicUrl];
    post.top10Scope=scope;post.top10Ufs=ufs;
-   posts.push(post);if(!save()){posts=posts.filter(p=>p.id!==post.id);throw new Error("Não foi possível salvar a arte gerada no painel.");}
+   posts.push(post);
+   if(!save())toast('Arte salva no Storage. O navegador não conseguiu guardar uma cópia local da pauta.');
    button.textContent="Publicando no Instagram…";
    await publishApprovedImage(post.id,button,{skipConfirm:true});
    const published=posts.find(p=>p.id===post.id);
