@@ -598,6 +598,43 @@ async function publishGeneratedStory(id,button){
   toast('Não foi possível publicar: '+(error.message||error));
  }finally{publishBusy=false;await loadGeneratedStories();}
 }
+
+const storyBoardSelect=document.getElementById('storyBoard');
+storyBoardSelect?.addEventListener('change',()=>{
+ const wrap=document.getElementById('storyOtherBoardWrap');
+ if(wrap)wrap.hidden=storyBoardSelect.value!=='Outra';
+});
+const storyDateInput=document.getElementById('storyDate');
+if(storyDateInput&&!storyDateInput.value)storyDateInput.value=localDate(new Date());
+document.getElementById('storyGenerateForm')?.addEventListener('submit',async event=>{
+ event.preventDefault();
+ if(!supabaseClient||!supabaseConnected){toast('Aguarde a conexão com o Supabase.');return;}
+ const {data:sessionData,error:sessionError}=await supabaseClient.auth.getSession();
+ const accessToken=sessionData?.session?.access_token;
+ if(sessionError||!accessToken){toast('Entre novamente como administrador.');return;}
+ const topic=document.getElementById('storyTopic').value.trim();
+ const discipline=document.getElementById('storyDiscipline').value.trim();
+ let examBoard=storyBoardSelect?.value||'';
+ if(examBoard==='Outra')examBoard=document.getElementById('storyOtherBoard').value.trim();
+ if(!topic||!discipline){toast('Informe tema e disciplina.');return;}
+ if(storyBoardSelect?.value==='Outra'&&!examBoard){toast('Informe o nome da outra banca.');return;}
+ const button=document.getElementById('storyGenerateButton');
+ button.disabled=true;button.textContent='Solicitando geração…';
+ try{
+  const response=await fetch(SUPABASE_URL+'/functions/v1/instagram-story-generate',{
+   method:'POST',
+   headers:{'Content-Type':'application/json','apikey':SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+accessToken},
+   body:JSON.stringify({story_id:crypto.randomUUID(),topic,discipline,exam_board:examBoard,date:document.getElementById('storyDate').value,time:document.getElementById('storyTime').value})
+  });
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok||!result.ok)throw new Error(result.error||'Falha ao iniciar a geração (HTTP '+response.status+').');
+  toast('Geração iniciada. O Story aparecerá na lista assim que for registrado.');
+  document.getElementById('storyTopic').value='';
+  await loadGeneratedStories();
+ }catch(error){toast('Não foi possível iniciar: '+(error.message||error));}
+ finally{button.disabled=false;button.textContent='Gerar vídeo para Stories';}
+});
+
 document.getElementById('refreshStories')?.addEventListener('click',()=>loadGeneratedStories(true));
 document.getElementById('storiesList')?.addEventListener('click',event=>{
  const publish=event.target.closest('[data-story-publish]');
