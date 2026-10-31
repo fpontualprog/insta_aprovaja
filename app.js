@@ -448,11 +448,24 @@ async function initializeSupabaseConnection() {
       console.warn('Sessão do Supabase não recuperada; conexão do serviço continua disponível:', sessionError);
     }
     updateAuthUI();
-    supabaseClient.auth.onAuthStateChange((_event, session) => {
+    supabaseClient.auth.onAuthStateChange((event, session) => {
       currentSession = session || null;
-      refreshInstagramHistory();
-      refreshInstagramStories();
       updateAuthUI();
+
+      // Não chamar métodos do Supabase Auth dentro deste callback:
+      // o SDK mantém um lock durante onAuthStateChange e chamadas como
+      // getSession() aqui podem bloquear a própria renovação da sessão.
+      if (event === 'SIGNED_OUT' && !session) {
+        integrationStatus('A sessão administrativa foi encerrada ou o token de renovação expirou. Entre novamente para restabelecer a publicação.', true);
+        return;
+      }
+
+      // Executa as consultas depois que o callback do Auth liberar o lock.
+      setTimeout(() => {
+        if (!currentSession) return;
+        refreshInstagramHistory();
+        refreshInstagramStories();
+      }, 0);
     });
   } catch (error) {
     supabaseConnected = false;
