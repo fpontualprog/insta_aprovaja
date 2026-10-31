@@ -151,3 +151,24 @@ main.wrap>#instagramIntegration h2{margin-top:0}
 .schedule-status.Aprovada{background:#e4f6eb;color:#197044}
 .schedule-status.Publicada{background:#e5efff;color:#174ea6}
 @media(max-width:600px){.monthly-schedule-table{min-width:620px}.monthly-schedule-panel{padding:17px}.monthly-schedule-panel .panel-head{align-items:flex-start}}
+
+/* Monitor de concursos e publicações automáticas */
+.contest-monitor-panel{margin:18px 0;border-color:#d5dfef}
+.contest-monitor-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:16px 0}
+.contest-monitor-stats article{background:#f5f8fd;border:1px solid var(--line);border-radius:11px;padding:13px 15px;display:flex;flex-direction:column;gap:5px}
+.contest-monitor-stats span{font-size:11px;color:var(--muted)}
+.contest-monitor-stats strong{font:800 24px Manrope;color:var(--navy)}
+.contest-monitor-table{min-width:850px;margin-top:16px}
+.contest-monitor-table td{font-size:12px;line-height:1.5}
+.contest-monitor-table a{color:var(--blue);font-weight:800;text-decoration:none}
+.contest-monitor-table a:hover{text-decoration:underline}
+.contest-monitor-table .status{display:inline-block}
+.contest-monitor-table .status.detectado,.contest-monitor-table .status.em_fila,.contest-monitor-table .status.arte_gerada{background:#fff3dc;color:#865200}
+.contest-monitor-table .status.publicado{background:#e4f6eb;color:#197044}
+.contest-monitor-table .status.falha{background:#fff0ef;color:#a12620}
+.contest-monitor-table .status.expirado,.contest-monitor-table .status.ignorado{background:#edf0f5;color:#596579}
+.contest-monitor-panel .actions{align-items:center}
+.contest-monitor-panel .actions .hint{margin:0}
+.contest-monitor-panel button:disabled{opacity:.6;cursor:wait}
+.contest-empty{text-align:center;color:var(--muted);padding:24px!important}
+@media(max-width:650px){.contest-monitor-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.contest-monitor-panel{padding:17px}.contest-monitor-panel .panel-head{align-items:flex-start;flex-wrap:wrap}}
