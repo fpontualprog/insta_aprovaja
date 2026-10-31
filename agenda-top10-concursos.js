@@ -77,10 +77,13 @@
    }
    const agendaId=data.agenda?.id;
    if(!agendaId)throw new Error('A pauta foi gerada, mas não retornou o identificador para salvar as artes na agenda.');
-   const {error:agendaSaveError}=await supabaseClient.from('instagram_agenda_publicacoes')
-    .update({imagem_url:imageUrls[0],legenda:post.caption,atualizado_em:new Date().toISOString()})
-    .eq('id',agendaId);
-   if(agendaSaveError)throw new Error('As imagens foram enviadas ao Storage, mas não foram vinculadas à agenda: '+agendaSaveError.message);
+   const attachResponse=await fetch("https://nukddukqilhsdklocout.supabase.co/functions/v1/instagram-top10-agenda",{
+    method:"POST",
+    headers:{"Content-Type":"application/json","apikey":SUPABASE_PUBLISHABLE_KEY,"Authorization":"Bearer "+token},
+    body:JSON.stringify({action:"attach_art",agendaId,imageUrl:imageUrls[0],caption:post.caption})
+   });
+   const attachResult=await attachResponse.json().catch(()=>({}));
+   if(!attachResponse.ok||!attachResult.ok)throw new Error(attachResult.error||("Não foi possível vincular as artes à agenda (HTTP "+attachResponse.status+")."));
    post.images=imageUrls;
    post.top10Scope=scope;post.top10Ufs=ufs;
    posts.push(post);
