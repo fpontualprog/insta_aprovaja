@@ -605,3 +605,10 @@ document.getElementById('storiesList')?.addEventListener('click',event=>{
  const view=event.target.closest('[data-story-view]');
  if(view){const card=view.closest('.story-card');card?.querySelector('video')?.scrollIntoView({behavior:'smooth',block:'center'});}
 });
+
+// Atualização automática da lista sem misturar Stories com a agenda de posts.
+document.addEventListener('DOMContentLoaded',()=>{
+ const start=()=>{if(currentSession){loadGeneratedStories();if(!storiesRefreshTimer)storiesRefreshTimer=window.setInterval(()=>loadGeneratedStories(),12000);}};
+ start();
+ if(supabaseClient)supabaseClient.auth.onAuthStateChange((_event,session)=>{currentSession=session;updateAuthUI();if(session)start();else{if(storiesRefreshTimer){clearInterval(storiesRefreshTimer);storiesRefreshTimer=null;}const host=document.getElementById('storiesList');if(host)host.innerHTML='<p class="hint">Entre com a conta administradora para consultar os Stories.</p>';}});
+});
