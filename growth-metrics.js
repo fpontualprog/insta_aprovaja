@@ -1,6 +1,8 @@
 (() => {
   'use strict';
   const STORAGE_KEY = 'aprovaja-growth-metrics-v1';
+  const GOAL_STORAGE_KEY = 'aprovaja-weekly-growth-goal-v1';
+  const GOAL_BASELINE = { date: '2026-10-31', followers: 278 };
   const $ = (id) => document.getElementById(id);
   const number = (id) => Math.max(0, Number($(id)?.value || 0));
   const read = () => {
@@ -47,6 +49,83 @@
       });
       body.append(tr);
     });
+  }
+
+  function readGoalEntries() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(GOAL_STORAGE_KEY) || 'null');
+      if (Array.isArray(saved) && saved.length) return saved;
+    } catch {}
+    return [{ date: GOAL_BASELINE.date, followers: GOAL_BASELINE.followers, baseline: true }];
+  }
+  let goalEntries = readGoalEntries();
+
+  function renderGoal() {
+    const sorted = [...goalEntries].sort((a,b) => a.date.localeCompare(b.date));
+    const latest = sorted[sorted.length - 1];
+    const first = sorted[0];
+    const elapsedDays = Math.max(0, Math.floor((new Date(latest.date + 'T12:00:00Z') - new Date(GOAL_BASELINE.date + 'T12:00:00Z')) / 86400000));
+    const gain = Number(latest.followers) - GOAL_BASELINE.followers;
+    const expectedGain = elapsedDays / 7 * 100;
+    const pace = elapsedDays > 0 ? gain / elapsedDays * 7 : 0;
+    const progress = expectedGain > 0 ? Math.max(0, Math.min(100, gain / expectedGain * 100)) : 0;
+    $('growthGoalBaseline').textContent = fmt(GOAL_BASELINE.followers);
+    $('growthGoalCurrent').textContent = fmt(latest.followers);
+    $('growthGoalGain').textContent = (gain > 0 ? '+' : '') + fmt(gain);
+    $('growthGoalPace').textContent = elapsedDays > 0 ? fmt(Math.round(pace)) + '/sem.' : '—';
+    $('growthGoalPercent').textContent = Math.round(progress) + '%';
+    $('growthGoalBar').style.width = progress + '%';
+    $('growthGoalStatus').textContent = elapsedDays === 0 ? 'Aguardando primeira semana' : (pace >= 100 ? 'Meta semanal no ritmo ou superada' : 'Abaixo do ritmo da meta');
+    const nextMilestone = new Date(GOAL_BASELINE.date + 'T12:00:00Z');
+    nextMilestone.setUTCDate(nextMilestone.getUTCDate() + (Math.floor(elapsedDays / 7) + 1) * 7);
+    const milestoneTarget = GOAL_BASELINE.followers + (Math.floor(elapsedDays / 7) + 1) * 100;
+    $('growthGoalNext').textContent = 'Próximo marco: ' + fmt(milestoneTarget) + ' seguidores até ' + nextMilestone.toLocaleDateString('pt-BR', {timeZone:'UTC'}) + '.';
+    const body = $('growthGoalRows');
+    body.replaceChildren();
+    sorted.forEach((item,index) => {
+      const previous = sorted[index - 1];
+      const days = previous ? Math.max(1, Math.floor((new Date(item.date + 'T12:00:00Z') - new Date(previous.date + 'T12:00:00Z')) / 86400000)) : 0;
+      const delta = previous ? Number(item.followers) - Number(previous.followers) : 0;
+      const tr = document.createElement('tr');
+      [new Date(item.date + 'T12:00:00Z').toLocaleDateString('pt-BR',{timeZone:'UTC'}), fmt(item.followers), previous ? ((delta > 0 ? '+' : '') + fmt(delta)) : 'Linha de base', previous ? fmt(Math.round(delta / days * 7)) + '/sem.' : '—'].forEach(value => {
+        const td = document.createElement('td'); td.textContent = value; tr.append(td);
+      });
+      body.append(tr);
+    });
+    $('growthGoalMessage').textContent = sorted.length > 1 ? 'Última medição: ' + new Date(latest.date + 'T12:00:00Z').toLocaleDateString('pt-BR',{timeZone:'UTC'}) + '. A comparação considera a variação entre medições e calcula o ritmo equivalente a sete dias.' : 'Linha de base registrada. Faça uma nova medição para iniciar a comparação semanal.';
+  }
+
+  function initGoal() {
+    const form = $('growthGoalForm');
+    if (!form) return;
+    const date = $('growthGoalDate');
+    if (date && !date.value) {
+      const now = new Date();
+      date.value = [now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-');
+    }
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      const followers = Number($('growthGoalFollowers').value);
+      const measurementDate = date.value;
+      if (!Number.isInteger(followers) || followers < 0 || !measurementDate) return;
+      if (measurementDate < GOAL_BASELINE.date) {
+        $('growthGoalMessage').textContent = 'A data da medição não pode ser anterior à linha de base de 31/10/2026.';
+        return;
+      }
+      const existing = goalEntries.findIndex(item => item.date === measurementDate);
+      const record = {date:measurementDate,followers};
+      if (existing >= 0) goalEntries[existing] = record; else goalEntries.push(record);
+      goalEntries.sort((a,b) => a.date.localeCompare(b.date));
+      try {
+        localStorage.setItem(GOAL_STORAGE_KEY, JSON.stringify(goalEntries));
+        renderGoal();
+        $('growthGoalMessage').textContent = 'Medição registrada neste navegador.';
+        $('growthGoalFollowers').value = '';
+      } catch {
+        $('growthGoalMessage').textContent = 'Não foi possível salvar a medição no armazenamento local.';
+      }
+    });
+    renderGoal();
   }
 
   function init() {
@@ -98,6 +177,7 @@
       $('growthMetricsStatus').textContent = 'Registros locais apagados.';
     });
     render();
+    initGoal();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
