@@ -430,6 +430,7 @@ async function initializeSupabaseConnection() {
     supabaseClient.auth.onAuthStateChange((_event, session) => {
       currentSession = session || null;
       refreshInstagramHistory();
+      refreshInstagramStories();
       updateAuthUI();
     });
   } catch (error) {
@@ -518,6 +519,7 @@ async function signInInstagramAdmin(event) {
     if (error) throw error;
     currentSession = data.session;
     refreshInstagramHistory();
+    await refreshInstagramStories();
     document.getElementById('instagramPassword').value = '';
     updateAuthUI();
     integrationStatus('Sessão iniciada. A função do servidor ainda verificará se esta conta é o administrador autorizado.');
@@ -636,6 +638,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('instagramLogoutButton')?.addEventListener('click', signOutInstagramAdmin);
   await initializeSupabaseConnection();
   await refreshInstagramHistory();
+  if (supabaseConnected && currentSession) await refreshInstagramStories();
   if (supabaseConnected) await loadEditorialLibrary();
 });
  
