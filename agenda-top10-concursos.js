@@ -5,7 +5,7 @@
   function rowsForMonth(month){
     const [y,m]=month.split("-").map(Number);
     const start=new Date(y,m-1,1,12), end=new Date(y,m,0,12);
-    const anchor=new Date(2026,9,31,12); // início da recorrência definida
+    const anchor=new Date(2026,10,3,12); // primeira publicação futura: 03/11/2026
     const rows=[];
     for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){
       const day=Math.floor((Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())-Date.UTC(anchor.getFullYear(),anchor.getMonth(),anchor.getDate()))/86400000);
