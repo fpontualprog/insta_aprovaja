@@ -28,6 +28,18 @@
  }
  document.addEventListener("DOMContentLoaded",()=>{
   document.getElementById("monthFilter")?.addEventListener("change",render);
+  document.getElementById("prepareTop10")?.addEventListener("click",async()=>{
+   const b=document.getElementById("prepareTop10");b.disabled=true;b.textContent="Validando concursos…";
+   try{
+    const {data,error}=await supabaseClient.functions.invoke("instagram-top10-agenda",{method:"POST",body:{}});
+    if(error)throw error;
+    if(!data?.ok)throw new Error(data?.error||"Não foi possível preparar a pauta");
+    await refresh();
+    const msg=data.quantidade?data.quantidade+" concursos válidos preparados.": "Nenhum concurso passou na validação; a publicação foi bloqueada.";
+    alert(msg);
+   }catch(e){alert(e.message||"Falha ao preparar Top 10")}
+   finally{b.disabled=false;b.textContent="Preparar Top 10 da próxima pauta"}
+  });
   const wait=()=>{if(typeof supabaseClient==="undefined"||!supabaseClient){setTimeout(wait,200);return}
    supabaseClient.auth.onAuthStateChange((event,session)=>{if(session)refresh();else{records=[];render()}});
    refresh();
