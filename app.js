@@ -466,7 +466,7 @@ async function signOutInstagramAdmin() {
     integrationStatus('Sessão encerrada. Entre novamente para publicar.');
   }
 }
-async function publishApprovedImage(postId, button) {
+async function publishApprovedImage(postId, button, options = {}) {
   if (publishBusy) return;
   const post = posts.find(item => item.id === postId);
   if (!post || post.status !== 'Aprovada' || post.needsApproval) {
@@ -497,7 +497,7 @@ async function publishApprovedImage(postId, button) {
       post.caption = fitted.caption;
     }
   }
-  if (!confirm('Publicar AGORA no Instagram?\\n\\n' + post.title + '\\n' + (isVideoStory ? 'Story em vídeo MP4' : post.images.length + (post.images.length === 1 ? ' imagem' : ' imagens')) + '\\n\\nA data e o horário planejados não serão considerados.')) return;
+  if (!options.skipConfirm && !confirm('Publicar AGORA no Instagram?\\n\\n' + post.title + '\\n' + (isVideoStory ? 'Story em vídeo MP4' : post.images.length + (post.images.length === 1 ? ' imagem' : ' imagens')) + '\\n\\nA data e o horário planejados não serão considerados.')) return;
   publishBusy = true;
   button.disabled = true;
   const originalLabel = button.textContent;
