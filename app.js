@@ -511,6 +511,11 @@ async function publishApprovedImage(postId, button, options = {}) {
     if (!isVideoStory) {
       for (let i = 0; i < post.images.length; i++) {
         integrationStatus('Preparando imagem ' + (i + 1) + ' de ' + post.images.length + '…');
+        const existingUrl = typeof post.images[i] === 'string' && post.images[i].startsWith('https://nukddukqilhsdklocout.supabase.co/storage/v1/object/public/instagram-publicacoes/');
+        if (existingUrl) {
+          imageUrls.push(post.images[i]);
+          continue;
+        }
         const jpegBlob = await imageDataToJpegBlob(post.images[i]);
         const objectPath = 'publicacoes/' + Date.now() + '-' + (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)) + '-' + (i + 1) + '.jpg';
         const { error: uploadError } = await supabaseClient.storage.from('instagram-publicacoes').upload(objectPath, jpegBlob, { contentType: 'image/jpeg', upsert: false });
