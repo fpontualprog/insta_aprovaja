@@ -23,25 +23,25 @@ def clean_narration_line(line: str) -> str:
         return ""
 
     # Ignora metadados e referências, que não fazem parte do conteúdo didático.
-    if re.match(r"^(?:#{1,6}\\s*)?(?:disciplina|formato|modelo local|fontes recuperadas pelo sistema)\\s*:", line, re.I):
+    if re.match(r"^(?:#{1,6}\s*)?(?:disciplina|formato|modelo local|fontes recuperadas pelo sistema)\s*:", line, re.I):
         return ""
-    if re.match(r"^(?:[-*•]\\s*)?(?:nenhuma fonte local relevante|fontes recuperadas)", line, re.I):
+    if re.match(r"^(?:[-*•]\s*)?(?:nenhuma fonte local relevante|fontes recuperadas)", line, re.I):
         return ""
 
     # Remove marcação Markdown, mantendo o texto e sua pontuação.
-    line = re.sub(r"^#{1,6}\\s*", "", line)
-    line = re.sub(r"^>+\\s*", "", line)
-    line = re.sub(r"^[-*•]\\s+", "", line)
-    line = re.sub(r"\\[([^\\]]+)\\]\\([^)]*\\)", r"\\1", line)
+    line = re.sub(r"^#{1,6}\s*", "", line)
+    line = re.sub(r"^>+\s*", "", line)
+    line = re.sub(r"^[-*•]\s+", "", line)
+    line = re.sub(r"\[([^\]]+)\]\([^)]*\)", r"\1", line)
     line = re.sub(r"[*_`]", "", line)
 
     # Símbolos comparativos são verbalizados somente quando conectam expressões.
-    line = re.sub(r"\\s*>\\s*", " maior que ", line)
-    line = re.sub(r"\\s*<\\s*", " menor que ", line)
+    line = re.sub(r"\s*>\s*", " maior que ", line)
+    line = re.sub(r"\s*<\s*", " menor que ", line)
     # Remove sinais gráficos soltos e caracteres de diagramação que não devem ser lidos.
     line = re.sub(r"[<>|]+", " ", line)
     line = re.sub(r"[📘📄🟦🔵]", " ", line)
-    line = re.sub(r"\\s+", " ", line).strip()
+    line = re.sub(r"\s+", " ", line).strip()
     return line
 
 
@@ -63,12 +63,12 @@ def narration_text() -> str:
 
     # Mantém a pontuação original e as pausas entre parágrafos.
     text = ". ".join(p.rstrip(" .;:") for p in paragraphs if p.strip())
-    text = re.sub(r"\\s+([,.;:!?])", r"\\1", text)
-    text = re.sub(r"([.!?])(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ])", r"\\1 ", text)
-    text = re.sub(r"\\s{2,}", " ", text).strip()
+    text = re.sub(r"\s+([,.;:!?])", r"\1", text)
+    text = re.sub(r"([.!?])(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ])", r"\1 ", text)
+    text = re.sub(r"\s{2,}", " ", text).strip()
 
     # Limita por frase inteira: nunca interrompe a locução no meio de uma ideia.
-    sentences = re.split(r"(?<=[.!?])\\s+", text)
+    sentences = re.split(r"(?<=[.!?])\s+", text)
     selected: list[str] = []
     count = 0
     for sentence in sentences:
@@ -131,7 +131,7 @@ def main() -> None:
 
     concat_file = OUT / "story_clips.txt"
     concat_file.write_text(
-        "".join(f"file '{p.resolve().as_posix()}'\\n" for p in clips),
+        "".join(f"file '{p.resolve().as_posix()}'\n" for p in clips),
         encoding="utf-8"
     )
     silent = OUT / "story_silent.mp4"
