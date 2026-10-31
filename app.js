@@ -17,11 +17,24 @@ function fitInstagramCaption(caption, limit=2200){
   if(lastSpace>max*0.75) cut=cut.slice(0,lastSpace);
   return {caption:cut.trimEnd()+suffix, truncated:true, originalLength:text.length};
 }
+function normalizeInstagramHashtags(values){
+ const clean=(Array.isArray(values)?values:[]).map(value=>{
+  const tag=String(value||'').trim().replace(/^#+/,'').replace(/[^\p{L}\p{N}_]/gu,'');
+  return tag?'#'+tag:null;
+ }).filter(Boolean);
+ return [...new Map(clean.map(tag=>[tag.toLocaleLowerCase('pt-BR'),tag])).values()].slice(0,5);
+}
+function recentInstagramHashtags(){
+ const recent=posts.filter(p=>['Publicada','Aprovada'].includes(p.status)).sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,12);
+ const tags=recent.flatMap(p=>[...(Array.isArray(p.aiHashtags)?p.aiHashtags:[]),...(String(p.caption||'').match(/#[\p{L}\p{N}_]+/gu)||[])]);
+ return [...new Set(tags.map(t=>String(t).replace(/^#/,'').toLocaleLowerCase('pt-BR')))].slice(0,35);
+}
 function makeCaption(p){
- const tags=Array.isArray(p.aiHashtags)&&p.aiHashtags.length?p.aiHashtags.map(t=>String(t).startsWith('#')?String(t):'#'+String(t).replace(/\\s+/g,'')).join(' '):'#AprovaJá #ConcursosPúblicos #Concurseiro #DicasDeConcurso #EstudeGrátis';
- const promo='📚 Conheça o AprovaJá: uma plataforma gratuita para organizar sua preparação para concursos. Acesse: '+PLATFORM_URL;
- const call=p.kind==='Divulgação da plataforma'?'Sua preparação pode começar hoje. Conheça as ferramentas gratuitas do AprovaJá!':p.kind==='Questão de revisão'?'Comente sua resposta antes de conferir o material. Salve para revisar!':'Salve esta dica para revisar antes da prova e compartilhe com quem também está estudando.';
- return p.title+'\n\n'+p.captionBody+'\n\n'+call+'\n\n'+promo+'\n\n'+tags;
+ const tags=normalizeInstagramHashtags(p.aiHashtags);
+ const body=String(p.captionBody||'').trim();
+ const cta='Acesse a plataforma AprovaJá — gratuita: '+PLATFORM_URL+'\nCanal no WhatsApp: https://whatsapp.com/channel/0029Vb6Ol6y9xVJZ2RZYVh0p\nInstagram: @aprovaja_seuconcurso';
+ const editorialCall=p.kind==='Questão de revisão'?'\n\nResponda nos comentários e salve para revisar.':'\n\nSalve esta publicação e compartilhe com outro concurseiro.';
+ return p.title+'\n\n'+body+editorialCall+'\n\n'+cta+(tags.length?'\n\n'+tags.join(' '):'');
 }
 function topicBody(topic,kind){
  if(kind==='Divulgação da plataforma')return 'Está se preparando para concursos? Conheça o AprovaJá, organize seus estudos e acompanhe conteúdos de revisão. A plataforma está em fase de testes e é gratuita.';
@@ -301,7 +314,7 @@ $('generateBatch').addEventListener('click',async()=>{
    const response=await fetch(SUPABASE_URL+'/functions/v1/generate-instagram-content',{
     method:'POST',
     headers:{'Content-Type':'application/json','Authorization': token ? 'Bearer '+token : 'Bearer '+SUPABASE_PUBLISHABLE_KEY,'apikey':SUPABASE_PUBLISHABLE_KEY},
-    body:JSON.stringify({topic,kind,discipline:selectedDiscipline.nome,brief:'Crie conteúdo educativo conciso e correto para Instagram sobre esta matéria. Tipo de publicação: '+kind+'.'})
+    body:JSON.stringify({topic,kind,discipline:selectedDiscipline.nome,brief:'Crie conteúdo educativo conciso e correto para Instagram sobre esta matéria. Tipo de publicação: '+kind+'. Hashtags recentes usadas no perfil (evite repetir as mesmas combinações): '+recentInstagramHashtags().join(', ')})
    });
    const data=await response.json().catch(()=>({}));
    if(!response.ok)throw new Error('Falha de IA no tema "'+topic+'": '+(data.error||'HTTP '+response.status));
@@ -718,7 +731,7 @@ $('postForm')?.addEventListener('submit', async e=>{
    const response=await fetch(SUPABASE_URL+'/functions/v1/generate-instagram-content',{
      method:'POST',
      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token,'apikey':SUPABASE_PUBLISHABLE_KEY},
-     body:JSON.stringify({topic,kind,discipline,brief})
+     body:JSON.stringify({topic,kind,discipline,brief,recentHashtags:recentInstagramHashtags()})
    });
    const data=await response.json().catch(()=>({}));
    if(!response.ok)throw new Error(data.error||'Falha na geração com IA (HTTP '+response.status+').');
