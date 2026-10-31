@@ -121,14 +121,17 @@ async function collectInstagramInsights(){
  const button=$('collectInstagramInsights');
  const status=$('instagramInsightsStatus');
  if(!button||!status)return;
- if(!supabaseClient||!currentSession?.access_token){status.textContent='Entre como administrador no painel antes de testar.';return;}
+ if(!supabaseClient){status.textContent='A conexão com o Supabase ainda não foi inicializada. Atualize o painel.';return;}
  button.disabled=true;
- status.textContent='Validando token da Meta e consultando Insights…';
+ status.textContent='Verificando a sessão administrativa e consultando Insights…';
  try{
   const {data,error}=await supabaseClient.auth.getSession();
   if(error)throw error;
-  const token=data?.session?.access_token;
-  if(!token)throw new Error('Sessão expirada. Entre novamente.');
+  const activeSession=data?.session||null;
+  const token=activeSession?.access_token;
+  if(!token)throw new Error('O Supabase não encontrou uma sessão ativa neste navegador. Entre novamente no painel administrativo.');
+  currentSession=activeSession;
+  updateAuthUI();
   const response=await fetch(SUPABASE_URL+'/functions/v1/instagram-insights-collect',{
    method:'POST',
    headers:{'Content-Type':'application/json','apikey':SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+token},
