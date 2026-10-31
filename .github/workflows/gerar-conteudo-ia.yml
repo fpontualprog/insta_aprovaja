@@ -233,7 +233,7 @@ jobs:
               "topic": os.environ["STORY_TOPIC"],
               "discipline": os.environ["STORY_DISCIPLINE"],
               "exam_board": os.environ.get("EXAM_BOARD", "").strip(),
-              "slides": 7,
+              "slides": 4,
           }
           url = os.environ["SUPABASE_URL"] + "/functions/v1/generate-story-content"
           response = requests.post(url, headers={"Authorization": "Bearer " + key, "apikey": key, "Content-Type": "application/json"}, json=payload, timeout=160)
