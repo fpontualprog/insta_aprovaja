@@ -71,13 +71,31 @@ jobs:
         run: |
           set -euo pipefail
           test -n "$SUPABASE_SERVICE_ROLE_KEY" || { echo "Falta configurar SUPABASE_SERVICE_ROLE_KEY."; exit 1; }
-          curl --fail-with-body --silent --show-error \\
-            -X POST "$SUPABASE_URL/rest/v1/instagram_stories?on_conflict=id" \\
-            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \\
-            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \\
-            -H "Content-Type: application/json" \\
-            -H "Prefer: resolution=merge-duplicates,return=minimal" \\
-            -d "{\\"id\\":\\"$STORY_ID\\",\\"titulo\\":\\"$STORY_TOPIC\\",\\"tema\\":\\"$STORY_TOPIC\\",\\"disciplina\\":\\"$STORY_DISCIPLINE\\",\\"agendado_para\\":\\"$STORY_DATE""T""$STORY_TIME:00-03:00\\",\\"status\\":\\"gerando\\",\\"erro\\":null}"
+          STORY_DATETIME=""
+          if [ -n "$STORY_DATE" ] && [ -n "$STORY_TIME" ]; then
+            STORY_DATETIME="${STORY_DATE}T${STORY_TIME}:00-03:00"
+          fi
+          BODY="$(jq -n \
+            --arg id "$STORY_ID" \
+            --arg titulo "$STORY_TOPIC" \
+            --arg tema "$STORY_TOPIC" \
+            --arg disciplina "$STORY_DISCIPLINE" \
+            --arg agendado_para "$STORY_DATETIME" \
+            '{
+              id: $id,
+              titulo: $titulo,
+              tema: $tema,
+              disciplina: $disciplina,
+              status: "gerando",
+              erro: null
+            } + (if $agendado_para == "" then {} else {agendado_para: $agendado_para} end)')"
+          curl --fail-with-body --silent --show-error \
+            -X POST "$SUPABASE_URL/rest/v1/instagram_stories?on_conflict=id" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: resolution=merge-duplicates,return=minimal" \
+            -d "$BODY"
           echo "Story $STORY_ID registrado como gerando."
 
       - name: Instalar FFmpeg
@@ -272,13 +290,13 @@ jobs:
             --data-binary @output/aprovaja_story.mp4
           echo "Vídeo enviado ao Supabase Storage para a pauta $STORY_ID."
           VIDEO_URL="$SUPABASE_URL/storage/v1/object/public/instagram-publicacoes/stories/$STORY_ID.mp4"
-          curl --fail-with-body --silent --show-error \\
-            -X PATCH "$SUPABASE_URL/rest/v1/instagram_stories?id=eq.$STORY_ID" \\
-            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \\
-            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \\
-            -H "Content-Type: application/json" \\
-            -H "Prefer: return=minimal" \\
-            -d "{\\"status\\":\\"pronto\\",\\"video_path\\":\\"stories/$STORY_ID.mp4\\",\\"video_url\\":\\"$VIDEO_URL\\",\\"erro\\":null,\\"atualizado_em\\":\\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\\"}"
+          curl --fail-with-body --silent --show-error \
+            -X PATCH "$SUPABASE_URL/rest/v1/instagram_stories?id=eq.$STORY_ID" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: return=minimal" \
+            -d "$(jq -n --arg video_path "stories/$STORY_ID.mp4" --arg video_url "$VIDEO_URL" --arg atualizado_em "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '{status:"pronto",video_path:$video_path,video_url:$video_url,erro:null,atualizado_em:$atualizado_em}')"
           echo "Story $STORY_ID atualizado como pronto no banco."
 
       - name: Registrar falha do Story no Supabase
@@ -291,10 +309,10 @@ jobs:
         run: |
           if [ -n "$SUPABASE_SERVICE_ROLE_KEY" ]; then
             MESSAGE="Falha no workflow GitHub Actions. Consulte o log da execução."
-            curl --silent --show-error -X PATCH "$SUPABASE_URL/rest/v1/instagram_stories?id=eq.$STORY_ID" \\
-              -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \\
-              -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \\
-              -H "Content-Type: application/json" \\
+            curl --silent --show-error -X PATCH "$SUPABASE_URL/rest/v1/instagram_stories?id=eq.$STORY_ID" \
+              -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+              -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+              -H "Content-Type: application/json" \
               -d "{\\"status\\":\\"erro\\",\\"erro\\":\\"$MESSAGE\\",\\"atualizado_em\\":\\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\\"}" || true
           fi
 
