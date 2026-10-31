@@ -269,8 +269,13 @@ async function loadEditorialLibrary() {
   const {data: disciplines, error} = await supabaseClient.from('biblioteca_disciplinas').select('id,nome').order('nome');
   if (error) throw error;
   editorialDisciplines = disciplines || [];
-  const options = '<option value="">Selecione a disciplina</option>' + editorialDisciplines.map(d=>'<option value="'+esc(d.id)+'">'+esc(d.nome)+'</option>').join('');
-  if(batch) batch.innerHTML=options;
+  const options = editorialDisciplines.map(d=>'<option value="'+esc(d.id)+'">'+esc(d.nome)+'</option>').join('');
+  if(batch) {
+   batch.multiple = true;
+   batch.size = Math.min(8, Math.max(4, editorialDisciplines.length));
+   batch.innerHTML=options;
+   updateBulkDisciplineCount();
+  }
   if(single) single.innerHTML=options;
   if(contentSelect) contentSelect.innerHTML='<option value="">Selecione uma disciplina primeiro</option>';
  } catch (error) {
@@ -307,8 +312,9 @@ $('generateBatch').addEventListener('click',async()=>{
  if(!topics.length){toast('Insira os temas antes de gerar a agenda.');return}
  if(topics.length>10){toast('Para usar IA em lote, gere no máximo 10 temas por vez.');return}
  if(!supabaseConnected||!supabaseClient){toast('O painel ainda não está conectado ao Supabase.');integrationStatus('Aguarde a conexão com o Supabase antes de gerar conteúdo.',true);return;}
- const selectedDiscipline=editorialDisciplines.find(d=>d.id===$('bulkDiscipline')?.value);
- if(!selectedDiscipline){toast('Selecione a disciplina para este lote.');return;}
+ const selectedIds=Array.from($('bulkDiscipline')?.selectedOptions||[]).map(option=>option.value);
+ const selectedDisciplines=editorialDisciplines.filter(d=>selectedIds.includes(String(d.id)));
+ if(!selectedDisciplines.length){toast('Selecione pelo menos uma disciplina para este lote.');return;}
  const startValue=$('bulkStart').value||localDate(new Date());
  $('monthFilter').value=startValue.slice(0,7);
  const startDate=new Date(startValue+'T12:00:00');
@@ -330,6 +336,7 @@ $('generateBatch').addEventListener('click',async()=>{
   for(let i=0;i<topics.length;i++){
    button.textContent='IA gerando '+(i+1)+'/'+topics.length+'…';
    const topic=topics[i],d=slots[i],kind=editorialForDate(d);
+   const selectedDiscipline=selectedDisciplines[i % selectedDisciplines.length];
    const time=kind==='Questão comentada'?'12:15':kind==='Dica de prova'||kind==='Mapa mental'?'19:30':kind==='Concursos abertos'?'10:00':'18:30';
    const {data:sessionData,error:sessionError}=await supabaseClient.auth.getSession();
    if(sessionError)throw sessionError;
