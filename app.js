@@ -635,14 +635,22 @@ async function publishApprovedImage(postId, button, options = {}) {
 }
 setInterval(() => { if (currentSession) refreshInstagramStories(); }, 12000);
 
-document.addEventListener('DOMContentLoaded', async () => {
+let aprovajaSupabaseBootStarted = false;
+async function startAprovajaSupabase() {
+  if (aprovajaSupabaseBootStarted) return;
+  aprovajaSupabaseBootStarted = true;
   document.getElementById('instagramLoginForm')?.addEventListener('submit', signInInstagramAdmin);
   document.getElementById('instagramLogoutButton')?.addEventListener('click', signOutInstagramAdmin);
   await initializeSupabaseConnection();
   await refreshInstagramHistory();
   if (supabaseConnected && currentSession) await refreshInstagramStories();
   if (supabaseConnected) await loadEditorialLibrary();
-});
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', startAprovajaSupabase, { once: true });
+} else {
+  startAprovajaSupabase();
+}
  
 // Listener delegado registrado imediatamente: também funciona para cards criados dinamicamente.
 document.addEventListener('click', event => {
