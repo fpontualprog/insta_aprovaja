@@ -30,9 +30,19 @@
   if(!v)return "—";const m=String(v).match(/^(\d{4})-(\d{2})-(\d{2})/);
   return m?m[3]+"/"+m[2]+"/"+m[1]:String(v);
  }
- function top10Html(list,scope="nacional",ufs=[]){
-  const rows=list.map((c,i)=>'<tr><td class="rank">'+(i+1)+'</td><td class="org">'+esc(c.orgao||"Órgão não informado")+(c.uf?' ('+esc(c.uf)+')':'')+'</td><td class="salary">'+esc(moneyLabel(c.remuneracao))+'</td><td class="deadline">'+esc(dateLabel(c.inscricoes_fim))+'</td></tr>').join("");
-  return '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><style>*{box-sizing:border-box}html,body{margin:0;width:1080px;height:1350px;font-family:Arial,sans-serif;background:#071a35;color:#fff}.canvas{width:1080px;height:1350px;padding:58px 58px 36px;background:linear-gradient(145deg,#06152d,#0c2b50)}.eyebrow{color:#ff9d24;font-size:23px;font-weight:800;letter-spacing:3px;text-transform:uppercase}.title{font-size:66px;line-height:1.02;font-weight:900;margin:18px 0 12px}.subtitle{font-size:25px;color:#dce7f5;margin-bottom:34px}.accent{color:#ff9d24}table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;color:#10213a;border-radius:18px;overflow:hidden}th{background:#f28c1b;color:#081a33;text-align:left;font-size:22px;padding:21px 16px;font-weight:900}td{padding:20px 16px;border-bottom:1px solid #e5eaf0;font-size:23px;font-weight:700}tr:last-child td{border-bottom:0}.rank{width:65px;color:#ed8211;font-size:28px;font-weight:900}.org{width:45%}.salary{white-space:nowrap;color:#0b315c;font-weight:900}.deadline{white-space:nowrap}.note{font-size:18px;color:#d3deed;margin-top:24px}</style></head><body><main class="canvas"><div class="eyebrow">APROVAJÁ CONCURSOS</div><div class="title">TOP 10 <span class="accent">CONCURSOS</span></div><div class="subtitle">'+(scope==="regional"?"Ranking regional · "+esc(ufs.join(", "))+" · ":"Ranking nacional · ")+"Inscrições abertas · Ordenados pela maior remuneração"+'</div><table><thead><tr><th>#</th><th>Órgão</th><th>Salário</th><th>Inscrições até</th></tr></thead><tbody>'+rows+'</tbody></table><div class="note">Confira o edital e os prazos de inscrição nos canais oficiais de cada órgão.</div></main></body></html>';
+ function concursosHtml(list,uf,pageNo,pageTotal){
+  const rows=list.map(c=>'<tr><td class="org"><strong>'+esc(c.orgao||"Órgão não informado")+'</strong>'+(c.cargo?'<small>'+esc(c.cargo)+'</small>':'')+'</td><td>'+esc(c.vagas||"—")+'</td><td class="salary">'+esc(moneyLabel(c.remuneracao))+'</td><td class="deadline">'+esc(dateLabel(c.inscricoes_fim))+'</td></tr>').join("");
+  return '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><style>*{box-sizing:border-box}html,body{margin:0;width:1080px;height:1350px;font-family:Arial,sans-serif;background:#071a35;color:#fff}.canvas{width:1080px;height:1350px;padding:58px 58px 36px;background:linear-gradient(145deg,#06152d,#0c2b50)}.eyebrow{color:#ff9d24;font-size:23px;font-weight:800;letter-spacing:3px;text-transform:uppercase}.title{font-size:62px;line-height:1.02;font-weight:900;margin:22px 0 12px}.accent{color:#ff9d24}.subtitle{font-size:25px;color:#dce7f5;margin-bottom:34px}table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;color:#10213a;border-radius:18px;overflow:hidden}th{background:#f28c1b;color:#081a33;text-align:left;font-size:21px;padding:18px 14px;font-weight:900}td{padding:18px 14px;border-bottom:1px solid #e5eaf0;font-size:21px;font-weight:700;vertical-align:middle}tr:last-child td{border-bottom:0}.org{width:47%}.org small{display:block;font-size:16px;font-weight:500;color:#52647a;margin-top:5px}.salary{white-space:nowrap;color:#0b315c;font-weight:900}.deadline{white-space:nowrap}.note{font-size:18px;color:#d3deed;margin-top:24px}</style></head><body><main class="canvas"><div class="eyebrow">APROVAJÁ CONCURSOS</div><div class="title">CONCURSOS <span class="accent">'+esc(uf)+'</span></div><div class="subtitle">Todos os concursos detectados nesta UF · Página '+pageNo+' de '+pageTotal+'</div><table><thead><tr><th>Órgão / Cargo</th><th>Vagas</th><th>Remuneração</th><th>Inscrições até</th></tr></thead><tbody>'+rows+'</tbody></table><div class="note">Relação extraída da tabela de detecção do APROVAJÁ. Consulte o edital oficial.</div></main></body></html>';
+ }
+ function concursosPages(list){
+  const groups=new Map();
+  list.forEach(c=>{const uf=String(c.uf||"Nacional").trim().toUpperCase();if(!groups.has(uf))groups.set(uf,[]);groups.get(uf).push(c);});
+  const pages=[];
+  for(const [uf,items] of groups){
+   const chunks=[];for(let i=0;i<items.length;i+=8)chunks.push(items.slice(i,i+8));
+   chunks.forEach((chunk,i)=>pages.push({uf,html:concursosHtml(chunk,uf,i+1,chunks.length)}));
+  }
+  return pages;
  }
  async function generateAndPublish(button){
   if(button.disabled)return;
@@ -47,33 +57,39 @@
    const data=await response.json().catch(()=>({}));
    if(!response.ok||!data.ok)throw new Error(data.error||("HTTP "+response.status));
    const contests=Array.isArray(data.concursos)?data.concursos:[];
-   if(!contests.length){alert("Não há concursos cadastrados com inscrições vigentes. Nenhuma publicação foi gerada ou enviada.");await refresh();return;}
+   if(!contests.length){alert("Não há concursos detectados para a(s) UF(s) selecionada(s). Nenhuma publicação foi gerada ou enviada.");await refresh();return;}
    if(typeof htmlEditorialToImage!=="function"||typeof publishApprovedImage!=="function")throw new Error("O gerador de arte ou o publicador do Instagram não está disponível nesta versão do painel.");
    button.textContent="Gerando arte…";
-   const post={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),title:"Top 10 concursos com inscrições abertas",kind:"Concursos abertos",format:"Feed",date:new Date().toISOString().slice(0,10),time:"09:00",brief:scope==="regional"?"Top 10 regional por maior remuneração — "+ufs.join(", "):"Top 10 nacional por maior remuneração",status:"Aprovada",needsApproval:false,captionBody:"Confira 10 oportunidades de concursos com inscrições vigentes, organizadas pela maior remuneração. Os valores e prazos foram extraídos dos concursos cadastrados no AprovaJá. Consulte sempre o edital oficial.\n\nPrepare-se com o APROVAJÁ Concursos! Acesse a plataforma: https://aprovajaconcurso.netlify.app/\n\nSiga @aprovaja_seuconcurso",aiHashtags:["#AprovaJá","#ConcursosPúblicos","#ConcursosAbertos","#Concurseiro"],concursosTop10:contests};
+   const stateNames=Array.from(new Set(contests.map(c=>String(c.uf||"Nacional").trim().toUpperCase())));
+   const post={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),title:"Concursos detectados por Estado",kind:"Concursos abertos",format:"Carrossel",date:new Date().toISOString().slice(0,10),time:"09:00",brief:"Relação completa de concursos detectados — "+stateNames.join(", "),status:"Aprovada",needsApproval:false,captionBody:"Confira a relação de todos os concursos detectados "+(scope==="regional"?"para "+stateNames.join(", "):"na base do APROVAJÁ")+". A listagem é apresentada por Estado, sem ranking ou classificação por remuneração. Consulte sempre o edital oficial.\n\nPrepare-se com o APROVAJÁ Concursos! Acesse a plataforma: https://aprovajaconcurso.netlify.app/\n\nSiga @aprovaja_seuconcurso",aiHashtags:["#AprovaJá","#ConcursosPúblicos","#ConcursosAbertos","#Oportunidades"],concursosDetectados:contests};
    post.caption=typeof makeCaption==="function"?makeCaption(post):post.captionBody;
-   const renderedImage=await htmlEditorialToImage(top10Html(contests,scope,ufs),post);
-   const imageBlob=await imageDataToJpegBlob(renderedImage);
-   const objectPath='publicacoes/top10-'+Date.now()+'-'+(crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2))+'.jpg';
-   const {error:storageError}=await supabaseClient.storage.from('instagram-publicacoes').upload(objectPath,imageBlob,{contentType:'image/jpeg',upsert:false});
-   if(storageError)throw new Error('Falha ao salvar a arte no Storage: '+storageError.message);
-   const {data:publicData}=supabaseClient.storage.from('instagram-publicacoes').getPublicUrl(objectPath);
-   if(!publicData?.publicUrl)throw new Error('O Storage não retornou a URL pública da arte.');
+   const pages=concursosPages(contests),imageUrls=[];
+   for(let i=0;i<pages.length;i++){
+    button.textContent="Gerando arte "+(i+1)+"/"+pages.length+"…";
+    const renderedImage=await htmlEditorialToImage(pages[i].html,post);
+    const imageBlob=await imageDataToJpegBlob(renderedImage);
+    const objectPath='publicacoes/concursos-'+pages[i].uf+'-'+Date.now()+'-'+i+'.jpg';
+    const {error:storageError}=await supabaseClient.storage.from('instagram-publicacoes').upload(objectPath,imageBlob,{contentType:'image/jpeg',upsert:false});
+    if(storageError)throw new Error('Falha ao salvar a página '+(i+1)+' no Storage: '+storageError.message);
+    const {data:publicData}=supabaseClient.storage.from('instagram-publicacoes').getPublicUrl(objectPath);
+    if(!publicData?.publicUrl)throw new Error('O Storage não retornou a URL pública da página '+(i+1)+'.');
+    imageUrls.push(publicData.publicUrl);
+   }
    const agendaId=data.agenda?.id;
-   if(!agendaId)throw new Error('A pauta foi gerada, mas não retornou o identificador para salvar a arte na agenda.');
+   if(!agendaId)throw new Error('A pauta foi gerada, mas não retornou o identificador para salvar as artes na agenda.');
    const {error:agendaSaveError}=await supabaseClient.from('instagram_agenda_publicacoes')
-    .update({imagem_url:publicData.publicUrl,legenda:post.caption,atualizado_em:new Date().toISOString()})
+    .update({imagem_url:imageUrls[0],legenda:post.caption,atualizado_em:new Date().toISOString()})
     .eq('id',agendaId);
-   if(agendaSaveError)throw new Error('A imagem foi enviada ao Storage, mas não foi vinculada à agenda: '+agendaSaveError.message);
-   post.images=[publicData.publicUrl];
+   if(agendaSaveError)throw new Error('As imagens foram enviadas ao Storage, mas não foram vinculadas à agenda: '+agendaSaveError.message);
+   post.images=imageUrls;
    post.top10Scope=scope;post.top10Ufs=ufs;
    posts.push(post);
-   if(!save())toast('Arte salva no Storage. O navegador não conseguiu guardar uma cópia local da pauta.');
+   if(!save())toast('Artes salvas no Storage. O navegador não conseguiu guardar uma cópia local da pauta.');
    button.textContent="Publicando no Instagram…";
    await publishApprovedImage(post.id,button,{skipConfirm:true});
    const published=posts.find(p=>p.id===post.id);
-   if(published?.status==="Publicada")alert("Top 10 gerado e publicado no Instagram. ID: "+published.instagramMediaId);
-   else alert("A arte foi gerada, mas a publicação não foi confirmada. Consulte o status de integração antes de tentar novamente.");
+   if(published?.status==="Publicada")alert("Relação completa de concursos por Estado gerada e publicada no Instagram. ID: "+published.instagramMediaId);
+   else alert("As artes foram geradas, mas a publicação não foi confirmada. Consulte o status de integração antes de tentar novamente.");
    await refresh();
   }catch(e){alert("Não foi possível gerar e publicar o Top 10: "+(e?.message||"erro inesperado"));console.error(e)}
   finally{button.disabled=false;button.textContent=original;}
