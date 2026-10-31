@@ -72,6 +72,19 @@
 <section class="panel growth-metrics-panel" id="growthMetrics">
   <div class="panel-head"><div><p class="eyebrow">CRESCIMENTO · INSIGHTS</p><h2>Desempenho das publicações</h2></div><span class="schedule-month-label" id="growthMetricsCount">0</span></div>
   <p class="hint">Registre os números exibidos no Instagram Insights após 24 horas e, se possível, novamente após 7 dias. Nesta versão, os dados ficam salvos apenas neste navegador; não há sincronização automática com a Meta.</p>
+  <div class="growth-goal-block" id="instagramAutoInsights">
+    <div class="growth-goal-heading"><div><p class="eyebrow">META API · COLETA AUTOMÁTICA</p><h3>Indicadores da conta</h3><p class="hint">Consulta segura ao Instagram e gravação do histórico diário no Supabase. A coleta não publica nem altera conteúdo.</p></div><span class="growth-goal-target">API oficial</span></div>
+    <div class="actions"><button class="btn primary" id="collectInstagramInsights" type="button">Testar token e coletar métricas</button></div>
+    <p class="hint" id="instagramInsightsStatus" role="status" aria-live="polite">Entre como administrador para executar o primeiro teste.</p>
+    <div class="growth-metric-cards">
+      <article><span>Seguidores</span><strong id="apiFollowers">—</strong></article>
+      <article><span>Alcance (janela da API)</span><strong id="apiReach">—</strong></article>
+      <article><span>Visualizações</span><strong id="apiViews">—</strong></article>
+      <article><span>Contas engajadas</span><strong id="apiEngaged">—</strong></article>
+      <article><span>Interações</span><strong id="apiInteractions">—</strong></article>
+      <article><span>Publicações no perfil</span><strong id="apiMediaCount">—</strong></article>
+    </div>
+  </div>
   <div class="growth-goal-block" id="growthGoalTracker">
     <div class="growth-goal-heading"><div><p class="eyebrow">META DE AQUISIÇÃO</p><h3>100 novos seguidores por semana</h3><p class="hint">Linha de base: 278 seguidores em 31/10/2026. Registre a contagem atual semanalmente para acompanhar o crescimento real.</p></div><span class="growth-goal-target">+100 / semana</span></div>
     <div class="growth-goal-cards">
