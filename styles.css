@@ -199,3 +199,23 @@ main.wrap>#instagramIntegration h2{margin-top:0}
 .growth-metrics-table{min-width:850px}
 .growth-empty{text-align:center;color:var(--muted);padding:22px!important}
 @media(max-width:680px){.growth-metric-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.growth-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.growth-form-grid .growth-title-field{grid-column:span 2}}
+
+/* Acompanhamento da meta semanal de seguidores */
+.growth-goal-block{margin:18px 0 24px;padding:18px;background:#f8faff;border:1px solid #dce5f2;border-radius:13px}
+.growth-goal-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}
+.growth-goal-heading h3{margin:0;color:var(--navy);font:800 18px Manrope}
+.growth-goal-heading .hint{margin-top:7px}
+.growth-goal-target{white-space:nowrap;padding:8px 11px;border-radius:8px;background:#fff1d8;color:#805000;font-size:12px;font-weight:800}
+.growth-goal-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:16px 0}
+.growth-goal-cards article{padding:12px;background:#fff;border:1px solid var(--line);border-radius:10px;display:flex;flex-direction:column;gap:5px;min-width:0}
+.growth-goal-cards span{font-size:10px;color:var(--muted)}
+.growth-goal-cards strong{font:800 21px Manrope;color:var(--navy);overflow-wrap:anywhere}
+.growth-goal-progress{margin:12px 0 18px}
+.growth-goal-progress-label{display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--navy);margin-bottom:8px}
+.growth-goal-track{height:10px;border-radius:20px;background:#e2e9f3;overflow:hidden}
+.growth-goal-track span{display:block;height:100%;width:0;background:#1769d2;border-radius:20px;transition:width .2s}
+#growthGoalForm{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end}
+#growthGoalForm label{margin:0 0 6px}
+#growthGoalForm .actions{margin:0}
+.growth-goal-table{min-width:520px;margin-top:12px}
+@media(max-width:760px){.growth-goal-cards{grid-template-columns:repeat(2,minmax(0,1fr))}#growthGoalForm{grid-template-columns:1fr}.growth-goal-heading{flex-direction:column}.growth-goal-target{align-self:flex-start}}
