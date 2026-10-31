@@ -24,7 +24,7 @@ def font(size, bold=False):
 
 def wrap_pixels(draw, text, fnt, max_width):
     lines, current = [], ""
-    for word in re.sub(r"\\s+", " ", text).split():
+    for word in re.sub(r"\s+", " ", text).split():
         candidate = word if not current else current + " " + word
         if draw.textbbox((0,0), candidate, font=fnt)[2] <= max_width: current = candidate
         else:
@@ -34,10 +34,10 @@ def wrap_pixels(draw, text, fnt, max_width):
     return lines
 
 def clean_text(s):
-    s = re.sub(r"^#+\\s*", "", s)
-    s = re.sub(r"^[-*•]\\s*", "", s)
-    s = re.sub(r"^\\d+[.)]\\s*", "", s)
-    return re.sub(r"\\*{1,2}", "", s).strip()
+    s = re.sub(r"^#+\s*", "", s)
+    s = re.sub(r"^[-*•]\s*", "", s)
+    s = re.sub(r"^\d+[.)]\s*", "", s)
+    return re.sub(r"\*{1,2}", "", s).strip()
 
 def split_content(text, max_chars=430):
     paras = []
@@ -82,7 +82,7 @@ def find_people_photo(topic: str):
                 usage = _meta_value(meta, "UsageTerms")
                 license_text = f"{license_name} {usage}".strip()
                 # Exclui explicitamente licenças NC/ND; aceita CC0, domínio público e CC BY/BY-SA.
-                if re.search(r"\\b(NC|ND)\\b|NonCommercial|NoDerivatives", license_text, re.I):
+                if re.search(r"\b(NC|ND)\b|NonCommercial|NoDerivatives", license_text, re.I):
                     continue
                 if not any(x.lower() in license_text.lower() for x in ALLOWED_LICENSES):
                     continue
@@ -177,7 +177,7 @@ def main():
     lines = raw.splitlines()
     title = next((clean_text(x) for x in lines if x.startswith("# ")), "Dica para concursos")
     content_start = next((i+1 for i,x in enumerate(lines) if x.startswith("**Modelo local:**")), 0)
-    body_text = re.split(r"(?im)^## Fontes recuperadas", "\\n".join(lines[content_start:]))[0]
+    body_text = re.split(r"(?im)^## Fontes recuperadas", "\n".join(lines[content_start:]))[0]
     paras = split_content(body_text)
     chunks, current = [], []
     for p in paras:
@@ -201,14 +201,14 @@ def main():
         with Image.open(p) as check:
             if check.size != (1080,1350): raise RuntimeError(f"Dimensão inválida em {p.name}: {check.size}")
         paths.append(p)
-    caption = f"{title}\\n\\nEstude com estratégia e revise os pontos principais. Salve esta publicação para consultar depois.\\n\\nSiga @aprovaja_seuconcurso para mais conteúdos gratuitos."
+    caption = f"{title}\n\nEstude com estratégia e revise os pontos principais. Salve esta publicação para consultar depois.\n\nSiga @aprovaja_seuconcurso para mais conteúdos gratuitos."
     if photo_record:
         attribution = f"Fotografia: {photo_record['author']} — {photo_record['license']}. Fonte: {photo_record['file_page']}"
-        caption += "\\n\\n" + attribution
+        caption += "\n\n" + attribution
         (OUT/"credito_fotografia.json").write_text(json.dumps(photo_record, ensure_ascii=False, indent=2), encoding="utf-8")
     else:
         (OUT/"credito_fotografia.json").write_text(json.dumps({"status":"no_licensed_photo_found","fallback":"arte gerada sem fotografia"}, ensure_ascii=False, indent=2), encoding="utf-8")
-    caption += "\\n\\n#AprovaJá #ConcursosPúblicos #Estudos #DicasDeConcurso #Concurseiro"
+    caption += "\n\n#AprovaJá #ConcursosPúblicos #Estudos #DicasDeConcurso #Concurseiro"
     (OUT/"legenda_instagram.txt").write_text(caption,encoding="utf-8")
     with zipfile.ZipFile(OUT/"carrossel_instagram.zip","w",zipfile.ZIP_DEFLATED) as z:
         for p in paths: z.write(p,p.name)
