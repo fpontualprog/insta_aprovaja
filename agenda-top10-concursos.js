@@ -59,6 +59,12 @@
    if(storageError)throw new Error('Falha ao salvar a arte no Storage: '+storageError.message);
    const {data:publicData}=supabaseClient.storage.from('instagram-publicacoes').getPublicUrl(objectPath);
    if(!publicData?.publicUrl)throw new Error('O Storage não retornou a URL pública da arte.');
+   const agendaId=data.agenda?.id;
+   if(!agendaId)throw new Error('A pauta foi gerada, mas não retornou o identificador para salvar a arte na agenda.');
+   const {error:agendaSaveError}=await supabaseClient.from('instagram_agenda_publicacoes')
+    .update({imagem_url:publicData.publicUrl,legenda:post.caption,atualizado_em:new Date().toISOString()})
+    .eq('id',agendaId);
+   if(agendaSaveError)throw new Error('A imagem foi enviada ao Storage, mas não foi vinculada à agenda: '+agendaSaveError.message);
    post.images=[publicData.publicUrl];
    post.top10Scope=scope;post.top10Ufs=ufs;
    posts.push(post);
