@@ -49,6 +49,12 @@
 <div class="actions"><button class="btn primary" id="generateAI" type="submit">Gerar Conteúdo Com IA</button></div>
 <p class="hint">A geração exige sessão administrativa e consulta o DeepSeek pelo servidor. O conteúdo será incluído na agenda para revisão antes da publicação.</p>
 </form></section>
+
+<section class="panel" id="storiesPanel" style="margin-top:24px">
+ <div class="panel-head"><div><p class="eyebrow">VÍDEOS VERTICAIS</p><h2>Stories gerados</h2></div><button type="button" class="btn secondary" id="refreshStories">Atualizar</button></div>
+ <p class="hint">Os vídeos concluídos pelo GitHub Actions aparecem aqui automaticamente. Confira a prévia antes de publicar.</p>
+ <div id="storiesList" aria-live="polite"><p class="hint">Entre como administrador para consultar os Stories.</p></div>
+</section>
 <section class="panel monthly-schedule-panel">
   <div class="panel-head"><div><p class="eyebrow">PROGRAMAÇÃO EDITORIAL</p><h2>Cronograma de publicações do mês</h2></div><div class="table-panel-actions"><span class="schedule-month-label" id="scheduleMonthLabel">Mês atual</span><button type="button" class="table-toggle-btn" data-collapse-target="monthlyScheduleContent" aria-expanded="true">Recolher tabela</button></div></div>
   <p class="hint">Publicações programadas da data atual até o fim do mês selecionado. Use o filtro mensal do calendário logo abaixo para mudar o período.</p>
