@@ -1,6 +1,9 @@
 name: Gerar conteúdo com IA gratuita
 
 on:
+  push:
+    branches-ignore:
+      - "**"
   workflow_dispatch:
     inputs:
       tema:
