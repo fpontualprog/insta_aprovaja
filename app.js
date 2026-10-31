@@ -116,6 +116,43 @@ async function htmlEditorialToImage(html,post){
 function makePost(topic,kind,date,time,format='Carrossel'){const p={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),title:topic.trim(),kind,format,date,time,brief:'Conteúdo educativo para candidatos a concursos públicos. Identidade visual azul-marinho, branco e laranja.',status:'Pendente'};p.captionBody=topicBody(p.title,kind);p.caption=makeCaption(p);p.images=[];return p}
 let instagramRemotePublications = [];
 let instagramHistoryMessage = 'Entre com a conta administradora para carregar o histórico do Instagram.';
+
+async function collectInstagramInsights(){
+ const button=$('collectInstagramInsights');
+ const status=$('instagramInsightsStatus');
+ if(!button||!status)return;
+ if(!supabaseClient||!currentSession?.access_token){status.textContent='Entre como administrador no painel antes de testar.';return;}
+ button.disabled=true;
+ status.textContent='Validando token da Meta e consultando Insights…';
+ try{
+  const {data,error}=await supabaseClient.auth.getSession();
+  if(error)throw error;
+  const token=data?.session?.access_token;
+  if(!token)throw new Error('Sessão expirada. Entre novamente.');
+  const response=await fetch(SUPABASE_URL+'/functions/v1/instagram-insights-collect',{
+   method:'POST',
+   headers:{'Content-Type':'application/json','apikey':SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+token},
+   body:JSON.stringify({})
+  });
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok||!result.ok)throw new Error((result.error||'Falha na coleta')+(result.details?': '+result.details:'')+(result.meta_status?' (Meta HTTP '+result.meta_status+')':''));
+  const fmt=v=>v===null||v===undefined?'—':Number(v).toLocaleString('pt-BR');
+  $('apiFollowers').textContent=fmt(result.followers_count);
+  $('apiMediaCount').textContent=fmt(result.media_count);
+  const metricValues=result.metrics_values||{};
+  $('apiReach').textContent=fmt(metricValues.reach);
+  $('apiViews').textContent=fmt(metricValues.views);
+  $('apiEngaged').textContent=fmt(metricValues.accounts_engaged);
+  $('apiInteractions').textContent=fmt(metricValues.total_interactions);
+  status.textContent='Token validado para @'+result.username+'. Registro salvo no Supabase. Métricas consultadas: '+(result.metrics_collected||[]).join(', ')+'.'+(Object.keys(result.metrics_unavailable||{}).length?' Métricas indisponíveis: '+Object.keys(result.metrics_unavailable).join(', ')+'.':'');
+  status.classList.remove('integration-error');
+ }catch(error){
+  status.textContent='Teste não concluído: '+(error?.message||'erro inesperado');
+  status.classList.add('integration-error');
+ }finally{button.disabled=false;}
+}
+document.getElementById('collectInstagramInsights')?.addEventListener('click',collectInstagramInsights);
+
 async function refreshInstagramHistory(){
  const host=$('publishedHistory');
  if(!host)return;
