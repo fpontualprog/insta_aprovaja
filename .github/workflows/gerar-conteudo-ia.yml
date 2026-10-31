@@ -57,6 +57,29 @@ jobs:
       - name: Baixar repositório
         uses: actions/checkout@v7
 
+      - name: Registrar Story como gerando no Supabase
+        if: ${{ inputs.formato == 'video' && inputs.story_id != '' }}
+        env:
+          SUPABASE_URL: https://nukddukqilhsdklocout.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          STORY_ID: ${{ inputs.story_id }}
+          STORY_TOPIC: ${{ inputs.tema }}
+          STORY_DISCIPLINE: ${{ inputs.disciplina }}
+          STORY_DATE: ${{ inputs.data_publicacao }}
+          STORY_TIME: ${{ inputs.horario_publicacao }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$SUPABASE_SERVICE_ROLE_KEY" || { echo "Falta configurar SUPABASE_SERVICE_ROLE_KEY."; exit 1; }
+          curl --fail-with-body --silent --show-error \\
+            -X POST "$SUPABASE_URL/rest/v1/instagram_stories?on_conflict=id" \\
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \\
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \\
+            -H "Content-Type: application/json" \\
+            -H "Prefer: resolution=merge-duplicates,return=minimal" \\
+            -d "{\\"id\\":\\"$STORY_ID\\",\\"titulo\\":\\"$STORY_TOPIC\\",\\"tema\\":\\"$STORY_TOPIC\\",\\"disciplina\\":\\"$STORY_DISCIPLINE\\",\\"agendado_para\\":\\"$STORY_DATE""T""$STORY_TIME:00-03:00\\",\\"status\\":\\"gerando\\",\\"erro\\":null}"
+          echo "Story $STORY_ID registrado como gerando."
+
       - name: Instalar FFmpeg
         run: |
           sudo apt-get update
@@ -196,6 +219,32 @@ jobs:
             -H "x-upsert: true" \
             --data-binary @output/aprovaja_story.mp4
           echo "Vídeo enviado ao Supabase Storage para a pauta $STORY_ID."
+          VIDEO_URL="$SUPABASE_URL/storage/v1/object/public/instagram-publicacoes/stories/$STORY_ID.mp4"
+          curl --fail-with-body --silent --show-error \\
+            -X PATCH "$SUPABASE_URL/rest/v1/instagram_stories?id=eq.$STORY_ID" \\
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \\
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \\
+            -H "Content-Type: application/json" \\
+            -H "Prefer: return=minimal" \\
+            -d "{\\"status\\":\\"pronto\\",\\"video_path\\":\\"stories/$STORY_ID.mp4\\",\\"video_url\\":\\"$VIDEO_URL\\",\\"erro\\":null,\\"atualizado_em\\":\\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\\"}"
+          echo "Story $STORY_ID atualizado como pronto no banco."
+
+      - name: Registrar falha do Story no Supabase
+        if: ${{ failure() && inputs.formato == 'video' && inputs.story_id != '' }}
+        env:
+          SUPABASE_URL: https://nukddukqilhsdklocout.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          STORY_ID: ${{ inputs.story_id }}
+        shell: bash
+        run: |
+          if [ -n "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            MESSAGE="Falha no workflow GitHub Actions. Consulte o log da execução."
+            curl --silent --show-error -X PATCH "$SUPABASE_URL/rest/v1/instagram_stories?id=eq.$STORY_ID" \\
+              -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \\
+              -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \\
+              -H "Content-Type: application/json" \\
+              -d "{\\"status\\":\\"erro\\",\\"erro\\":\\"$MESSAGE\\",\\"atualizado_em\\":\\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\\"}" || true
+          fi
 
       - name: Disponibilizar arquivos gerados
         if: always()
