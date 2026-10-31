@@ -66,6 +66,9 @@
  }
  document.addEventListener("DOMContentLoaded",()=>{
   document.getElementById("monthFilter")?.addEventListener("change",render);
+  const scopeSelect=document.getElementById("top10Scope"),ufField=document.getElementById("top10UfField");
+  const syncFilterVisibility=()=>{if(ufField)ufField.hidden=scopeSelect?.value!=="regional"};
+  scopeSelect?.addEventListener("change",syncFilterVisibility);syncFilterVisibility();
   document.getElementById("prepareTop10")?.addEventListener("click",e=>generateAndPublish(e.currentTarget));
   const wait=()=>{if(typeof supabaseClient==="undefined"||!supabaseClient){setTimeout(wait,200);return}
    supabaseClient.auth.onAuthStateChange((event,session)=>{if(session)refresh();else{records=[];render()}});
