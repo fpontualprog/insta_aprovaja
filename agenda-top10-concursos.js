@@ -40,16 +40,20 @@
   try{
    const {data:sessionData,error:sessionError}=await supabaseClient.auth.getSession();if(sessionError)throw sessionError;
    const token=sessionData?.session?.access_token;if(!token)throw new Error("Entre novamente com a conta administradora.");
-   const response=await fetch("https://nukddukqilhsdklocout.supabase.co/functions/v1/instagram-top10-agenda",{method:"POST",headers:{"Content-Type":"application/json","apikey":SUPABASE_PUBLISHABLE_KEY,"Authorization":"Bearer "+token},body:"{}"});
+   const scope=document.getElementById("top10Scope")?.value||"nacional";
+   const ufs=scope==="regional"?Array.from(document.getElementById("top10Uf")?.selectedOptions||[]).map(o=>o.value):[];
+   if(scope==="regional"&&!ufs.length)throw new Error("Selecione ao menos uma UF no filtro regional.");
+   const response=await fetch("https://nukddukqilhsdklocout.supabase.co/functions/v1/instagram-top10-agenda",{method:"POST",headers:{"Content-Type":"application/json","apikey":SUPABASE_PUBLISHABLE_KEY,"Authorization":"Bearer "+token},body:JSON.stringify({scope,ufs})});
    const data=await response.json().catch(()=>({}));
    if(!response.ok||!data.ok)throw new Error(data.error||("HTTP "+response.status));
    const contests=Array.isArray(data.concursos)?data.concursos:[];
    if(!contests.length){alert("Não há concursos cadastrados com inscrições vigentes. Nenhuma publicação foi gerada ou enviada.");await refresh();return;}
    if(typeof htmlEditorialToImage!=="function"||typeof publishApprovedImage!=="function")throw new Error("O gerador de arte ou o publicador do Instagram não está disponível nesta versão do painel.");
    button.textContent="Gerando arte…";
-   const post={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),title:"Top 10 concursos com inscrições abertas",kind:"Concursos abertos",format:"Feed",date:new Date().toISOString().slice(0,10),time:"09:00",brief:"Top 10 por maior remuneração",status:"Aprovada",needsApproval:false,captionBody:"Confira 10 oportunidades de concursos com inscrições vigentes, organizadas pela maior remuneração. Os valores e prazos foram extraídos dos concursos cadastrados no AprovaJá. Consulte sempre o edital oficial.\n\nPrepare-se com o APROVAJÁ Concursos! Acesse a plataforma: https://aprovajaconcurso.netlify.app/\n\nSiga @aprovaja_seuconcurso",aiHashtags:["#AprovaJá","#ConcursosPúblicos","#ConcursosAbertos","#Concurseiro"],concursosTop10:contests};
+   const post={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),title:"Top 10 concursos com inscrições abertas",kind:"Concursos abertos",format:"Feed",date:new Date().toISOString().slice(0,10),time:"09:00",brief:scope==="regional"?"Top 10 regional por maior remuneração — "+ufs.join(", "):"Top 10 nacional por maior remuneração",status:"Aprovada",needsApproval:false,captionBody:"Confira 10 oportunidades de concursos com inscrições vigentes, organizadas pela maior remuneração. Os valores e prazos foram extraídos dos concursos cadastrados no AprovaJá. Consulte sempre o edital oficial.\n\nPrepare-se com o APROVAJÁ Concursos! Acesse a plataforma: https://aprovajaconcurso.netlify.app/\n\nSiga @aprovaja_seuconcurso",aiHashtags:["#AprovaJá","#ConcursosPúblicos","#ConcursosAbertos","#Concurseiro"],concursosTop10:contests};
    post.caption=typeof makeCaption==="function"?makeCaption(post):post.captionBody;
    post.images=[await htmlEditorialToImage(top10Html(contests),post)];
+   post.top10Scope=scope;post.top10Ufs=ufs;
    posts.push(post);if(!save()){posts=posts.filter(p=>p.id!==post.id);throw new Error("Não foi possível salvar a arte gerada no painel.");}
    button.textContent="Publicando no Instagram…";
    await publishApprovedImage(post.id,button,{skipConfirm:true});
