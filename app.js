@@ -683,10 +683,13 @@ async function waitForStoryVideo(storyId, storyDate, storyTime) {
   if (status) status.textContent = 'A geração ainda não foi localizada no Storage. Confira a execução no GitHub Actions antes de tentar novamente.';
  }
 }
+$('storyBoard')?.addEventListener('change',()=>{const wrap=$('storyOtherBoardWrap');if(wrap)wrap.hidden=$('storyBoard').value!=='Outra';});
 $('storyForm')?.addEventListener('submit',async e=>{
  e.preventDefault();
  const date=$('storyDate').value,time=$('storyTime').value,discipline=$('storyDiscipline').value.trim(),subject=$('storySubject').value.trim(),instructions=$('storyInstructions').value.trim();
+ const boardChoice=$('storyBoard')?.value||'',otherBoard=$('storyOtherBoard')?.value.trim()||'',examBoard=boardChoice==='Outra'?otherBoard:boardChoice;
  if(!date||!time||!discipline||!subject||!instructions){toast('Preencha todos os campos do Estúdio Editorial.');return;}
+ if(boardChoice==='Outra'&&!otherBoard){toast('Informe o nome da outra banca.');return;}
  if(!supabaseClient||!currentSession?.access_token){toast('Entre com a conta administradora antes de gerar Stories.');integrationStatus('A geração de Stories exige uma sessão administrativa válida.',true);return;}
  const button=$('generateStoryVideo');
  const storyId=crypto.randomUUID?crypto.randomUUID():String(Date.now());
@@ -701,7 +704,7 @@ $('storyForm')?.addEventListener('submit',async e=>{
   const response=await fetch(SUPABASE_URL+'/functions/v1/instagram-story-generate',{
    method:'POST',
    headers:{'Content-Type':'application/json','apikey':SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+accessToken},
-   body:JSON.stringify({story_id:storyId,topic:subject,discipline,date,time,instructions})
+   body:JSON.stringify({story_id:storyId,topic:subject,discipline,exam_board:examBoard,date,time,instructions})
   });
   const result=await response.json().catch(()=>({}));
   if(!response.ok||!result.ok)throw new Error(result.error||('Falha ao iniciar a geração (HTTP '+response.status+').'));
