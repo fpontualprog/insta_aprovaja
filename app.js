@@ -31,9 +31,10 @@ function recentInstagramHashtags(){
 }
 function makeCaption(p){
  const tags=normalizeInstagramHashtags(p.aiHashtags);
- const call=p.kind==='Divulgação da plataforma'?'Conheça os recursos gratuitos do AprovaJá: '+PLATFORM_URL:p.kind==='Questão de revisão'?'Qual é sua resposta? Comente e confira o comentário.':'Salve para revisar e compartilhe com outro concurseiro.';
  const body=String(p.captionBody||'').trim();
- return p.title+'\\n\\n'+body+'\\n\\n'+call+(tags.length?'\\n\\n'+tags.join(' '):'');
+ const cta='Acesse a plataforma AprovaJá — gratuita: '+PLATFORM_URL+'\nCanal no WhatsApp: https://whatsapp.com/channel/0029Vb6Ol6y9xVJZ2RZYVh0p\nInstagram: @aprovaja_seuconcurso';
+ const editorialCall=p.kind==='Questão de revisão'?'\n\nResponda nos comentários e salve para revisar.':'\n\nSalve esta publicação e compartilhe com outro concurseiro.';
+ return p.title+'\n\n'+body+editorialCall+'\n\n'+cta+(tags.length?'\n\n'+tags.join(' '):'');
 }
 function topicBody(topic,kind){
  if(kind==='Divulgação da plataforma')return 'Está se preparando para concursos? Conheça o AprovaJá, organize seus estudos e acompanhe conteúdos de revisão. A plataforma está em fase de testes e é gratuita.';
