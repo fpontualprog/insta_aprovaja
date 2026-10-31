@@ -11,6 +11,13 @@
  async function invoke(method){if(typeof supabaseClient==="undefined"||!supabaseClient){throw new Error("Cliente Supabase ainda não inicializado.")}const {data:sessionData,error:sessionError}=await supabaseClient.auth.getSession();if(sessionError)throw sessionError;if(!sessionData.session?.access_token)throw new Error("Entre com a conta administradora do painel.");const {data,error}=await supabaseClient.functions.invoke(fn,{method,body:method==="POST"?{}:undefined});if(error)throw error;if(!data?.ok)throw new Error(data?.error||"Não foi possível consultar o monitor.");return data}
  async function load(){setStatus("Consultando o histórico no Supabase…");try{const d=await invoke("GET");paintStats(d.stats);paintRows(d.concursos);setStatus("Atualizado em "+new Date(d.atualizado_em).toLocaleString("pt-BR")+".")}catch(e){setStatus(e.message||"Falha ao carregar o painel.",true);const body=$("contestMonitorRows");if(body)body.innerHTML='<tr><td colspan="7">'+safe(e.message||"Falha de conexão")+'</td></tr>'}}
  async function sync(){const b=$("syncContestMonitor");if(b)b.disabled=true;setStatus("Consultando a API pública e registrando novos concursos…");try{const d=await invoke("POST");setStatus("Sincronização concluída. Concursos na API: "+d.total_api+".");await load()}catch(e){setStatus(e.message||"Falha na sincronização.",true)}finally{if(b)b.disabled=false}}
- document.addEventListener("DOMContentLoaded",()=>{ $("refreshContestMonitor")?.addEventListener("click",load);$("syncContestMonitor")?.addEventListener("click",sync);load();});
+ document.addEventListener("DOMContentLoaded",()=>{
+  $("refreshContestMonitor")?.addEventListener("click",load);
+  $("syncContestMonitor")?.addEventListener("click",sync);
+  const waitForClient=()=>{if(typeof supabaseClient==="undefined"||!supabaseClient){setTimeout(waitForClient,150);return}
+    supabaseClient.auth.onAuthStateChange((event,session)=>{if(session)load();else{paintStats({});paintRows([]);setStatus("Entre com a conta administradora para consultar o histórico.")}});
+    supabaseClient.auth.getSession().then(({data})=>{if(data.session)load()});
+  };waitForClient();
+ });
  window.addEventListener("supabase-admin-session-ready",load);
 })();
