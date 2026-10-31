@@ -557,3 +557,51 @@ document.addEventListener('click',e=>{
  const title=img.alt||link?.querySelector('span')?.textContent||'Prévia da arte';
  openArtworkPopup(img.currentSrc||img.src,title);
 });
+
+
+// --- Sincronização dos Stories gerados no Supabase ---
+let storiesRefreshTimer = null;
+async function loadGeneratedStories(showMessage=false) {
+ const host=document.getElementById('storiesList');
+ if(!host||!supabaseClient)return;
+ if(!currentSession){host.innerHTML='<p class="hint">Entre com a conta administradora para consultar os Stories.</p>';return;}
+ try {
+  const {data,error}=await supabaseClient.from('instagram_stories').select('*').order('criado_em',{ascending:false}).limit(50);
+  if(error)throw error;
+  if(!data?.length){host.innerHTML='<p class="hint">Nenhum Story registrado no banco. Os próximos vídeos gerados pelo workflow aparecerão aqui.</p>';return;}
+  host.innerHTML=data.map(s=>{
+   const statusLabels={gerando:'Gerando',pronto:'Pronto para revisar',publicando:'Publicando',publicado:'Publicado',erro:'Erro na geração'};
+   const video=s.video_url?'<video controls playsinline preload="metadata" style="display:block;width:min(100%,360px);max-height:640px;background:#080d18;border-radius:12px;margin:12px 0" src="'+esc(s.video_url)+'"></video>':'';
+   const actions=s.status==='pronto'&&s.video_url?'<div class="actions"><button type="button" class="btn secondary" data-story-view="'+esc(s.id)+'">Ver vídeo</button><button type="button" class="btn primary" data-story-publish="'+esc(s.id)+'">Publicar Story</button></div>':'';
+   return '<article class="story-card" style="border:1px solid #dbe2ee;border-radius:12px;padding:16px;margin:12px 0"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><strong>'+esc(s.titulo||s.tema)+'</strong><span class="pill">'+esc(statusLabels[s.status]||s.status)+'</span></div><p class="hint">'+esc(s.disciplina||'')+' · '+esc(s.tema||'')+'</p>'+video+(s.erro?'<p class="integration-error">'+esc(s.erro)+'</p>':'')+actions+(s.status==='publicado'?'<p class="hint">Publicado em '+esc(s.publicado_em||'')+'</p>':'')+'</article>';
+  }).join('');
+ } catch(error) {host.innerHTML='<p class="hint integration-error">Não foi possível carregar os Stories: '+esc(error.message||error)+'</p>';}
+}
+async function publishGeneratedStory(id,button){
+ if(publishBusy)return;
+ const {data:sessionData,error:sessionError}=await supabaseClient.auth.getSession();
+ if(sessionError||!sessionData?.session?.access_token){toast('Entre novamente como administrador.');return;}
+ const {data:story,error}=await supabaseClient.from('instagram_stories').select('*').eq('id',id).single();
+ if(error||!story?.video_url){toast('Vídeo não encontrado ou ainda não está pronto.');return;}
+ if(!confirm('Publicar este vídeo como Story no Instagram agora?'))return;
+ publishBusy=true;button.disabled=true;button.textContent='Publicando…';
+ try{
+  await supabaseClient.from('instagram_stories').update({status:'publicando',atualizado_em:new Date().toISOString()}).eq('id',id);
+  const response=await fetch(INSTAGRAM_PUBLISH_URL,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+sessionData.session.access_token},body:JSON.stringify({video_url:story.video_url})});
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok||!result.ok)throw new Error(result.error||'Falha na publicação (HTTP '+response.status+').');
+  const {error:updateError}=await supabaseClient.from('instagram_stories').update({status:'publicado',instagram_media_id:result.media_id,publicado_em:new Date().toISOString(),atualizado_em:new Date().toISOString(),erro:null}).eq('id',id);
+  if(updateError)throw updateError;
+  toast('Instagram confirmou a publicação do Story.');
+ }catch(error){
+  await supabaseClient.from('instagram_stories').update({status:'pronto',erro:String(error.message||error),atualizado_em:new Date().toISOString()}).eq('id',id);
+  toast('Não foi possível publicar: '+(error.message||error));
+ }finally{publishBusy=false;await loadGeneratedStories();}
+}
+document.getElementById('refreshStories')?.addEventListener('click',()=>loadGeneratedStories(true));
+document.getElementById('storiesList')?.addEventListener('click',event=>{
+ const publish=event.target.closest('[data-story-publish]');
+ if(publish){publishGeneratedStory(publish.dataset.storyPublish,publish);return;}
+ const view=event.target.closest('[data-story-view]');
+ if(view){const card=view.closest('.story-card');card?.querySelector('video')?.scrollIntoView({behavior:'smooth',block:'center'});}
+});
