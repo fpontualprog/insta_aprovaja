@@ -260,6 +260,24 @@ function nextEditorialDate(d){const x=new Date(d);while(!editorialForDate(x))x.s
 
 // Carrega disciplinas e conteúdos reais da biblioteca do AprovaJá após autenticação.
 let editorialDisciplines = [];
+function updateBulkDisciplineCount(){
+ const select=document.getElementById('bulkDiscipline');
+ const status=document.getElementById('bulkDisciplineCount');
+ if(!select||!status)return;
+ const count=Array.from(select.selectedOptions||[]).length;
+ status.textContent=count+' disciplina(s) selecionada(s). Os temas serão distribuídos entre elas na ordem escolhida.';
+}
+document.getElementById('bulkSelectAllDisciplines')?.addEventListener('click',()=>{
+ const select=document.getElementById('bulkDiscipline');
+ if(select)Array.from(select.options).forEach(option=>option.selected=true);
+ updateBulkDisciplineCount();
+});
+document.getElementById('bulkClearDisciplines')?.addEventListener('click',()=>{
+ const select=document.getElementById('bulkDiscipline');
+ if(select)Array.from(select.options).forEach(option=>option.selected=false);
+ updateBulkDisciplineCount();
+});
+document.getElementById('bulkDiscipline')?.addEventListener('change',updateBulkDisciplineCount);
 async function loadEditorialLibrary() {
  if (!supabaseClient || !currentSession?.access_token) return;
  const batch = document.getElementById('bulkDiscipline');
