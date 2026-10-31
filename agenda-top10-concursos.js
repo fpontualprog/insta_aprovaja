@@ -22,7 +22,7 @@
  }
  function moneyValue(v){
   if(typeof v==="number")return v;
-  const raw=String(v??"").replace(/[^0-9,.-]/g,"");const normalized=raw.includes(",")?raw.replace(/\\./g,"").replace(",","."):raw;const n=Number(normalized);
+  const raw=String(v??"").replace(/[^0-9,.-]/g,"");const normalized=raw.includes(",")?raw.replace(/\./g,"").replace(",","."):raw;const n=Number(normalized);
   return Number.isFinite(n)?n:0;
  }
  function moneyLabel(v){return moneyValue(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});}
