@@ -120,11 +120,12 @@ let instagramHistoryMessage = 'Entre com a conta administradora para carregar o 
 async function collectInstagramInsights(){
  const button=$('collectInstagramInsights');
  const status=$('instagramInsightsStatus');
- if(!button||!status)return;
  const fields=['apiFollowers','apiMediaCount','apiReach','apiViews','apiEngaged','apiInteractions'];
- button.disabled=true;
- status.classList.remove('integration-error');
- status.textContent='Etapa 1/3 — conectando ao serviço seguro de Analytics…';
+ if(button)button.disabled=true;
+ if(status){
+  status.classList.remove('integration-error');
+  status.textContent='Etapa 1/3 — conectando automaticamente ao serviço seguro de Analytics…';
+ }
  fields.forEach(id=>{const el=$(id);if(el)el.textContent='…';});
  const controller=new AbortController();
  const timeout=setTimeout(()=>controller.abort(),60000);
