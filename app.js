@@ -131,13 +131,15 @@ async function collectInstagramInsights(){
   let {data,error}=await supabaseClient.auth.getSession();
   if(error)throw error;
   let activeSession=data?.session||currentSession||null;
-  if(!activeSession?.access_token){
+  // Só tenta renovar quando o SDK realmente recuperou um refresh token.
+  // Chamar refreshSession() sem sessão provoca "Auth session missing!".
+  if(!activeSession?.access_token && activeSession?.refresh_token){
    const refreshed=await supabaseClient.auth.refreshSession();
    if(refreshed.error)throw refreshed.error;
    activeSession=refreshed.data?.session||null;
   }
   const token=activeSession?.access_token;
-  if(!token)throw new Error('Não foi possível recuperar automaticamente a sessão administrativa salva no navegador.');
+  if(!token)throw new Error('A sessão administrativa não está ativa neste navegador. Entre uma vez pelo acesso administrativo; depois o painel poderá restaurá-la automaticamente.');
   currentSession=activeSession;
   updateAuthUI();
   const response=await fetch(SUPABASE_URL+'/functions/v1/instagram-insights-collect',{
