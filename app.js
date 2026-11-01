@@ -704,6 +704,9 @@ async function startAprovajaSupabase() {
   document.getElementById('instagramLoginForm')?.addEventListener('submit', signInInstagramAdmin);
   document.getElementById('instagramLogoutButton')?.addEventListener('click', signOutInstagramAdmin);
   await initializeSupabaseConnection();
+  // Coleta os Insights automaticamente ao abrir o painel; não exige login nem clique.
+  // A função usa o token privado armazenado no servidor e não aciona publicação.
+  void collectInstagramInsights();
   await refreshInstagramHistory();
   if (supabaseConnected && currentSession) await refreshInstagramStories();
   if (supabaseConnected) await loadEditorialLibrary();
