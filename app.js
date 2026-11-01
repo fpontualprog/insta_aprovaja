@@ -308,10 +308,11 @@ async function loadEditorialLibrary() {
  const batch = document.getElementById('bulkDisciplineChecks');
  const single = document.getElementById('aiDisciplineSelect');
  const contentSelect = document.getElementById('aiContentSelect');
- if (!supabaseClient || !currentSession?.access_token) {
-  if(batch) batch.innerHTML='<p class="hint">Entre como administrador para carregar as disciplinas.</p>';
+ if (!supabaseClient) {
+  if(batch) batch.innerHTML='<p class="hint">Aguardando conexão com o Supabase…</p>';
   return;
  }
+ if(batch) batch.innerHTML='<p class="hint">Consultando a biblioteca de disciplinas…</p>';
  try {
   const {data: disciplines, error} = await supabaseClient.from('biblioteca_disciplinas').select('id,nome').order('nome');
   if (error) throw error;
