@@ -121,30 +121,61 @@ async function collectInstagramInsights(){
  const button=$('collectInstagramInsights');
  const status=$('instagramInsightsStatus');
  if(!button||!status)return;
+ const fields=['apiFollowers','apiMediaCount','apiReach','apiViews','apiEngaged','apiInteractions'];
  button.disabled=true;
- status.textContent='Consultando diretamente os Insights da API oficial do Instagram…';
+ status.classList.remove('integration-error');
+ status.textContent='Etapa 1/3 — conectando ao serviço seguro de Analytics…';
+ fields.forEach(id=>{const el=$(id);if(el)el.textContent='…';});
+ const controller=new AbortController();
+ const timeout=setTimeout(()=>controller.abort(),60000);
  try{
-  const response=await fetch(SUPABASE_URL+'/functions/v1/instagram-insights-collect',{
+  const endpoint=SUPABASE_URL+'/functions/v1/instagram-insights-collect';
+  const publicKey=SUPABASE_PUBLISHABLE_KEY;
+  const response=await fetch(endpoint,{
    method:'POST',
-   headers:{'Content-Type':'application/json','apikey':SUPABASE_PUBLISHABLE_KEY},
-   body:JSON.stringify({})
+   mode:'cors',
+   credentials:'omit',
+   cache:'no-store',
+   signal:controller.signal,
+   headers:{
+    'Content-Type':'application/json',
+    'Accept':'application/json',
+    'apikey':publicKey,
+    'Authorization':'Bearer '+publicKey,
+    'X-Client-Info':'aprovaja-instagram-analytics/2'
+   },
+   body:JSON.stringify({source:'aprovaja-instagram-panel'})
   });
-  const result=await response.json().catch(()=>({}));
-  if(!response.ok||!result.ok)throw new Error((result.error||'Falha na consulta')+(result.details?': '+result.details:'')+(result.meta_status?' (Meta HTTP '+result.meta_status+')':''));
+  const raw=await response.text();
+  let result={};
+  try{result=raw?JSON.parse(raw):{};}catch{throw new Error('O serviço respondeu em formato inesperado (HTTP '+response.status+').');}
+  if(!response.ok||result.ok!==true){
+   const stage=result.stage?' Etapa: '+result.stage+'.':'';
+   const details=result.details? ' '+(typeof result.details==='string'?result.details:JSON.stringify(result.details)):'';
+   throw new Error((result.error||'Falha na coleta')+'.'+stage+details+' HTTP '+response.status+'.');
+  }
   const fmt=v=>v===null||v===undefined?'—':Number(v).toLocaleString('pt-BR');
-  $('apiFollowers').textContent=fmt(result.followers_count);
-  $('apiMediaCount').textContent=fmt(result.media_count);
-  const metricValues=result.metrics_values||{};
-  $('apiReach').textContent=fmt(metricValues.reach);
-  $('apiViews').textContent=fmt(metricValues.views);
-  $('apiEngaged').textContent=fmt(metricValues.accounts_engaged);
-  $('apiInteractions').textContent=fmt(metricValues.total_interactions);
-  status.textContent='Dados recebidos diretamente da API do Instagram para @'+result.username+'. Histórico atualizado no Supabase. Indicadores consultados: '+(result.metrics_collected||[]).join(', ')+'.'+(Object.keys(result.metrics_unavailable||{}).length?' Indisponíveis nesta consulta: '+Object.keys(result.metrics_unavailable).join(', ')+'.':'');
-  status.classList.remove('integration-error');
+  const values=result.metrics_values||{};
+  const output={
+   apiFollowers:result.followers_count,
+   apiMediaCount:result.media_count,
+   apiReach:values.reach,
+   apiViews:values.views,
+   apiEngaged:values.accounts_engaged,
+   apiInteractions:values.total_interactions
+  };
+  Object.entries(output).forEach(([id,value])=>{const el=$(id);if(el)el.textContent=fmt(value);});
+  const unavailable=Object.keys(result.metrics_unavailable||{});
+  status.textContent='Concluído: API do Instagram consultada para @'+(result.username||'conta conectada')+'. '+(result.saved_rows||0)+' registro(s) gravado(s) no histórico do Supabase. Métricas recebidas: '+((result.metrics_collected||[]).join(', ')||'nenhuma')+'.'+(unavailable.length?' Não disponíveis nesta coleta: '+unavailable.join(', ')+'.':'');
  }catch(error){
-  status.textContent='Consulta não concluída: '+(error?.message||'erro inesperado');
+  fields.forEach(id=>{const el=$(id);if(el)el.textContent='—';});
+  const message=error?.name==='AbortError'?'Tempo limite excedido após 60 segundos.':(error?.message||'erro inesperado');
+  status.textContent='Analytics não concluído: '+message+' Verifique a etapa informada; nenhuma publicação foi realizada.';
   status.classList.add('integration-error');
- }finally{button.disabled=false;}
+ }finally{
+  clearTimeout(timeout);
+  button.disabled=false;
+ }
 }
 document.getElementById('collectInstagramInsights')?.addEventListener('click',collectInstagramInsights);
 
