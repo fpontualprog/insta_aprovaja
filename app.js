@@ -123,32 +123,15 @@ async function collectInstagramInsights(){
  if(!button||!status)return;
  if(!supabaseClient){status.textContent='A conexão com o Supabase ainda não foi inicializada. Atualize o painel.';return;}
  button.disabled=true;
- status.textContent='Verificando a sessão administrativa e consultando Insights…';
+ status.textContent='Consultando diretamente os Insights da API oficial do Instagram…';
  try{
-  // Reutiliza a sessão persistida pelo login automático. Se o access token
-  // ainda não estiver disponível, tenta renovar com o refresh token já salvo,
-  // sem solicitar credenciais ou encerrar a sessão do administrador.
-  let {data,error}=await supabaseClient.auth.getSession();
-  if(error)throw error;
-  let activeSession=data?.session||currentSession||null;
-  // Só tenta renovar quando o SDK realmente recuperou um refresh token.
-  // Chamar refreshSession() sem sessão provoca "Auth session missing!".
-  if(!activeSession?.access_token && activeSession?.refresh_token){
-   const refreshed=await supabaseClient.auth.refreshSession();
-   if(refreshed.error)throw refreshed.error;
-   activeSession=refreshed.data?.session||null;
-  }
-  const token=activeSession?.access_token;
-  if(!token)throw new Error('A sessão administrativa não está ativa neste navegador. Entre uma vez pelo acesso administrativo; depois o painel poderá restaurá-la automaticamente.');
-  currentSession=activeSession;
-  updateAuthUI();
   const response=await fetch(SUPABASE_URL+'/functions/v1/instagram-insights-collect',{
    method:'POST',
-   headers:{'Content-Type':'application/json','apikey':SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+token},
+   headers:{'Content-Type':'application/json','apikey':SUPABASE_PUBLISHABLE_KEY},
    body:JSON.stringify({})
   });
   const result=await response.json().catch(()=>({}));
-  if(!response.ok||!result.ok)throw new Error((result.error||'Falha na coleta')+(result.details?': '+result.details:'')+(result.meta_status?' (Meta HTTP '+result.meta_status+')':''));
+  if(!response.ok||!result.ok)throw new Error((result.error||'Falha na consulta')+(result.details?': '+result.details:'')+(result.meta_status?' (Meta HTTP '+result.meta_status+')':''));
   const fmt=v=>v===null||v===undefined?'—':Number(v).toLocaleString('pt-BR');
   $('apiFollowers').textContent=fmt(result.followers_count);
   $('apiMediaCount').textContent=fmt(result.media_count);
@@ -157,10 +140,10 @@ async function collectInstagramInsights(){
   $('apiViews').textContent=fmt(metricValues.views);
   $('apiEngaged').textContent=fmt(metricValues.accounts_engaged);
   $('apiInteractions').textContent=fmt(metricValues.total_interactions);
-  status.textContent='Token validado para @'+result.username+'. Registro salvo no Supabase. Métricas consultadas: '+(result.metrics_collected||[]).join(', ')+'.'+(Object.keys(result.metrics_unavailable||{}).length?' Métricas indisponíveis: '+Object.keys(result.metrics_unavailable).join(', ')+'.':'');
+  status.textContent='Dados recebidos diretamente da API do Instagram para @'+result.username+'. Histórico atualizado no Supabase. Indicadores consultados: '+(result.metrics_collected||[]).join(', ')+'.'+(Object.keys(result.metrics_unavailable||{}).length?' Indisponíveis nesta consulta: '+Object.keys(result.metrics_unavailable).join(', ')+'.':'');
   status.classList.remove('integration-error');
  }catch(error){
-  status.textContent='Teste não concluído: '+(error?.message||'erro inesperado');
+  status.textContent='Consulta não concluída: '+(error?.message||'erro inesperado');
   status.classList.add('integration-error');
  }finally{button.disabled=false;}
 }
