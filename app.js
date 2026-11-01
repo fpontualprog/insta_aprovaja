@@ -121,7 +121,6 @@ async function collectInstagramInsights(){
  const button=$('collectInstagramInsights');
  const status=$('instagramInsightsStatus');
  if(!button||!status)return;
- if(!supabaseClient){status.textContent='A conexão com o Supabase ainda não foi inicializada. Atualize o painel.';return;}
  button.disabled=true;
  status.textContent='Consultando diretamente os Insights da API oficial do Instagram…';
  try{
