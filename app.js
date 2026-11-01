@@ -305,24 +305,30 @@ document.getElementById('bulkClearDisciplines')?.addEventListener('click',()=>{
 });
 document.getElementById('bulkDisciplineChecks')?.addEventListener('change',updateBulkDisciplineCount);
 async function loadEditorialLibrary() {
- if (!supabaseClient || !currentSession?.access_token) return;
- const batch = document.getElementById('bulkDiscipline');
+ const batch = document.getElementById('bulkDisciplineChecks');
  const single = document.getElementById('aiDisciplineSelect');
  const contentSelect = document.getElementById('aiContentSelect');
+ if (!supabaseClient || !currentSession?.access_token) {
+  if(batch) batch.innerHTML='<p class="hint">Entre como administrador para carregar as disciplinas.</p>';
+  return;
+ }
  try {
   const {data: disciplines, error} = await supabaseClient.from('biblioteca_disciplinas').select('id,nome').order('nome');
   if (error) throw error;
-  editorialDisciplines = disciplines || [];
+  editorialDisciplines = Array.isArray(disciplines) ? disciplines : [];
   if(batch) {
-   batch.innerHTML=editorialDisciplines.map(d=>'<label class="bulk-discipline-option"><input type="checkbox" name="bulkDiscipline" value="'+esc(d.id)+'"><span>'+esc(d.nome)+'</span></label>').join('');
+   batch.innerHTML=editorialDisciplines.length
+    ? editorialDisciplines.map(d=>'<label class="bulk-discipline-option"><input type="checkbox" name="bulkDiscipline" value="'+esc(d.id)+'"><span>'+esc(d.nome)+'</span></label>').join('')
+    : '<p class="hint">Nenhuma disciplina cadastrada na biblioteca do AprovaJá.</p>';
    updateBulkDisciplineCount();
   }
-  if(single) single.innerHTML=options;
+  if(single) single.innerHTML='<option value="">Selecione uma disciplina</option>'+editorialDisciplines.map(d=>'<option value="'+esc(d.id)+'">'+esc(d.nome)+'</option>').join('');
   if(contentSelect) contentSelect.innerHTML='<option value="">Selecione uma disciplina primeiro</option>';
  } catch (error) {
   const message = 'Não foi possível carregar a biblioteca: '+(error?.message||'erro de acesso');
-  if(batch) batch.innerHTML='<option value="">'+esc(message)+'</option>';
+  if(batch) batch.innerHTML='<p class="hint">'+esc(message)+'</p>';
   if(single) single.innerHTML='<option value="">'+esc(message)+'</option>';
+  updateBulkDisciplineCount();
  }
 }
 async function loadEditorialTopics(disciplineId) {
@@ -492,6 +498,7 @@ async function initializeSupabaseConnection() {
         if (!currentSession) return;
         refreshInstagramHistory();
         refreshInstagramStories();
+        void loadEditorialLibrary();
       }, 0);
     });
   } catch (error) {
@@ -583,6 +590,7 @@ async function signInInstagramAdmin(event) {
     currentSession = data.session;
     refreshInstagramHistory();
     await refreshInstagramStories();
+    await loadEditorialLibrary();
     document.getElementById('instagramPassword').value = '';
     updateAuthUI();
     integrationStatus('Sessão iniciada. A função do servidor ainda verificará se esta conta é o administrador autorizado.');
