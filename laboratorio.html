@@ -26,13 +26,13 @@
 <script>
 const URL='https://nukddukqilhsdklocout.supabase.co';
 const KEY='sb_publishable_vPQVdnjlEY9g0vZKjeb58A_OIhkIiqH';
-const sb=window.supabase.createClient(URL,KEY);
+const sb=window.supabase.createClient(URL,KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storageKey:'sb-nukddukqilhsdklocout-auth-token'}});
 const $=id=>document.getElementById(id);
 const fmt=n=>Number(n||0).toLocaleString('pt-BR');
 const date=v=>v?new Date(v).toLocaleString('pt-BR'):'—';
 function stat(label,value){return '<div class="stat"><small>'+label+'</small><strong>'+fmt(value)+'</strong></div>'}
 function msg(id,text,cls=''){const el=$(id);el.textContent=text;el.className=cls}
-async function adminCheck(){const {data:{user}}=await sb.auth.getUser();if(!user)return false;const {data,error}=await sb.from('profiles').select('role,email').eq('id',user.id).single();if(error||data?.role!=='admin'){await sb.auth.signOut();throw new Error('Acesso restrito a administradores.');} $('who').textContent=data.email||user.email;return true}
+async function adminCheck(){const {data:{session},error:sessionError}=await sb.auth.getSession();if(sessionError)throw sessionError;if(!session?.user)return false;const {data:{user},error:userError}=await sb.auth.getUser();if(userError||!user)throw new Error('Sessão administrativa inválida ou expirada.');const {data,error}=await sb.from('profiles').select('role,email').eq('id',user.id).single();if(error||data?.role!=='admin'){await sb.auth.signOut();throw new Error('Acesso restrito a administradores.');} $('who').textContent=data.email||user.email;return true}
 async function loadAll(){
  const [syn,hum,cycles,ig,runs,participants]=await Promise.all([
   sb.from('lab_audiencia_resumo_simulacao').select('*').single(),
@@ -60,6 +60,7 @@ $('exportParticipants').addEventListener('click',async()=>{const {data,error}=aw
 $('exportInvites').addEventListener('click',async()=>{const {data,error}=await sb.from('lab_audiencia_convites').select('codigo,ativo,criado_em,expiracao,usado_em').order('criado_em',{ascending:true});if(error){msg('cycleMsg',error.message,'error');return}downloadCsv('aprovaja-codigos-convite.csv',['codigo','ativo','criado_em','expiracao','usado_em'],(data||[]).map(v=>[v.codigo,v.ativo,v.criado_em||'',v.expiracao||'',v.usado_em||'']))});
 $('refresh').addEventListener('click',async()=>{try{await loadAll();msg('cycleMsg','Dados atualizados.','success')}catch(e){msg('cycleMsg',e.message,'error')}});
 $('logout').addEventListener('click',async()=>{await sb.auth.signOut();$('app').hidden=true;$('login').hidden=false});
-(async()=>{try{if(await adminCheck()){$('login').hidden=true;$('app').hidden=false;await loadAll()}}catch(e){msg('loginMsg',e.message,'error')}})();
+(async()=>{try{msg('loginMsg','Verificando automaticamente a sessão do APROVAJÁ…');const connected=await adminCheck();if(connected){$('login').hidden=true;$('app').hidden=false;await loadAll();msg('cycleMsg','Conectado automaticamente pela sessão administrativa do APROVAJÁ.','success')}else{msg('loginMsg','Nenhuma sessão ativa encontrada. Entre uma vez no painel principal do APROVAJÁ e volte aqui; o laboratório reutilizará a mesma sessão neste navegador.')}}catch(e){msg('loginMsg','Não foi possível recuperar a sessão automaticamente: '+e.message,'error')}})();
+sb.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'&&!session){$('app').hidden=true;$('login').hidden=false;msg('loginMsg','Sessão encerrada no APROVAJÁ. Entre novamente no painel principal para reconectar.','error')}else if(session){setTimeout(async()=>{try{if(await adminCheck()){$('login').hidden=true;$('app').hidden=false;await loadAll()}}catch(e){msg('loginMsg',e.message,'error')}},0)}});
 </script>
 </body></html>
