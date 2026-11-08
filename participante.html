@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#102c63"><title>Participar do estudo | APROVAJÁ</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--navy:#102c63;--blue:#1769d2;--orange:#ff9e18;--ink:#18243b;--muted:#68758a;--line:#e1e7f0;--bg:#f4f7fc}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px system-ui,-apple-system,Segoe UI,sans-serif}.top{background:white;border-bottom:1px solid var(--line);padding:16px max(20px,calc((100% - 760px)/2));display:flex;gap:12px;align-items:center}.mark{background:var(--navy);color:white;border-radius:9px;padding:9px 12px;font-weight:900}.mark span{color:var(--orange)}main{max-width:760px;margin:28px auto;padding:0 16px}.hero{background:linear-gradient(120deg,#102c63,#174b9b);color:white;padding:26px;border-radius:16px}.hero h1{margin:0 0 8px;font-size:27px}.hero p{line-height:1.6;color:#e5edfb;margin:0}.panel{background:white;border:1px solid var(--line);border-radius:14px;padding:22px;margin:16px 0}.panel h2{color:var(--navy);font-size:18px;margin:0 0 12px}label{display:block;font-weight:700;font-size:13px;margin:14px 0 6px}input{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:9px;font:inherit}button,.linkbtn{display:inline-block;border:0;border-radius:9px;padding:12px 16px;background:var(--blue);color:white;font-weight:750;text-decoration:none;cursor:pointer;font:inherit}.secondary{background:#fff1d8;color:#754700}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.notice{background:#fff7e8;border:1px solid #f2d49c;border-radius:10px;padding:13px;line-height:1.55;margin:14px 0}.muted{color:var(--muted);line-height:1.55}.status{margin-top:14px;line-height:1.5}.success{color:#187044}.error{color:#a12626}.step{border-left:3px solid var(--orange);padding-left:13px;margin:14px 0}.footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
+</style></head>
+<body>
+<header class="top"><div class="mark">A<span>J</span></div><div><b>APROVAJÁ Concursos</b><div class="muted">Participação voluntária em pesquisa</div></div></header>
+<main>
+<section class="hero"><h1>Participe do estudo de audiência</h1><p>Estamos estudando como a divulgação legítima de um perfil educacional se relaciona com o crescimento e o alcance orgânico no Instagram. A participação é gratuita e voluntária.</p></section>
+<section class="panel">
+<h2>1. Inscrição com convite</h2>
+<p class="muted">Informe o código individual que recebeu. Seu nome de usuário do Instagram é opcional. Nunca informe sua senha.</p>
+<form id="joinForm">
+<label for="code">Código do convite</label><input id="code" required maxlength="64" autocomplete="off" placeholder="Cole aqui seu código individual">
+<label for="username">Usuário do Instagram (opcional)</label><input id="username" maxlength="31" autocomplete="off" placeholder="@seuusuario">
+<label style="display:flex;gap:10px;align-items:flex-start;font-weight:500;line-height:1.5"><input id="consent" type="checkbox" required style="width:auto;margin-top:3px">Li as informações e concordo voluntariamente com o registro da minha inscrição e, se eu informar, do meu @Instagram para fins deste estudo.</label>
+<div class="notice"><b>Privacidade:</b> coletamos o código de convite, o @Instagram opcional, a data do consentimento e os registros de participação. Não solicitamos senha, acesso à conta, mensagens privadas ou outros dados pessoais do Instagram. Os dados serão usados somente para acompanhar este experimento e serão acessíveis à administração do estudo. Você pode retirar sua participação usando seu código.</div>
+<button type="submit">Registrar minha participação</button>
+</form><p id="joinStatus" class="status" role="status" aria-live="polite"></p>
+</section>
+<section class="panel" id="followPanel" hidden>
+<h2>2. Acesse o Instagram e decida livremente</h2>
+<div class="step"><b>Abra o perfil oficial:</b><p class="muted">O link abaixo abre a página real do APROVAJÁ. Se desejar acompanhar o perfil, toque em “Seguir” diretamente no Instagram. Não há obrigação de seguir, curtir ou comentar.</p>
+<a class="linkbtn" href="https://www.instagram.com/aprovaja_seuconcurso/" target="_blank" rel="noopener">Abrir @aprovaja_seuconcurso</a></div>
+<div class="step"><b>Se você decidiu seguir:</b><p class="muted">Volte a esta página e registre sua declaração. Ela será identificada como autodeclarada, pois o Instagram não fornece à pesquisa uma confirmação individual automática.</p>
+<button id="declareBtn" type="button">Já estou seguindo — registrar declaração</button></div>
+<p id="followStatus" class="status" role="status" aria-live="polite"></p>
+</section>
+<section class="panel">
+<h2>Já se inscreveu? Consultar ou retirar participação</h2>
+<p class="muted">Digite novamente o código individual do convite para declarar o seguimento ou encerrar sua participação. A retirada não altera sua conta do Instagram; se quiser deixar de seguir, faça isso diretamente no Instagram.</p>
+<label for="manageCode">Código de participação</label><input id="manageCode" maxlength="64" autocomplete="off" placeholder="Código do convite">
+<div class="actions"><button class="secondary" id="manageDeclare" type="button">Registrar que estou seguindo</button><button class="secondary" id="withdraw" type="button">Retirar minha participação</button></div><p id="manageStatus" class="status" role="status" aria-live="polite"></p>
+</section>
+</main><div class="footer">APROVAJÁ Concursos · Pesquisa voluntária · Nenhuma ação automática no Instagram</div>
+<script>
+const SUPABASE_URL='https://nukddukqilhsdklocout.supabase.co';
+const SUPABASE_KEY='sb_publishable_vPQVdnjlEY9g0vZKjeb58A_OIhkIiqH';
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const $=id=>document.getElementById(id);
+function status(id,message,kind=''){const e=$(id);e.textContent=message;e.className='status '+kind}
+function remember(code){sessionStorage.setItem('aprovaja_participacao_codigo',code);$('manageCode').value=code}
+async function rpc(name,args){const {data,error}=await db.rpc(name,args);if(error)throw error;if(!data?.ok)throw new Error(data?.mensagem||'Não foi possível concluir a operação.');return data}
+$('joinForm').addEventListener('submit',async e=>{e.preventDefault();const code=$('code').value.trim();const username=$('username').value.trim().replace(/^@/,'');if(username&&!/^[A-Za-z0-9._]{1,30}$/.test(username)){status('joinStatus','Informe um @Instagram válido ou deixe o campo vazio.','error');return}if(!$('consent').checked)return;status('joinStatus','Registrando inscrição…');try{const r=await rpc('lab_registrar_participante',{p_codigo:code,p_instagram_username:username||null,p_consentimento:true});remember(code);$('followPanel').hidden=false;status('joinStatus',r.mensagem,'success');status('followStatus','Sua inscrição está registrada. Agora você pode abrir o Instagram e decidir se deseja seguir o perfil.','success')}catch(err){status('joinStatus',err.message,'error')}});
+async function declare(code,target){if(!code){status(target,'Informe seu código de convite.','error');return}try{const r=await rpc('lab_declarar_seguimento',{p_codigo:code});remember(code);status(target,r.mensagem,'success')}catch(err){status(target,err.message,'error')}}
+$('declareBtn').addEventListener('click',()=>declare(sessionStorage.getItem('aprovaja_participacao_codigo')||$('code').value.trim(),'followStatus'));
+$('manageDeclare').addEventListener('click',()=>declare($('manageCode').value.trim(),'manageStatus'));
+$('withdraw').addEventListener('click',async()=>{const code=$('manageCode').value.trim();if(!code){status('manageStatus','Informe seu código de participação.','error');return}if(!confirm('Confirma a retirada da pesquisa?'))return;try{const r=await rpc('lab_retirar_participacao',{p_codigo:code});sessionStorage.removeItem('aprovaja_participacao_codigo');$('followPanel').hidden=true;status('manageStatus',r.mensagem,'success')}catch(err){status('manageStatus',err.message,'error')}});
+const saved=sessionStorage.getItem('aprovaja_participacao_codigo');if(saved){$('manageCode').value=saved;$('followPanel').hidden=false}
+</script></body></html>
