@@ -39,7 +39,8 @@ async function loadAll(){
   sb.from('lab_audiencia_resumo_experimento').select('*').limit(1),
   sb.from('lab_audiencia_ciclos').select('id,nome,ordem,agentes_ativos,eventos_por_agente,status,parametros').order('ordem'),
   sb.from('lab_audiencia_metricas_instagram').select('*').order('metric_date',{ascending:false}).limit(30),
-  sb.from('lab_audiencia_execucoes').select('executado_em,agentes_ativos,eventos_gerados,distribuicao').order('executado_em',{ascending:false}).limit(30),\n  sb.from('lab_audiencia_participantes').select('instagram_username,status,inscrito_em,seguimento_declarado_em').order('inscrito_em',{ascending:false})
+  sb.from('lab_audiencia_execucoes').select('executado_em,agentes_ativos,eventos_gerados,distribuicao').order('executado_em',{ascending:false}).limit(30),
+  sb.from('lab_audiencia_participantes').select('instagram_username,status,inscrito_em,seguimento_declarado_em').order('inscrito_em',{ascending:false})
  ]);
  for(const x of [syn,hum,cycles,ig,runs,participants])if(x.error)throw x.error;
  const s=syn.data||{};
