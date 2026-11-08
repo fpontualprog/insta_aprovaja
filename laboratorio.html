@@ -38,16 +38,16 @@ async function loadAll(){
   sb.from('lab_audiencia_resumo_simulacao').select('*').single(),
   sb.from('lab_audiencia_resumo_experimento').select('*').limit(1),
   sb.from('lab_audiencia_ciclos').select('id,nome,ordem,agentes_ativos,eventos_por_agente,status,parametros').order('ordem'),
-  sb.from('lab_audiencia_metricas_instagram').select('*').order('data_referencia',{ascending:false}).limit(30),
+  sb.from('lab_audiencia_metricas_instagram').select('*').order('metric_date',{ascending:false}).limit(30),
   sb.from('lab_audiencia_execucoes').select('executado_em,agentes_ativos,eventos_gerados,distribuicao').order('executado_em',{ascending:false}).limit(30)
  ]);
  for(const x of [syn,hum,cycles,ig,runs])if(x.error)throw x.error;
  const s=syn.data||{};
  $('syntheticStats').innerHTML=stat('Total de agentes',s.total_agentes)+stat('Agentes ativos',s.agentes_ativos)+stat('Eventos sintéticos',s.eventos_sinteticos)+stat('Execuções',s.execucoes);
  const h=hum.data?.[0]||{};
- $('humanStats').innerHTML=stat('Convites disponíveis',h.convites_disponiveis)+stat('Inscritos',h.inscritos)+stat('Seguimentos declarados',h.seguimentos_declarados)+stat('Vagas restantes',h.vagas_restantes);
+ $('humanStats').innerHTML=stat('Convites gerados',h.convites_gerados)+stat('Inscritos',h.inscritos)+stat('Seguimentos declarados',h.seguimentos_declarados)+stat('Vagas restantes',h.vagas_restantes);
  $('cycles').innerHTML=(cycles.data||[]).map(c=>'<tr><td>'+c.ordem+'. '+c.nome+'</td><td><span class="tag">'+(c.parametros?.fase||'etapa')+'</span></td><td>'+fmt(c.agentes_ativos)+'</td><td>'+fmt(c.eventos_por_agente)+'</td><td>'+c.status+'</td><td><button data-cycle="'+c.id+'" '+(c.status==='pausado'?'disabled':'')+'>Executar etapa</button></td></tr>').join('');
- $('instagramRows').innerHTML=(ig.data||[]).map(x=>'<tr><td>'+String(x.data_referencia||x.data||'').slice(0,10)+'</td><td>'+fmt(x.followers||x.seguidores)+'</td><td>'+fmt(x.reach||x.alcance)+'</td><td>'+fmt(x.views||x.visualizacoes)+'</td><td>'+fmt(x.accounts_engaged||x.contas_engajadas)+'</td><td>'+fmt(x.total_interactions||x.interacoes)+'</td><td>'+fmt(x.follows)+'</td><td>'+fmt(x.unfollows)+'</td><td>'+fmt((x.follows||0)-(x.unfollows||0))+'</td></tr>').join('')||'<tr><td colspan="9">Nenhuma coleta disponível.</td></tr>';
+ $('instagramRows').innerHTML=(ig.data||[]).map(x=>'<tr><td>'+String(x.metric_date||'').slice(0,10)+'</td><td>'+fmt(x.followers_count)+'</td><td>'+fmt(x.reach)+'</td><td>'+fmt(x.views)+'</td><td>'+fmt(x.accounts_engaged)+'</td><td>'+fmt(x.total_interactions)+'</td><td>'+fmt(x.follows)+'</td><td>'+fmt(x.unfollows)+'</td><td>'+fmt((x.follows||0)-(x.unfollows||0))+'</td></tr>').join('')||'<tr><td colspan="9">Nenhuma coleta disponível.</td></tr>';
  $('instagramMsg').textContent='Fonte: instagram_account_daily_metrics via integração oficial. Métricas não são geradas pelo laboratório.';
  $('runs').innerHTML=(runs.data||[]).map(x=>'<tr><td>'+date(x.executado_em)+'</td><td>'+fmt(x.agentes_ativos)+'</td><td>'+fmt(x.eventos_gerados)+'</td><td>'+JSON.stringify(x.distribuicao||{})+'</td></tr>').join('')||'<tr><td colspan="4">Nenhuma execução realizada.</td></tr>';
  document.querySelectorAll('[data-cycle]').forEach(b=>b.addEventListener('click',async()=>{if(!confirm('Executar esta etapa no laboratório? Nenhuma ação será realizada no Instagram.'))return;b.disabled=true;msg('cycleMsg','Executando simulação…');const {data,error}=await sb.rpc('lab_executar_ciclo',{p_ciclo_id:b.dataset.cycle});if(error){msg('cycleMsg',error.message,'error');b.disabled=false;return}msg('cycleMsg','Etapa concluída: '+fmt(data.agentes_ativos)+' agentes ativos e '+fmt(data.eventos_gerados)+' eventos sintéticos gerados.','success');await loadAll()}));
