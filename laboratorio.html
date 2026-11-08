@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#102c63"><title>Laboratório de Audiência | APROVAJÁ</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--navy:#102c63;--blue:#1769d2;--orange:#ff9e18;--ink:#18243b;--muted:#68758a;--line:#e1e7f0;--bg:#f4f7fc}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px system-ui,-apple-system,Segoe UI,sans-serif}.top{background:#fff;border-bottom:1px solid var(--line);padding:18px max(20px,calc((100% - 1120px)/2));display:flex;align-items:center;gap:12px}.mark{background:var(--navy);color:white;border-radius:10px;padding:10px 13px;font-weight:900}.mark span{color:var(--orange)}.top small{display:block;color:var(--muted)}main{max-width:1120px;margin:26px auto;padding:0 18px}.hero{background:linear-gradient(120deg,#102c63,#174b9b);color:white;padding:26px;border-radius:18px;margin-bottom:18px}.hero h1{margin:0 0 8px;font-size:27px}.hero p{color:#e0e9fa;line-height:1.55;margin:0;max-width:800px}.notice{background:#fff7e8;border:1px solid #f5d69d;padding:13px 16px;border-radius:12px;line-height:1.5;margin:14px 0 18px}.panel{background:white;border:1px solid var(--line);border-radius:15px;padding:20px;margin:16px 0}.panel h2{font-size:18px;margin:0 0 14px;color:var(--navy)}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.stat{border:1px solid var(--line);padding:15px;border-radius:12px}.stat small{display:block;color:var(--muted)}.stat strong{display:block;font-size:25px;margin-top:4px}.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:650px}label{display:block;font-size:12px;font-weight:700;margin:0 0 6px}input{width:100%;padding:11px;border:1px solid #ccd6e5;border-radius:9px;font:inherit}button{border:0;border-radius:9px;background:var(--blue);color:white;padding:11px 15px;font-weight:750;cursor:pointer}button.secondary{background:#fff1d8;color:#774600}button:disabled{opacity:.5;cursor:not-allowed}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;font-size:13px}th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line);white-space:nowrap}th{color:var(--muted);font-size:11px;text-transform:uppercase}.tag{display:inline-block;border-radius:20px;padding:4px 8px;background:#edf3ff;color:#174ea6;font-size:11px;font-weight:700}.muted{color:var(--muted)}#app[hidden],#login[hidden]{display:none}.error{color:#a12626}.success{color:#197044}.footer{padding:20px;text-align:center;color:var(--muted);font-size:11px}@media(max-width:700px){.grid{grid-template-columns:repeat(2,1fr)}.fields{grid-template-columns:1fr}.hero h1{font-size:23px}}
+</style>
+</head>
+<body>
+<header class="top"><div class="mark">A<span>J</span></div><div><b>APROVAJÁ · Laboratório de Audiência</b><small>Ambiente experimental de analytics</small></div></header>
+<main>
+<section class="hero"><h1>Laboratório de crescimento e prova social</h1><p>Simule ondas de agentes sintéticos, compare com indicadores humanos observados no Instagram e acompanhe a retirada progressiva dos agentes. Os agentes existem somente neste ambiente e não executam ações na rede social.</p></section>
+<div class="notice"><b>Separação obrigatória dos dados:</b> agentes sintéticos e seus eventos são simulações. Participantes humanos são voluntários. Seguidores, alcance e interações do Instagram são indicadores oficiais da conta. Não some essas três fontes em um único número.</div>
+<section id="login" class="panel"><h2>Acesso administrativo</h2><p class="muted">Entre com sua conta administradora do APROVAJÁ. O painel verifica a função admin no perfil do Supabase.</p><form id="loginForm"><div class="fields"><div><label for="email">E-mail</label><input id="email" type="email" autocomplete="username" required></div><div><label for="password">Senha</label><input id="password" type="password" autocomplete="current-password" required></div></div><div class="actions"><button type="submit">Entrar</button></div></form><p id="loginMsg" aria-live="polite"></p></section>
+<section id="app" hidden>
+<div class="actions" style="justify-content:flex-end"><span id="who" class="muted"></span><button class="secondary" id="refresh">Atualizar dados</button><button class="secondary" id="logout">Sair</button></div>
+<section class="panel"><h2>1. Resumo dos agentes sintéticos</h2><div class="grid" id="syntheticStats"></div><p class="muted">Indicadores exclusivos do ambiente de simulação.</p></section>
+<section class="panel"><h2>2. Ondas de ativação e retirada</h2><p class="muted">Execute uma etapa por vez. A execução altera apenas o campo ativo dos perfis sintéticos e registra eventos sintéticos no laboratório.</p><div class="tablewrap"><table><thead><tr><th>Etapa</th><th>Fase</th><th>Agentes ativos</th><th>Eventos/agente</th><th>Status</th><th>Ação</th></tr></thead><tbody id="cycles"></tbody></table></div><p id="cycleMsg" aria-live="polite"></p></section>
+<section class="panel"><h2>3. Participantes humanos voluntários</h2><div class="grid" id="humanStats"></div><p class="muted">Inscrições e confirmações são declaradas pelos participantes. Não representam verificação automática de seguidores.</p></section>
+<section class="panel"><h2>4. Indicadores oficiais do Instagram</h2><p class="muted">Dados da integração Instagram Graph API, sem mistura com eventos simulados.</p><div class="tablewrap"><table><thead><tr><th>Data</th><th>Seguidores</th><th>Alcance</th><th>Visualizações</th><th>Contas engajadas</th><th>Interações</th><th>Follows</th><th>Unfollows</th><th>Saldo</th></tr></thead><tbody id="instagramRows"></tbody></table></div><p id="instagramMsg" class="muted"></p></section>
+<section class="panel"><h2>5. Histórico das execuções</h2><div class="tablewrap"><table><thead><tr><th>Executado em</th><th>Agentes</th><th>Eventos</th><th>Distribuição sintética</th></tr></thead><tbody id="runs"></tbody></table></div></section>
+</section>
+</main><div class="footer">APROVAJÁ Concursos · Laboratório experimental · Agentes sintéticos não operam no Instagram.</div>
+<script>
+const URL='https://nukddukqilhsdklocout.supabase.co';
+const KEY='sb_publishable_vPQVdnjlEY9g0vZKjeb58A_OIhkIiqH';
+const sb=window.supabase.createClient(URL,KEY);
+const $=id=>document.getElementById(id);
+const fmt=n=>Number(n||0).toLocaleString('pt-BR');
+const date=v=>v?new Date(v).toLocaleString('pt-BR'):'—';
+function stat(label,value){return '<div class="stat"><small>'+label+'</small><strong>'+fmt(value)+'</strong></div>'}
+function msg(id,text,cls=''){const el=$(id);el.textContent=text;el.className=cls}
+async function adminCheck(){const {data:{user}}=await sb.auth.getUser();if(!user)return false;const {data,error}=await sb.from('profiles').select('role,email').eq('id',user.id).single();if(error||data?.role!=='admin'){await sb.auth.signOut();throw new Error('Acesso restrito a administradores.');} $('who').textContent=data.email||user.email;return true}
+async function loadAll(){
+ const [syn,hum,cycles,ig,runs]=await Promise.all([
+  sb.from('lab_audiencia_resumo_simulacao').select('*').single(),
+  sb.from('lab_audiencia_resumo_experimento').select('*').limit(1),
+  sb.from('lab_audiencia_ciclos').select('id,nome,ordem,agentes_ativos,eventos_por_agente,status,parametros').order('ordem'),
+  sb.from('lab_audiencia_metricas_instagram').select('*').order('data_referencia',{ascending:false}).limit(30),
+  sb.from('lab_audiencia_execucoes').select('executado_em,agentes_ativos,eventos_gerados,distribuicao').order('executado_em',{ascending:false}).limit(30)
+ ]);
+ for(const x of [syn,hum,cycles,ig,runs])if(x.error)throw x.error;
+ const s=syn.data||{};
+ $('syntheticStats').innerHTML=stat('Total de agentes',s.total_agentes)+stat('Agentes ativos',s.agentes_ativos)+stat('Eventos sintéticos',s.eventos_sinteticos)+stat('Execuções',s.execucoes);
+ const h=hum.data?.[0]||{};
+ $('humanStats').innerHTML=stat('Convites disponíveis',h.convites_disponiveis)+stat('Inscritos',h.inscritos)+stat('Seguimentos declarados',h.seguimentos_declarados)+stat('Vagas restantes',h.vagas_restantes);
+ $('cycles').innerHTML=(cycles.data||[]).map(c=>'<tr><td>'+c.ordem+'. '+c.nome+'</td><td><span class="tag">'+(c.parametros?.fase||'etapa')+'</span></td><td>'+fmt(c.agentes_ativos)+'</td><td>'+fmt(c.eventos_por_agente)+'</td><td>'+c.status+'</td><td><button data-cycle="'+c.id+'" '+(c.status==='pausado'?'disabled':'')+'>Executar etapa</button></td></tr>').join('');
+ $('instagramRows').innerHTML=(ig.data||[]).map(x=>'<tr><td>'+String(x.data_referencia||x.data||'').slice(0,10)+'</td><td>'+fmt(x.followers||x.seguidores)+'</td><td>'+fmt(x.reach||x.alcance)+'</td><td>'+fmt(x.views||x.visualizacoes)+'</td><td>'+fmt(x.accounts_engaged||x.contas_engajadas)+'</td><td>'+fmt(x.total_interactions||x.interacoes)+'</td><td>'+fmt(x.follows)+'</td><td>'+fmt(x.unfollows)+'</td><td>'+fmt((x.follows||0)-(x.unfollows||0))+'</td></tr>').join('')||'<tr><td colspan="9">Nenhuma coleta disponível.</td></tr>';
+ $('instagramMsg').textContent='Fonte: instagram_account_daily_metrics via integração oficial. Métricas não são geradas pelo laboratório.';
+ $('runs').innerHTML=(runs.data||[]).map(x=>'<tr><td>'+date(x.executado_em)+'</td><td>'+fmt(x.agentes_ativos)+'</td><td>'+fmt(x.eventos_gerados)+'</td><td>'+JSON.stringify(x.distribuicao||{})+'</td></tr>').join('')||'<tr><td colspan="4">Nenhuma execução realizada.</td></tr>';
+ document.querySelectorAll('[data-cycle]').forEach(b=>b.addEventListener('click',async()=>{if(!confirm('Executar esta etapa no laboratório? Nenhuma ação será realizada no Instagram.'))return;b.disabled=true;msg('cycleMsg','Executando simulação…');const {data,error}=await sb.rpc('lab_executar_ciclo',{p_ciclo_id:b.dataset.cycle});if(error){msg('cycleMsg',error.message,'error');b.disabled=false;return}msg('cycleMsg','Etapa concluída: '+fmt(data.agentes_ativos)+' agentes ativos e '+fmt(data.eventos_gerados)+' eventos sintéticos gerados.','success');await loadAll()}));
+}
+$('loginForm').addEventListener('submit',async e=>{e.preventDefault();msg('loginMsg','Autenticando…');const {error}=await sb.auth.signInWithPassword({email:$('email').value,password:$('password').value});if(error){msg('loginMsg',error.message,'error');return}try{await adminCheck();$('login').hidden=true;$('app').hidden=false;await loadAll()}catch(err){msg('loginMsg',err.message,'error')}});
+$('refresh').addEventListener('click',async()=>{try{await loadAll();msg('cycleMsg','Dados atualizados.','success')}catch(e){msg('cycleMsg',e.message,'error')}});
+$('logout').addEventListener('click',async()=>{await sb.auth.signOut();$('app').hidden=true;$('login').hidden=false});
+(async()=>{try{if(await adminCheck()){$('login').hidden=true;$('app').hidden=false;await loadAll()}}catch(e){msg('loginMsg',e.message,'error')}})();
+</script>
+</body></html>
