@@ -23,7 +23,8 @@ function localEditorialSnapshot(){
   try { return JSON.parse(localStorage.getItem(KEY)||'[]'); } catch { return []; }
 }
 let editorialCloudSave = Promise.resolve();
-async function persistEditorialPosts(){
+function persistEditorialPosts(){
+  const run = async () => {
   if(!supabaseClient || !currentSession?.access_token) throw new Error('Sessão administrativa necessária.');
   // Elimina IDs duplicados antes do upsert: PostgreSQL não permite que
   // o mesmo comando ON CONFLICT atualize a mesma linha duas vezes.
@@ -57,6 +58,9 @@ async function persistEditorialPosts(){
     localStorage.setItem(KEY,JSON.stringify(light));
   } catch {}
   render();
+  };
+  editorialCloudSave = editorialCloudSave.catch(() => {}).then(run);
+  return editorialCloudSave;
 }
 async function loadEditorialPostsFromCloud(){
   if(!supabaseClient || !currentSession?.access_token) return;
