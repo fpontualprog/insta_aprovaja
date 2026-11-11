@@ -1,7 +1,72 @@
 
 const KEY='insta-aprovaja-posts-v1';const $=id=>document.getElementById(id);let posts=load();let pendingAIContent=null;
 function load(){try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch{return []}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(posts));render();return true}catch(e){toast('O armazenamento do navegador está cheio. Exclua publicações antigas e tente novamente.');return false}}
+function save(){
+  render();
+  if (supabaseClient && currentSession?.access_token) {
+    void persistEditorialPosts().catch(error => {
+      console.error('Falha ao salvar agenda editorial na nuvem:', error);
+      toast('Não foi possível salvar no Supabase: ' + (error?.message || 'erro inesperado'));
+    });
+    return true;
+  }
+  try {
+    const light = posts.map(p => ({...p, images:(p.images||[]).map(x => typeof x==='string' && x.startsWith('data:') ? '' : x)}));
+    localStorage.setItem(KEY, JSON.stringify(light));
+    return true;
+  } catch(e) {
+    toast('Entre como administrador para salvar a agenda na nuvem. O armazenamento local está cheio.');
+    return false;
+  }
+}
+function localEditorialSnapshot(){
+  try { return JSON.parse(localStorage.getItem(KEY)||'[]'); } catch { return []; }
+}
+let editorialCloudSave = Promise.resolve();
+async function persistEditorialPosts(){
+  if(!supabaseClient || !currentSession?.access_token) throw new Error('Sessão administrativa necessária.');
+  const snapshot = posts.map(p => ({...p, images:[...(p.images||[])]}));
+  for (const post of snapshot) {
+    for (let i=0;i<(post.images||[]).length;i++) {
+      const image = post.images[i];
+      if(typeof image !== 'string' || !image.startsWith('data:')) continue;
+      const blob = await imageDataToJpegBlob(image);
+      const path = 'agenda/'+String(post.id).replace(/[^a-zA-Z0-9_-]/g,'_')+'/'+i+'.jpg';
+      const {error:uploadError} = await supabaseClient.storage.from('instagram-publicacoes').upload(path,blob,{contentType:'image/jpeg',upsert:true});
+      if(uploadError) throw uploadError;
+      const {data:publicData} = supabaseClient.storage.from('instagram-publicacoes').getPublicUrl(path);
+      post.images[i] = publicData.publicUrl;
+    }
+  }
+  const rows = snapshot.map(p => ({id:String(p.id),owner_email:currentSession.user.email,payload:p,updated_at:new Date().toISOString()}));
+  if(rows.length){
+    const {error} = await supabaseClient.from('instagram_posts_cloud').upsert(rows,{onConflict:'id'});
+    if(error) throw error;
+  }
+  posts = snapshot;
+  // Mantém somente metadados leves no navegador; imagens ficam no Storage.
+  try {
+    const light = posts.map(p => ({...p,images:(p.images||[]).map(x=>typeof x==='string'&&x.startsWith('data:')?'':x),generatedHtml:''}));
+    localStorage.setItem(KEY,JSON.stringify(light));
+  } catch {}
+  render();
+}
+async function loadEditorialPostsFromCloud(){
+  if(!supabaseClient || !currentSession?.access_token) return;
+  const {data,error} = await supabaseClient.from('instagram_posts_cloud').select('payload').order('updated_at',{ascending:true});
+  if(error) throw error;
+  const remote = (data||[]).map(row=>row.payload).filter(Boolean);
+  const local = localEditorialSnapshot();
+  const byId = new Map(remote.map(p=>[String(p.id),p]));
+  for(const p of local) if(p?.id && !byId.has(String(p.id))) byId.set(String(p.id),p);
+  posts = [...byId.values()];
+  if(local.length && local.some(p=>(p.images||[]).some(x=>typeof x==='string'&&x.startsWith('data:')))) {
+    await persistEditorialPosts();
+  } else {
+    render();
+    if(local.length && remote.length < posts.length) await persistEditorialPosts();
+  }
+}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function toast(msg){const el=$('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2800)}
 function formatDate(v){if(!v)return 'Data não definida';const [y,m,d]=v.split('-');return d+'/'+m+'/'+y}
