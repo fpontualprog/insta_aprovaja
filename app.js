@@ -25,7 +25,14 @@ function localEditorialSnapshot(){
 let editorialCloudSave = Promise.resolve();
 async function persistEditorialPosts(){
   if(!supabaseClient || !currentSession?.access_token) throw new Error('Sessão administrativa necessária.');
-  const snapshot = posts.map(p => ({...p, images:[...(p.images||[])]}));
+  // Elimina IDs duplicados antes do upsert: PostgreSQL não permite que
+  // o mesmo comando ON CONFLICT atualize a mesma linha duas vezes.
+  const uniquePosts = new Map();
+  for (const post of posts) {
+    if (!post || post.id == null || String(post.id).trim() === '') continue;
+    uniquePosts.set(String(post.id), post);
+  }
+  const snapshot = [...uniquePosts.values()].map(p => ({...p, images:[...(p.images||[])]}));
   for (const post of snapshot) {
     for (let i=0;i<(post.images||[]).length;i++) {
       const image = post.images[i];
