@@ -1041,3 +1041,39 @@ document.addEventListener('click',e=>{
  const title=img.alt||link?.querySelector('span')?.textContent||'Prévia da arte';
  openArtworkPopup(img.currentSrc||img.src,title);
 });
+
+
+// Conexão OAuth do Threads (administrador autenticado)
+document.addEventListener('click', async (event) => {
+  const button = event.target.closest('#connectThreadsButton');
+  if (!button) return;
+  const status = document.getElementById('threadsConnectionStatus');
+  try {
+    if (!supabaseClient) throw new Error('Supabase não está conectado.');
+    const { data, error } = await supabaseClient.auth.getSession();
+    if (error) throw error;
+    const token = data?.session?.access_token;
+    if (!token) throw new Error('Entre com a conta administradora antes de conectar o Threads.');
+    button.disabled = true;
+    button.textContent = 'Preparando autorização…';
+    if (status) status.textContent = 'Validando acesso administrativo e preparando a autorização segura da Meta…';
+    const response = await fetch(SUPABASE_URL + '/functions/v1/threads-oauth', {
+      method: 'GET',
+      headers: {
+        'apikey': SUPABASE_PUBLISHABLE_KEY,
+        'Authorization': 'Bearer ' + token,
+        'Accept': 'application/json'
+      }
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.authorization_url) throw new Error(result.error || result.message || 'Não foi possível iniciar a autorização Threads (HTTP ' + response.status + ').');
+    if (status) status.textContent = 'Redirecionando para a Meta. Autorize o perfil do Threads solicitado.';
+    window.location.assign(result.authorization_url);
+  } catch (error) {
+    if (status) status.textContent = error?.message || 'Falha ao iniciar a conexão Threads.';
+    if (typeof toast === 'function') toast(error?.message || 'Falha ao iniciar a conexão Threads.');
+    button.disabled = false;
+    button.textContent = 'Conectar Threads';
+    console.error('Threads OAuth:', error);
+  }
+});
