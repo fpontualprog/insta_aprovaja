@@ -46,9 +46,12 @@ function persistEditorialPosts(){
       post.images[i] = publicData.publicUrl;
     }
   }
-  const rows = snapshot.map(p => ({id:String(p.id),owner_email:currentSession.user.email,payload:p,updated_at:new Date().toISOString()}));
-  if(rows.length){
-    const {error} = await supabaseClient.from('instagram_posts_cloud').upsert(rows,{onConflict:'id'});
+  // Envia um registro por requisição. Isso impede que o PostgreSQL
+  // receba IDs repetidos no mesmo comando ON CONFLICT, mesmo em agendas
+  // antigas que ainda contenham duplicidades.
+  for (const post of snapshot) {
+    const row = {id:String(post.id),owner_email:currentSession.user.email,payload:post,updated_at:new Date().toISOString()};
+    const {error} = await supabaseClient.from('instagram_posts_cloud').upsert(row,{onConflict:'id'});
     if(error) throw error;
   }
   posts = snapshot;
