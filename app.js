@@ -31,7 +31,7 @@ async function persistEditorialPosts(){
       const image = post.images[i];
       if(typeof image !== 'string' || !image.startsWith('data:')) continue;
       const blob = await imageDataToJpegBlob(image);
-      const path = 'agenda/'+String(post.id).replace(/[^a-zA-Z0-9_-]/g,'_')+'/'+i+'.jpg';
+      const path = 'publicacoes/agenda/'+String(post.id).replace(/[^a-zA-Z0-9_-]/g,'_')+'/'+i+'.jpg';
       const {error:uploadError} = await supabaseClient.storage.from('instagram-publicacoes').upload(path,blob,{contentType:'image/jpeg',upsert:true});
       if(uploadError) throw uploadError;
       const {data:publicData} = supabaseClient.storage.from('instagram-publicacoes').getPublicUrl(path);
