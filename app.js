@@ -248,7 +248,7 @@ function renderMonthlySchedule(){
  if(!rows.length){body.innerHTML='<tr><td colspan="5" class="schedule-empty">Nenhuma publicação programada para o período selecionado.</td></tr>';return;}
  body.innerHTML=rows.map(p=>'<tr><td>'+esc(formatDate(p.date))+'</td><td>'+esc(p.time||'—')+'</td><td class="schedule-title-cell">'+esc(p.title||'Sem título')+'</td><td>'+esc(p.kind||'—')+'</td><td><span class="schedule-status '+esc((p.status||'Pendente').replace(/[^a-zA-Z]/g,''))+'">'+esc(p.needsApproval?'Aguardando aprovação':p.status||'Pendente')+'</span></td></tr>').join('');
 }
-function render(){const filter=$('filter').value;const monthFilter=$('monthFilter')?.value||localDate(new Date()).slice(0,7);const list=posts.filter(p=>(!p.date||p.date.slice(0,7)===monthFilter)&&(filter==='all'||filter==='Pendente'?(filter==='all'||p.status==='Pendente'||p.needsApproval):p.status===filter)).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));$('count').textContent=posts.length;$('pendingCount').textContent=posts.filter(p=>p.status==='Pendente'||p.needsApproval).length;$('approvedCount').textContent=posts.filter(p=>p.status==='Aprovada'&&!p.needsApproval).length;$('publishedCount').textContent=posts.filter(p=>p.status==='Publicada').length;renderPublishedHistory();renderMonthlySchedule();const host=$('posts');if(!list.length){host.className='posts-empty';host.innerHTML='<div class="empty-icon">✦</div><strong>Agenda vazia</strong><p>Gere as pautas para montar o calendário mensal.</p>';return}host.className='';host.classList.toggle('posts-grid',filter==='Aprovada');host.innerHTML=list.map(p=>{const needsApproval=!!p.needsApproval||p.status==='Pendente';return '<article class="post-card layout-'+esc((p.kind||'dica').toLowerCase().replace(/[^a-z0-9]+/g,'-'))+'"><div class="post-top"><div><h3>'+esc(p.title)+'</h3><div class="meta">'+(p.status==='Aprovada'?'<strong>Data:</strong> ':'')+esc(formatDate(p.date))+(p.status==='Aprovada'?'<br><strong>Horário:</strong> ':' às ')+esc(p.time)+(p.status==='Aprovada'?'<br><strong>Tipo:</strong> ':' · ')+esc(p.kind)+' · '+esc(p.format||'Feed')+'</div></div><span class="status '+esc(p.status)+'">'+esc(needsApproval?'Aguardando aprovação':p.status==='Aprovada'?'Na fila de publicação':p.status)+'</span></div><p class="post-caption">'+esc(needsApproval?'Prévia da pauta. Aprove para gerar o texto, a legenda e as artes.':p.caption||'')+'</p>'+(p.images&&p.images.length?'<div class="post-images">'+p.images.map((src,i)=>'<a href="'+src+'" download="aprovaja-arte-'+(i+1)+'.png" target="_blank" rel="noopener"><img src="'+src+'" alt="Arte '+(i+1)+' do carrossel"><span>Baixar arte '+(i+1)+'</span></a>').join('')+'</div>':'')+(p.videoUrl?'<div class="post-video"><video controls playsinline preload="metadata" src="'+esc(p.videoUrl)+'" style="width:100%;max-width:360px;border-radius:12px"></video><p><a href="'+esc(p.videoUrl)+'" target="_blank" rel="noopener">Abrir MP4 do Story</a></p></div>':(p.status==='Gerando vídeo'?'<p class="hint">Vídeo em processamento no GitHub Actions…</p>':''))+'<div class="post-actions">'+(needsApproval?'<button class="small-btn" data-action="edit" data-id="'+p.id+'">Alterar</button><button class="small-btn approve-btn" data-action="approve" data-id="'+p.id+'">'+(p.storyWorkflow?'Aprovar Story':'Aprovar e gerar conteúdo')+'</button><button class="small-btn" data-action="reject" data-id="'+p.id+'">Reprovar</button>':'<button class="small-btn" data-action="copy" data-id="'+p.id+'">Copiar legenda</button>')+(p.status==='Aprovada'&&!needsApproval?'<button class="small-btn publish-btn" data-publish-id="'+p.id+'">Publicar agora</button><button class="small-btn" data-action="published" data-id="'+p.id+'">Marcar publicada</button>':'')+'<button class="small-btn" data-action="delete" data-id="'+p.id+'">Excluir</button></div></article>'}).join('')}function setDefaultDate(){const d=new Date();d.setDate(d.getDate()+((2-d.getDay()+7)%7||7));const dateField=$('date');if(dateField)dateField.value=localDate(d);const bulkStartField=$('bulkStart');if(bulkStartField)bulkStartField.value=localDate(d)};if($('storyDate'))$('storyDate').value=localDate(new Date())
+function render(){const filter=$('filter').value;const monthFilter=$('monthFilter')?.value||localDate(new Date()).slice(0,7);const list=posts.filter(p=>(!p.date||p.date.slice(0,7)===monthFilter)&&(filter==='all'||filter==='Pendente'?(filter==='all'||p.status==='Pendente'||p.needsApproval):p.status===filter)).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));$('count').textContent=posts.length;$('pendingCount').textContent=posts.filter(p=>p.status==='Pendente'||p.needsApproval).length;$('approvedCount').textContent=posts.filter(p=>p.status==='Aprovada'&&!p.needsApproval).length;$('publishedCount').textContent=posts.filter(p=>p.status==='Publicada').length;renderPublishedHistory();renderMonthlySchedule();const host=$('posts');if(!list.length){host.className='posts-empty';host.innerHTML='<div class="empty-icon">✦</div><strong>Agenda vazia</strong><p>Gere as pautas para montar o calendário mensal.</p>';return}host.className='';host.classList.toggle('posts-grid',filter==='Aprovada');host.innerHTML=list.map(p=>{const needsApproval=!!p.needsApproval||p.status==='Pendente';return '<article class="post-card layout-'+esc((p.kind||'dica').toLowerCase().replace(/[^a-z0-9]+/g,'-'))+'"><div class="post-top"><div><h3>'+esc(p.title)+'</h3><div class="meta">'+(p.status==='Aprovada'?'<strong>Data:</strong> ':'')+esc(formatDate(p.date))+(p.status==='Aprovada'?'<br><strong>Horário:</strong> ':' às ')+esc(p.time)+(p.status==='Aprovada'?'<br><strong>Tipo:</strong> ':' · ')+esc(p.kind)+' · '+esc(p.format||'Feed')+'</div></div><span class="status '+esc(p.status)+'">'+esc(needsApproval?'Aguardando aprovação':p.status==='Aprovada'?'Na fila de publicação':p.status)+'</span></div><p class="post-caption">'+esc(needsApproval?'Prévia da pauta. Aprove para gerar o texto, a legenda e as artes.':p.caption||'')+'</p>'+(p.images&&p.images.length?'<div class="post-images">'+p.images.map((src,i)=>'<a href="'+src+'" download="aprovaja-arte-'+(i+1)+'.png" target="_blank" rel="noopener"><img src="'+src+'" alt="Arte '+(i+1)+' do carrossel"><span>Baixar arte '+(i+1)+'</span></a>').join('')+'</div>':'')+(p.videoUrl?'<div class="post-video"><video controls playsinline preload="metadata" src="'+esc(p.videoUrl)+'" style="width:100%;max-width:360px;border-radius:12px"></video><p><a href="'+esc(p.videoUrl)+'" target="_blank" rel="noopener">Abrir MP4 do Story</a></p></div>':(p.status==='Gerando vídeo'?'<p class="hint">Vídeo em processamento no GitHub Actions…</p>':''))+'<div class="post-actions">'+(needsApproval?'<button class="small-btn" data-action="edit" data-id="'+p.id+'">Alterar</button><button class="small-btn approve-btn" data-action="approve" data-id="'+p.id+'">'+(p.storyWorkflow?'Aprovar Story':'Aprovar e gerar conteúdo')+'</button><button class="small-btn" data-action="reject" data-id="'+p.id+'">Reprovar</button>':'<button class="small-btn" data-action="copy" data-id="'+p.id+'">Copiar legenda</button>')+(p.status==='Aprovada'&&!needsApproval?'<button class="small-btn publish-btn" data-publish-id="'+p.id+'">Publicar agora</button><button class="small-btn" data-action="published" data-id="'+p.id+'">Marcar publicada</button>':'')+(p.status==='Publicada'&&!p.threadsMediaId?'<button class="small-btn publish-btn" data-threads-publish-id="'+p.id+'">Publicar no Threads</button>':'')+'<button class="small-btn" data-action="delete" data-id="'+p.id+'">Excluir</button></div></article>'}).join('')}function setDefaultDate(){const d=new Date();d.setDate(d.getDate()+((2-d.getDay()+7)%7||7));const dateField=$('date');if(dateField)dateField.value=localDate(d);const bulkStartField=$('bulkStart');if(bulkStartField)bulkStartField.value=localDate(d)};if($('storyDate'))$('storyDate').value=localDate(new Date())
 const RANDOM_EDITORIAL_KINDS=['Dica de prova','Questão comentada','Mapa mental','Planejamento de estudos','Divulgação da plataforma','Motivação e disciplina'];
 function randomItem(items){return items[Math.floor(Math.random()*items.length)]}
 
@@ -611,6 +611,71 @@ async function signOutInstagramAdmin() {
     integrationStatus('Sessão encerrada. Entre novamente para publicar.');
   }
 }
+
+const THREADS_PUBLISH_URL = SUPABASE_URL + '/functions/v1/threads-publish';
+function fitThreadsText(value, limit=500){
+  const text=String(value||'').trim();
+  if(text.length<=limit)return text;
+  let cut=text.slice(0,limit-1);
+  const space=cut.lastIndexOf(' ');
+  if(space>limit*.75)cut=cut.slice(0,space);
+  return cut.trimEnd()+'…';
+}
+async function ensureThreadsImageUrls(post){
+  const urls=[];
+  for(let i=0;i<(post.images||[]).length;i++){
+    const source=post.images[i];
+    if(typeof source==='string'&&source.startsWith('https://nukddukqilhsdklocout.supabase.co/storage/v1/object/public/instagram-publicacoes/')){
+      urls.push(source);continue;
+    }
+    const blob=await imageDataToJpegBlob(source);
+    const path='publicacoes/threads-'+Date.now()+'-'+(crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2))+'-'+(i+1)+'.jpg';
+    const {error}=await supabaseClient.storage.from('instagram-publicacoes').upload(path,blob,{contentType:'image/jpeg',upsert:false});
+    if(error)throw new Error('Falha ao preparar imagem para Threads: '+error.message);
+    const {data}=supabaseClient.storage.from('instagram-publicacoes').getPublicUrl(path);
+    if(!data?.publicUrl)throw new Error('URL pública da imagem para Threads indisponível.');
+    urls.push(data.publicUrl);
+  }
+  return urls;
+}
+async function publishThreadsForPost(post, imageUrls=null){
+  const {data,error}=await supabaseClient.auth.getSession();
+  if(error)throw error;
+  const token=data?.session?.access_token;
+  if(!token)throw new Error('Sessão administrativa expirada.');
+  const videoPost=!!post.storyWorkflow&&typeof post.videoUrl==='string'&&post.videoUrl.trim();
+  const urls=videoPost?[]:(imageUrls||await ensureThreadsImageUrls(post));
+  const payload={text:fitThreadsText(post.caption||makeCaption(post))};
+  if(videoPost)payload.video_url=post.videoUrl;
+  else if(urls.length)payload.image_urls=urls;
+  const response=await fetch(THREADS_PUBLISH_URL,{
+    method:'POST',
+    headers:{'Content-Type':'application/json','apikey':SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+token},
+    body:JSON.stringify(payload)
+  });
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok||!result.ok)throw new Error((result.error||'Falha ao publicar no Threads')+(result.stage?' (etapa: '+result.stage+')':''));
+  post.threadsMediaId=result.media_id;
+  post.threadsPermalink=result.permalink||null;
+  post.threadsPublishedAt=new Date().toISOString();
+  post.threadsError=null;
+  post.threadsStatus='Publicada';
+  return result;
+}
+async function retryThreadsPublication(postId,button){
+  const post=posts.find(p=>p.id===postId);
+  if(!post||post.threadsMediaId)return;
+  button.disabled=true;const old=button.textContent;button.textContent='Publicando no Threads…';
+  try{
+    await publishThreadsForPost(post);
+    save();toast('Threads confirmou a publicação.');
+    integrationStatus('Threads confirmou a publicação de “'+post.title+'”.');
+  }catch(error){
+    post.threadsError=error?.message||'Falha desconhecida';post.threadsStatus='Falha';
+    save();integrationStatus('Instagram já foi publicado, mas o Threads falhou: '+post.threadsError,true);
+  }finally{button.disabled=false;button.textContent=old;}
+}
+
 async function publishApprovedImage(postId, button, options = {}) {
   if (publishBusy) return;
   const post = posts.find(item => item.id === postId);
@@ -685,6 +750,16 @@ async function publishApprovedImage(postId, button, options = {}) {
     post.status = 'Publicada';
     post.instagramMediaId = result.media_id;
     post.publishedAt = new Date().toISOString();
+    let threadsMessage = '';
+    try {
+      integrationStatus('Instagram confirmou. Publicando também no Threads…');
+      const threadsResult = await publishThreadsForPost(post, imageUrls);
+      threadsMessage = ' Threads também confirmou em @' + (threadsResult.threads_username || 'sua conta') + '.';
+    } catch (threadsError) {
+      post.threadsError = threadsError?.message || 'Falha desconhecida';
+      post.threadsStatus = 'Falha';
+      threadsMessage = ' Atenção: Instagram publicado, mas Threads não confirmou: ' + post.threadsError + '.';
+    }
     if (post.storyDb && currentSession?.access_token) {
       const dbUpdate = await fetch(SUPABASE_URL + '/rest/v1/instagram_stories?id=eq.' + encodeURIComponent(post.id), {
         method: 'PATCH',
@@ -694,8 +769,8 @@ async function publishApprovedImage(postId, button, options = {}) {
       if (!dbUpdate.ok) console.warn('Instagram publicou, mas o status do Story não foi atualizado no banco:', dbUpdate.status);
     }
     if (save()) {
-      integrationStatus('Instagram confirmou a publicação imediata de ' + (isVideoStory ? 'um Story em vídeo' : imageUrls.length + (imageUrls.length === 1 ? ' imagem' : ' imagens')) + ' em @' + (result.instagram_username || 'aprovaja_seuconcurso') + '.');
-      toast('Instagram confirmou a publicação.');
+      integrationStatus('Instagram confirmou a publicação imediata em @' + (result.instagram_username || 'aprovaja_seuconcurso') + '.' + threadsMessage, !!post.threadsError);
+      toast(post.threadsError ? 'Instagram publicado; Threads pendente.' : 'Publicação confirmada nas duas redes.');
     }
   } catch (error) {
     integrationStatus('Não foi possível confirmar a publicação: ' + (error?.message || 'erro inesperado') + '. Confira o Instagram antes de tentar novamente para evitar duplicidade.', true);
@@ -729,6 +804,12 @@ if (document.readyState === 'loading') {
  
 // Listener delegado registrado imediatamente: também funciona para cards criados dinamicamente.
 document.addEventListener('click', event => {
+  const threadsButton = event.target.closest?.('button[data-threads-publish-id]');
+  if (threadsButton) {
+    event.preventDefault();event.stopPropagation();
+    retryThreadsPublication(threadsButton.dataset.threadsPublishId,threadsButton);
+    return;
+  }
   const button = event.target.closest?.('button[data-publish-id]');
   if (!button) return;
   event.preventDefault();
